@@ -90,7 +90,7 @@ bintray {
         repo = 'maven'
         name = 'cowherd-core'
         licenses = [ 'GPL-3.0' ]
-        vcsUrl = 'https://github.com/notsyncing/cowherd.git'
+        vcsUrl = 'https://github.com/notsyncing/manifold.git'
 
         version {
             name = ver
