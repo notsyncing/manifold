@@ -2,23 +2,60 @@ package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
+import io.github.notsyncing.manifold.ManifoldTransaction
+import io.github.notsyncing.manifold.ManifoldTransactionProvider
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
 import org.mockito.Mockito
-import kotlin.reflect.jvm.reflect
+import java.util.concurrent.CompletableFuture
 
 class ManifoldTest {
+    private var beganWithTrans = false
+    private var beganWithoutTrans = false
+    private var committed = false
+    private var ended = false
+
     @Before
     fun setUp() {
+        beganWithTrans = false
+        beganWithoutTrans = false
+        committed = false
+        ended = false
+
         Manifold.reset()
 
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(null)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestAction::class.java)).thenReturn(TestAction(null, null))
+
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun <T> get(transClass: Class<T>): ManifoldTransaction<T> {
+                return object : ManifoldTransaction<T>(String() as T) {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        if (withTransaction) {
+                            beganWithTrans = true
+                        } else {
+                            beganWithoutTrans = true
+                        }
+
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(): CompletableFuture<Void> {
+                        committed = true
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        ended = true
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
     }
 
     @Test

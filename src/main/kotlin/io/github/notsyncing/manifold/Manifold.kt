@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
+    var transactionProvider: ManifoldTransactionProvider? = null
     var actionPool: MutableMap<Class<*>, ManifoldAction<*, *>> = ConcurrentHashMap()
 
     fun reset() {
