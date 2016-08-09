@@ -1,5 +1,5 @@
 package io.github.notsyncing.manifold
 
-interface ManifoldManagerProvider {
+interface ManifoldDependencyProvider {
     fun <T> get(type: Class<T>): T?
 }

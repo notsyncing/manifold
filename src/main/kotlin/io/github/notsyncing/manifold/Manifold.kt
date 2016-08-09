@@ -3,11 +3,11 @@ package io.github.notsyncing.manifold
 import java.util.concurrent.ConcurrentHashMap
 
 object Manifold {
-    var managerProvider: ManifoldManagerProvider? = null
+    var dependencyProvider: ManifoldDependencyProvider? = null
     var actionPool: MutableMap<Class<*>, ManifoldAction<*>> = ConcurrentHashMap()
 
     fun reset() {
-        managerProvider = null
+        dependencyProvider = null
 
         actionPool.clear()
     }
@@ -22,7 +22,12 @@ object Manifold {
         val a: A
 
         if (!actionPool.containsKey(A::class.java)) {
-            a = A::class.java.newInstance()
+            if (dependencyProvider != null) {
+                a = dependencyProvider!!.get(A::class.java)!!
+            } else {
+                a = A::class.java.newInstance()
+            }
+
             actionPool[A::class.java] = a
         } else {
             a = actionPool[A::class.java]!! as A

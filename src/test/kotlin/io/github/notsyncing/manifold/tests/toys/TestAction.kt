@@ -1,17 +1,10 @@
 package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.ManifoldAction
-import io.github.notsyncing.manifold.annotations.AutoProvide
 import java.util.concurrent.CompletableFuture
 
-class TestAction() : ManifoldAction<String>() {
-    companion object {
-        @AutoProvide
-        var testManager: TestManager? = null
-
-        var testManager2: TestManager? = null
-    }
-
+class TestAction(var testManager: TestManager?,
+                 var testManager2: TestManager?) : ManifoldAction<String>() {
     fun hello(): CompletableFuture<String> {
         return CompletableFuture.completedFuture("Hello")
     }
