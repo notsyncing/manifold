@@ -9,6 +9,7 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
+import kotlin.reflect.jvm.reflect
 
 class ManifoldTest {
     @Before
@@ -22,7 +23,7 @@ class ManifoldTest {
 
     @Test
     fun testExecute() {
-        val r = Manifold.from<TestAction>().hello().get()
+        val r = Manifold.run(TestAction::class.java) { it.hello() }.get()
         Assert.assertEquals("Hello", r)
     }
 

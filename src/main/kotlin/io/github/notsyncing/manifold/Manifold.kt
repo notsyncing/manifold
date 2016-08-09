@@ -1,10 +1,11 @@
 package io.github.notsyncing.manifold
 
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
-    var actionPool: MutableMap<Class<*>, ManifoldAction<*>> = ConcurrentHashMap()
+    var actionPool: MutableMap<Class<*>, ManifoldAction<*, *>> = ConcurrentHashMap()
 
     fun reset() {
         dependencyProvider = null
@@ -12,27 +13,29 @@ object Manifold {
         actionPool.clear()
     }
 
-    fun registerAction(action: ManifoldAction<*>) {
+    fun <A: ManifoldAction<T, R>, T, R> registerAction(action: A) {
         actionPool[action.javaClass] = action
     }
 
-    fun <A: ManifoldAction<T>, T> getAction(action: Class<A>) = actionPool[action]
-
-    inline fun <reified A: ManifoldAction<*>> from(): A {
+    fun <A: ManifoldAction<T, R>, T, R> getAction(action: Class<A>): A {
         val a: A
 
-        if (!actionPool.containsKey(A::class.java)) {
+        if (!actionPool.containsKey(action)) {
             if (dependencyProvider != null) {
-                a = dependencyProvider!!.get(A::class.java)!!
+                a = dependencyProvider!!.get(action)!!
             } else {
-                a = A::class.java.newInstance()
+                a = action.newInstance()
             }
 
-            actionPool[A::class.java] = a
+            actionPool[action] = a
         } else {
-            a = actionPool[A::class.java]!! as A
+            a = actionPool[action]!! as A
         }
 
         return a
+    }
+
+    fun <A: ManifoldAction<T, R>, T, R> run(type: Class<A>, trans: T? = null, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
+        return getAction(type).with(trans).execute(f as (ManifoldAction<T, R>) -> CompletableFuture<R>)
     }
 }
