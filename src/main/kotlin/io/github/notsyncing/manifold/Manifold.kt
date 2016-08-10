@@ -37,6 +37,6 @@ object Manifold {
     }
 
     fun <A: ManifoldAction<T, R>, T, R> run(type: Class<A>, trans: ManifoldTransaction<T>? = null, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
-        return getAction(type).with(trans).execute(f as (ManifoldAction<T, R>) -> CompletableFuture<R>)
+        return getAction(type).with(trans).execute(f)
     }
 }

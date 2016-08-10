@@ -12,32 +12,32 @@ abstract class ManifoldAction<T, R>(private var autoCommit: Boolean = true,
         return this
     }
 
-    fun execute(f: (ManifoldAction<T, R>) -> CompletableFuture<R>) = async<R> {
-        val trans: ManifoldTransaction<T>
+    fun <A: ManifoldAction<T, R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
+        var inTrans = false
 
         if (transaction == null) {
-            trans = Manifold.transactionProvider!!.get(transClass)
+            transaction = Manifold.transactionProvider!!.get(transClass)
         } else {
-            trans = transaction!!
+            inTrans = true
         }
 
-        await(trans.begin(!autoCommit))
+        await(transaction!!.begin(!autoCommit))
 
         try {
-            val r = await(f(this@ManifoldAction))
+            val r = await(f(this@ManifoldAction as A))
 
-            if ((!autoCommit) && (transaction == null)) {
-                await(trans.commit())
+            if ((!autoCommit) && (!inTrans)) {
+                await(transaction!!.commit())
             }
 
-            if (transaction == null) {
-                await(trans.end())
+            if (!inTrans) {
+                //await(transaction!!.end())
             }
 
             return@async r
         } catch (e: Exception) {
-            if (transaction == null) {
-                await(trans.end())
+            if (!inTrans) {
+                await(transaction!!.end())
             }
 
             throw e
