@@ -33,7 +33,7 @@ class ManifoldTest {
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
             override fun <T> get(transClass: Class<T>): ManifoldTransaction<T> {
-                return object : ManifoldTransaction<T>(String() as T) {
+                return object : ManifoldTransaction<T>("" as T) {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         if (withTransaction) {
                             beganWithTrans = true
@@ -62,6 +62,11 @@ class ManifoldTest {
     fun testExecute() {
         val r = Manifold.run(TestAction::class.java) { it.hello() }.get()
         Assert.assertEquals("Hello", r)
+
+        Assert.assertFalse(beganWithTrans)
+        Assert.assertTrue(beganWithoutTrans)
+        Assert.assertFalse(committed)
+        Assert.assertTrue(ended)
     }
 
     @Test
