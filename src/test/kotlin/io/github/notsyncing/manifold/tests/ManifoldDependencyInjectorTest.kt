@@ -83,4 +83,24 @@ class ManifoldDependencyInjectorTest {
 
         Assert.assertEquals(ac, c.a)
     }
+
+    @Test
+    fun testGetAllAnnotated() {
+        val l = di.getAllAnnotated(TestAnno::class.java)
+
+        Assert.assertEquals(3, l.size)
+        Assert.assertTrue(l.contains(A::class.java))
+        Assert.assertTrue(l.contains(B::class.java))
+        Assert.assertTrue(l.contains(C::class.java))
+    }
+
+    @Test
+    fun testGetAllSubclasses() {
+        val l = di.getAllSubclasses(A::class.java)
+
+        Assert.assertEquals(3, l.size)
+        Assert.assertTrue(l.contains<Any>(AC::class.java))
+        Assert.assertTrue(l.contains<Any>(AC2::class.java))
+        Assert.assertTrue(l.contains<Any>(AC3::class.java))
+    }
 }

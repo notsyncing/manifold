@@ -82,4 +82,28 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     fun register(obj: Any) {
         singletons.put(obj.javaClass, obj)
     }
+
+    fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
+        cpScanner.matchClassesWithAnnotation(anno) { handler.invoke(it as Class<A>) }.scan()
+    }
+
+    fun <A: Annotation> getAllAnnotated(anno: Class<A>): Array<Class<*>> {
+        val list = ArrayList<Class<*>>()
+
+        getAllAnnotated(anno) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
+
+    fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
+        cpScanner.matchSubclassesOf(superClass) { handler.invoke(it as Class<S>) }.scan()
+    }
+
+    fun <S> getAllSubclasses(superClass: Class<S>): Array<Class<S>> {
+        val list = ArrayList<Class<S>>()
+
+        getAllSubclasses(superClass) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
 }
