@@ -1,11 +1,13 @@
 buildscript {
     ext.kotlin_version = '1.1-M01'
+    //ext.kotlin_version = '1.1.0-dev-2385'
 
     repositories {
         mavenCentral()
 
         maven {
             url "http://dl.bintray.com/kotlin/kotlin-eap-1.1"
+            //url "http://dl.bintray.com/kotlin/kotlin-dev"
         }
     }
 
@@ -36,6 +38,7 @@ repositories {
 
     maven {
         url "http://dl.bintray.com/kotlin/kotlin-eap-1.1"
+        //url "http://dl.bintray.com/kotlin/kotlin-dev"
     }
 
     maven {
@@ -49,6 +52,7 @@ dependencies {
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.1-alpha'
     compile 'io.vertx:vertx-core:3.3.2'
     compile group: 'com.alibaba', name: 'fastjson', version: '1.2.16'
+    compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.1'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:1.10.19'
