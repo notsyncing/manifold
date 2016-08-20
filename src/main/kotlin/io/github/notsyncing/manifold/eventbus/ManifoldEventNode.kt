@@ -20,10 +20,12 @@ class ManifoldEventNode(var id: String,
 
     val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler<*>>>()
     val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent<*>>>()
+    val replyCallbackTimeoutSchedulers = ConcurrentHashMap<Long, ScheduledFuture<*>>()
 
     private fun processEvent(event: ManifoldEvent<*>) {
         if (event.replyToCounter > 0) {
             val f = replyCallbacks.remove(event.replyToCounter)
+            replyCallbackTimeoutSchedulers.remove(event.replyToCounter)
             f!!.complete(event)
             return
         }
@@ -68,11 +70,15 @@ class ManifoldEventNode(var id: String,
         send(targetId, event)
 
         if (timeout > 0) {
-            replyCallbackTimeout.schedule({
+            val s = replyCallbackTimeout.schedule({
                 if ((!f.isDone) && (!f.isCancelled) && (!f.isCompletedExceptionally)) {
                     f.completeExceptionally(TimeoutException("Timeout ($timeout ms) while waiting for reply: target $targetId, source event $event"))
                 }
+
+                replyCallbackTimeoutSchedulers.remove(event.replyToCounter)
             }, timeout, TimeUnit.MILLISECONDS)
+
+            replyCallbackTimeoutSchedulers.put(event.counter, s)
         }
 
         return f
