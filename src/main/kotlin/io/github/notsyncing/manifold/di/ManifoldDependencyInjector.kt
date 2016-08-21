@@ -11,7 +11,9 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         private val singletons = ConcurrentHashMap<Class<*>, Any>()
         private val configs = ConcurrentHashMap<Class<*>, ProvideConfig>()
         private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
-        var scanner = FastClasspathScanner("-com.github.mauricio", "-scala")
+        var scanner = createScanner()
+
+        private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
     }
 
     init {
@@ -74,7 +76,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
 
     override fun reset() {
         singletons.clear()
-        scanner = FastClasspathScanner()
+        scanner = createScanner()
     }
 
     private fun earlyProvide(c: Class<*>) {
