@@ -85,6 +85,23 @@ class ManifoldDependencyInjectorTest {
     }
 
     @Test
+    fun testRegisterMapping() {
+        di.registerMapping(A::class.java, IA::class.java)
+        val a = di.get(IA::class.java)
+
+        Assert.assertEquals(A::class.java, a.javaClass)
+    }
+
+    @Test
+    fun testRegisterSingleton() {
+        di.registerSingleton(B::class.java)
+        val b1 = di.get(B::class.java)
+        val b2 = di.get(B::class.java)
+
+        Assert.assertEquals(b1, b2)
+    }
+
+    @Test
     fun testGetAllAnnotated() {
         val l = di.getAllAnnotated(TestAnno::class.java)
 

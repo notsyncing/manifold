@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold
 
+import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.vertx.core.Vertx
 import java.util.concurrent.CompletableFuture
@@ -13,6 +14,10 @@ object Manifold {
     private var vertx: Vertx? = null
 
     fun init() {
+        if (dependencyProvider == null) {
+            dependencyProvider = ManifoldDependencyInjector()
+        }
+
         vertx = Vertx.vertx()
 
         ManifoldEventBus.init(vertx!!)

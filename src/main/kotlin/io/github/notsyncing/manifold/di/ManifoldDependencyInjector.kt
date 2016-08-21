@@ -9,34 +9,45 @@ import java.util.concurrent.ConcurrentHashMap
 class ManifoldDependencyInjector : ManifoldDependencyProvider {
     companion object {
         private val singletons = ConcurrentHashMap<Class<*>, Any>()
-        var scanner = FastClasspathScanner()
+        private val configs = ConcurrentHashMap<Class<*>, ProvideConfig>()
+        private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
+        var scanner = FastClasspathScanner("-com.github.mauricio", "-scala")
     }
 
     init {
         scanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
     }
 
-    override fun <T> get(type: Class<T>): T {
+    override fun <T> get(type: Class<T>, singleton: Boolean): T {
         if (singletons.containsKey(type)) {
             return singletons[type] as T
+        }
+
+        val config = configs[type]
+
+        var t: Class<*> = type
+
+        if (classMap.containsKey(t)) {
+            t = classMap[t]!!
         }
 
         val constructor: Constructor<*>?
 
         if (type.constructors.size > 1) {
-            constructor = type.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
+            constructor = t.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
         } else {
-            constructor = type.constructors.first()
+            constructor = t.constructors.first()
         }
 
         if (constructor == null) {
-            throw InstantiationException("Type $type has no annotated constructor for dependency injection!")
+            throw InstantiationException("Type $type has no annotated constructor for dependency injection, " +
+                    "please mark the correct constructor with @${AutoProvide::class.java.simpleName}!")
         }
 
         val o: T
 
         if (constructor.parameterCount <= 0) {
-            o = type.newInstance()
+            o = t.newInstance() as T
         } else {
             val params = ArrayList<Any?>()
 
@@ -53,14 +64,15 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             o = constructor.newInstance(*params.toArray()) as T
         }
 
-        if (type.isAnnotationPresent(ProvideAsSingleton::class.java)) {
+        if ((type.isAnnotationPresent(ProvideAsSingleton::class.java)) || (singleton)
+                || (config?.singleton == true)) {
             singletons.put(type, o as Any)
         }
 
         return o
     }
 
-    fun reset() {
+    override fun reset() {
         singletons.clear()
         scanner = FastClasspathScanner()
     }
@@ -75,12 +87,23 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
 
     fun has(type: Class<*>) = singletons.containsKey(type)
 
-    fun <T: S, S> registerAs(obj: T, type: Class<S>) {
+    override fun <T: S, S> registerAs(obj: T, type: Class<S>) {
         singletons.put(type, obj as Any)
     }
 
-    fun register(obj: Any) {
+    override fun register(obj: Any) {
         singletons.put(obj.javaClass, obj)
+    }
+
+    override fun <T: S, S> registerMapping(instClass: Class<T>, intfClass: Class<S>) {
+        classMap.put(intfClass, instClass)
+    }
+
+    override fun registerSingleton(type: Class<*>) {
+        val config = ProvideConfig()
+        config.singleton = true
+
+        configs.put(type, config)
     }
 
     fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
