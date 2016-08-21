@@ -103,4 +103,15 @@ class ManifoldDependencyInjectorTest {
         Assert.assertTrue(l.contains<Any>(AC2::class.java))
         Assert.assertTrue(l.contains<Any>(AC3::class.java))
     }
+
+    @Test
+    fun testGetAllClassesImplemented() {
+        val l = di.getAllClassesImplemented(IA::class.java)
+
+        Assert.assertEquals(4, l.size)
+        Assert.assertTrue(l.contains<Any>(A::class.java))
+        Assert.assertTrue(l.contains<Any>(AC::class.java))
+        Assert.assertTrue(l.contains<Any>(AC2::class.java))
+        Assert.assertTrue(l.contains<Any>(AC3::class.java))
+    }
 }

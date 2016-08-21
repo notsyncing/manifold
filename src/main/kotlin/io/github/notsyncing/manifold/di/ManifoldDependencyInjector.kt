@@ -9,11 +9,11 @@ import java.util.concurrent.ConcurrentHashMap
 class ManifoldDependencyInjector : ManifoldDependencyProvider {
     companion object {
         private val singletons = ConcurrentHashMap<Class<*>, Any>()
-        private var cpScanner = FastClasspathScanner()
+        var scanner = FastClasspathScanner()
     }
 
     init {
-        cpScanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
+        scanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
     }
 
     override fun <T> get(type: Class<T>): T {
@@ -62,7 +62,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
 
     fun reset() {
         singletons.clear()
-        cpScanner = FastClasspathScanner()
+        scanner = FastClasspathScanner()
     }
 
     private fun earlyProvide(c: Class<*>) {
@@ -84,7 +84,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
-        cpScanner.matchClassesWithAnnotation(anno) { handler.invoke(it as Class<A>) }.scan()
+        scanner.matchClassesWithAnnotation(anno) { handler.invoke(it as Class<A>) }.scan()
     }
 
     fun <A: Annotation> getAllAnnotated(anno: Class<A>): Array<Class<*>> {
@@ -96,13 +96,25 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
-        cpScanner.matchSubclassesOf(superClass) { handler.invoke(it as Class<S>) }.scan()
+        scanner.matchSubclassesOf(superClass) { handler.invoke(it as Class<S>) }.scan()
     }
 
     fun <S> getAllSubclasses(superClass: Class<S>): Array<Class<S>> {
         val list = ArrayList<Class<S>>()
 
         getAllSubclasses(superClass) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
+
+    fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
+        scanner.matchClassesImplementing(implInterface) { handler.invoke(it as Class<S>) }.scan()
+    }
+
+    fun <S> getAllClassesImplemented(implInterface: Class<S>): Array<Class<S>> {
+        val list = ArrayList<Class<S>>()
+
+        getAllClassesImplemented(implInterface) { list.add(it) }
 
         return list.toArray(arrayOf())
     }
