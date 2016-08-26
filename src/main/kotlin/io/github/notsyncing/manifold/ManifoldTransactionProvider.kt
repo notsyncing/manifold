@@ -1,5 +1,9 @@
 package io.github.notsyncing.manifold
 
 interface ManifoldTransactionProvider {
-    fun <T> get(transClass: Class<T>): ManifoldTransaction<T>
+    fun get(): ManifoldTransaction<*>
+
+    fun <T> get(transClass: Class<T>): ManifoldTransaction<T> {
+        return get() as ManifoldTransaction<T>
+    }
 }

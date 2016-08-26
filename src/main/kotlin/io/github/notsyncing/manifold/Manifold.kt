@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
-    var actionPool = ConcurrentHashMap<Class<*>, ManifoldAction<*, *>>()
+    var actionPool = ConcurrentHashMap<Class<*>, ManifoldAction<*, *, *>>()
 
     private var vertx: Vertx? = null
 
@@ -52,20 +52,22 @@ object Manifold {
         actionPool.clear()
     }
 
-    fun <A: ManifoldAction<T, R>, T, R> registerAction(action: A) {
+    fun beginTran() = transactionProvider?.get()
+
+    fun <A: ManifoldAction<*, *, *>> registerAction(action: A) {
         actionPool[action.javaClass] = action
     }
 
-    fun <A: ManifoldAction<T, R>, T, R> registerAction(action: Class<A>) {
-        getAction(action)
+    fun <A: ManifoldAction<*, *, *>> registerAction(actionClass: Class<A>) {
+        getAction(actionClass)
     }
 
-    fun <A: ManifoldAction<T, R>, T, R> getAction(action: Class<A>): A {
+    fun <A: ManifoldAction<*, *, *>> getAction(action: Class<A>): A {
         val a: A
 
         if (!actionPool.containsKey(action)) {
             if (dependencyProvider != null) {
-                a = dependencyProvider!!.get(action)!!
+                a = dependencyProvider!!.get(action)
             } else {
                 a = action.newInstance()
             }
@@ -78,14 +80,21 @@ object Manifold {
         return a
     }
 
-    fun <A: ManifoldAction<T, R>, T, R> run(type: Class<A>, trans: ManifoldTransaction<T>? = null, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
+    fun <A: ManifoldAction<*, R, *>, R> run(actionClass: Class<A>, trans: ManifoldTransaction<*>? = null, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         try {
-            return getAction(type).with(trans).execute(f)
+            return getAction(actionClass).with(trans).execute(f)
         } catch (e: Exception) {
             val c = CompletableFuture<R>()
             c.completeExceptionally(e)
 
             return c
         }
+    }
+
+    fun <A: ManifoldAction<*, R, *>, R> run(f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+        val t = transactionProvider?.get()
+        val runner = ManifoldRunner(t)
+
+        return f(runner)
     }
 }

@@ -3,17 +3,19 @@ package io.github.notsyncing.manifold
 import kotlinx.coroutines.async
 import java.util.concurrent.CompletableFuture
 
-abstract class ManifoldAction<T, R>(private var useTrans: Boolean = true,
-                                    private var autoCommit: Boolean = true,
-                                    private var transClass: Class<T>) {
+abstract class ManifoldAction<T, R, F>(private var useTrans: Boolean = true,
+                                       private var autoCommit: Boolean = true,
+                                       private var transClass: Class<T>) {
     var transaction: ManifoldTransaction<T>? = null
 
-    fun with(trans: ManifoldTransaction<T>?): ManifoldAction<T, R> {
-        transaction = trans
+    abstract fun core(): F?
+
+    fun with(trans: ManifoldTransaction<*>?): ManifoldAction<T, R, F> {
+        transaction = trans as ManifoldTransaction<T>?
         return this
     }
 
-    fun <A: ManifoldAction<T, R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
+    fun <A: ManifoldAction<*, R, F>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
         if ((useTrans) && (Manifold.transactionProvider == null) && (transaction == null)) {
             throw RuntimeException("Action ${this@ManifoldAction.javaClass} wants to use transaction, but no transaction provider, nor a transaction is provided!")
         }

@@ -6,6 +6,7 @@ import io.github.notsyncing.manifold.ManifoldTransaction
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
+import kotlinx.coroutines.async
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -32,8 +33,8 @@ class ManifoldTest {
         Mockito.`when`(Manifold.dependencyProvider?.get(TestAction::class.java)).thenReturn(TestAction(null, null))
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun <T> get(transClass: Class<T>): ManifoldTransaction<T> {
-                return object : ManifoldTransaction<T>("" as T) {
+            override fun get(): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         if (withTransaction) {
                             beganWithTrans = true
@@ -74,6 +75,24 @@ class ManifoldTest {
         val a = TestAction(null, null)
         Manifold.registerAction(a)
 
-        Assert.assertEquals(a, Manifold.getAction(a.javaClass))
+        Assert.assertEquals(a, Manifold.getAction(TestAction::class.java))
+    }
+
+    @Test
+    fun testRunActionWithInvokeClosure() {
+        Manifold.run { m ->
+            async<String> {
+                return@async await(m(TestAction::class.java) { it.hello() })
+            }
+        }.get()
+    }
+
+    @Test
+    fun testRunActionWithInvoke() {
+        Manifold.run { m ->
+            async<String> {
+                return@async await(m(TestAction::class.java)())
+            }
+        }.get()
     }
 }

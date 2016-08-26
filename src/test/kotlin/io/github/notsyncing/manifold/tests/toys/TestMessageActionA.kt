@@ -6,7 +6,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
-class TestMessageActionA : ManifoldAction<String, ManifoldEvent<TestEvent>?>(false, true, String::class.java) {
+class TestMessageActionA : ManifoldAction<String, ManifoldEvent<TestEvent>?, Any>(false, true, String::class.java) {
     val node: ManifoldEventNode
     val msg: ManifoldEvent<TestEvent>
 
@@ -14,6 +14,8 @@ class TestMessageActionA : ManifoldAction<String, ManifoldEvent<TestEvent>?>(fal
         node = ManifoldEventBus.register("test.msg.action.A", arrayOf("group1"))
         msg = ManifoldEvent(TestEvent.TestA, "1")
     }
+
+    override fun core() = null
 
     fun send(): CompletableFuture<ManifoldEvent<TestEvent>?> {
         node.send("test.msg.action.B1", msg)
