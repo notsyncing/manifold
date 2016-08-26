@@ -3,6 +3,8 @@ package io.github.notsyncing.manifold
 interface ManifoldDependencyProvider {
     fun reset()
 
+    fun init()
+
     fun <T> get(type: Class<T>): T {
         return get(type, false)
     }

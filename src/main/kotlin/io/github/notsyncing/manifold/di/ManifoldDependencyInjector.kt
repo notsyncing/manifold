@@ -16,7 +16,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
     }
 
-    init {
+    override fun init() {
         scanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
     }
 
