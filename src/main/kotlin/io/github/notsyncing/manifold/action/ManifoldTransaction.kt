@@ -1,4 +1,4 @@
-package io.github.notsyncing.manifold
+package io.github.notsyncing.manifold.action
 
 import java.util.concurrent.CompletableFuture
 

@@ -1,5 +1,6 @@
-package io.github.notsyncing.manifold
+package io.github.notsyncing.manifold.action
 
+import io.github.notsyncing.manifold.Manifold
 import java.util.concurrent.CompletableFuture
 
 class ManifoldRunner(val trans: ManifoldTransaction<*>? = null) {

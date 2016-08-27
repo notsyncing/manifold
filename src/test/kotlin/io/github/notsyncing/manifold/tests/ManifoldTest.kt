@@ -2,8 +2,8 @@ package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
-import io.github.notsyncing.manifold.ManifoldTransaction
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
+import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
 import kotlinx.coroutines.async

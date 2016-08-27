@@ -1,6 +1,6 @@
 package io.github.notsyncing.manifold.tests.toys
 
-import io.github.notsyncing.manifold.ManifoldAction
+import io.github.notsyncing.manifold.action.ManifoldAction
 import java.util.concurrent.CompletableFuture
 
 class TestAction(var testManager: TestManager?,

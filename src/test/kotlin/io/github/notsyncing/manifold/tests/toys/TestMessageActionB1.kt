@@ -1,6 +1,6 @@
 package io.github.notsyncing.manifold.tests.toys
 
-import io.github.notsyncing.manifold.ManifoldAction
+import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
