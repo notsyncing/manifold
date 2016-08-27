@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.tests
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
+import io.github.notsyncing.manifold.action.ManifoldRunnerContext
 import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
@@ -81,8 +82,10 @@ class ManifoldTest {
     @Test
     fun testRunActionWithInvokeClosure() {
         Manifold.run { m ->
-            async<String> {
-                return@async await(m(TestAction::class.java) { it.hello() })
+            async<Unit> {
+                val s = await(m(TestAction::class.java) { it.hello() })
+
+                Assert.assertEquals("Hello", s)
             }
         }.get()
     }
@@ -90,9 +93,26 @@ class ManifoldTest {
     @Test
     fun testRunActionWithInvoke() {
         Manifold.run { m ->
+            async<Unit> {
+                val s = await(m(TestAction::class.java)())
+
+                Assert.assertEquals("Hello", s)
+            }
+        }.get()
+    }
+
+    @Test
+    fun testRunActionWithContext() {
+        val c = object : ManifoldRunnerContext {
+            val data = 1
+        }
+
+        Manifold.run(c) { m ->
             async<String> {
                 return@async await(m(TestAction::class.java)())
             }
         }.get()
+
+        Assert.assertEquals(c, Manifold.getAction<TestAction>().context)
     }
 }

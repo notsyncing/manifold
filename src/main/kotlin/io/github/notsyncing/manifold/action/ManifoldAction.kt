@@ -8,8 +8,14 @@ abstract class ManifoldAction<T, R, F>(private var useTrans: Boolean = true,
                                        private var autoCommit: Boolean = true,
                                        private var transClass: Class<T>) {
     var transaction: ManifoldTransaction<T>? = null
+    var context: ManifoldRunnerContext? = null
 
     abstract fun core(): F?
+
+    fun with(context: ManifoldRunnerContext?): ManifoldAction<T, R, F> {
+        this.context = context
+        return this
+    }
 
     fun with(trans: ManifoldTransaction<*>?): ManifoldAction<T, R, F> {
         transaction = trans as ManifoldTransaction<T>?

@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold
 
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldRunner
+import io.github.notsyncing.manifold.action.ManifoldRunnerContext
 import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
@@ -83,6 +84,8 @@ object Manifold {
         return a
     }
 
+    inline fun <reified A: ManifoldAction<*, *, *>> getAction(): A = getAction(A::class.java)
+
     fun <A: ManifoldAction<*, R, *>, R> run(actionClass: Class<A>, trans: ManifoldTransaction<*>? = null, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         try {
             return getAction(actionClass).with(trans).execute(f)
@@ -94,9 +97,9 @@ object Manifold {
         }
     }
 
-    fun <A: ManifoldAction<*, R, *>, R> run(f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+    fun <A: ManifoldAction<*, R, *>, R> run(context: ManifoldRunnerContext? = null, f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
         val t = transactionProvider?.get()
-        val runner = ManifoldRunner(t)
+        val runner = ManifoldRunner(t, context)
 
         return f(runner)
     }
