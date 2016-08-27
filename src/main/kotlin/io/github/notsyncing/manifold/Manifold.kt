@@ -93,7 +93,7 @@ object Manifold {
                                                                          context: C? = null,
                                                                          f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         try {
-            return getAction(actionClass).with(trans).execute(f)
+            return getAction(actionClass).with(context).with(trans).execute(f)
         } catch (e: Exception) {
             val c = CompletableFuture<R>()
             c.completeExceptionally(e)
