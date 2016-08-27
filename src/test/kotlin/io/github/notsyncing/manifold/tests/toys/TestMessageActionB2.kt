@@ -1,12 +1,13 @@
 package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldAction
+import io.github.notsyncing.manifold.action.ManifoldRunnerContext
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
-class TestMessageActionB2 : ManifoldAction<String, ManifoldEvent<TestEvent>?, Any>(false, true, String::class.java) {
+class TestMessageActionB2 : ManifoldAction<String, ManifoldEvent<TestEvent>?, Any, ManifoldRunnerContext>(false, true, String::class.java) {
     val node: ManifoldEventNode
     val msg: ManifoldEvent<TestEvent>
 
