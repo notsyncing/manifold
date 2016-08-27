@@ -13,6 +13,7 @@ class ManifoldDependencyInjectorTest {
     @Before
     fun setUp() {
         di = ManifoldDependencyInjector()
+        di.init()
 
         E.counter = 0
     }
