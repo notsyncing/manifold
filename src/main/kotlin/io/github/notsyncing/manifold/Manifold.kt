@@ -63,6 +63,8 @@ object Manifold {
         dependencyProvider = null
 
         actionPool.clear()
+
+        ManifoldScene.reset()
     }
 
     fun beginTran() = transactionProvider?.get()

@@ -11,6 +11,10 @@ abstract class ManifoldScene<R>() {
 
     companion object {
         private val eventNodes = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<ManifoldEventNode>>()
+
+        fun reset() {
+            eventNodes.clear()
+        }
     }
 
     constructor(event: ManifoldEvent<*>) : this() {
