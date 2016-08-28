@@ -1,8 +1,10 @@
-package io.github.notsyncing.manifold.tests.toys
+package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.tests.toys.TestEvent
+import io.github.notsyncing.manifold.tests.toys.TestScene
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -21,7 +23,7 @@ class ManifoldSceneTest {
 
     @After
     fun tearDown() {
-        Manifold.destroy()
+        Manifold.destroy().get()
     }
 
     @Test
