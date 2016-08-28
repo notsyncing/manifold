@@ -11,6 +11,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         private val singletons = ConcurrentHashMap<Class<*>, Any>()
         private val configs = ConcurrentHashMap<Class<*>, ProvideConfig>()
         private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
+        private val constructorMap = ConcurrentHashMap<Class<*>, Constructor<*>>()
         var scanner = createScanner()
 
         private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
@@ -33,17 +34,23 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             t = classMap[t]!!
         }
 
-        val constructor: Constructor<*>?
-
-        if (type.constructors.size > 1) {
-            constructor = t.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
-        } else {
-            constructor = t.constructors.first()
-        }
+        var constructor: Constructor<*>? = constructorMap[t]
 
         if (constructor == null) {
-            throw InstantiationException("Type $type has no annotated constructor for dependency injection, " +
-                    "please mark the correct constructor with @${AutoProvide::class.java.simpleName}!")
+            if (type.constructors.size > 1) {
+                constructor = t.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
+            } else {
+                constructor = t.constructors.first()
+            }
+
+            if (constructor == null) {
+                throw InstantiationException("Type $type has no annotated constructor for dependency injection, " +
+                        "please mark the correct constructor with @${AutoProvide::class.java.simpleName}!")
+            } else {
+                constructorMap.put(t, constructor)
+            }
+
+            constructor.isAccessible = true
         }
 
         val o: T
@@ -76,6 +83,9 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
 
     override fun reset() {
         singletons.clear()
+        configs.clear()
+        classMap.clear()
+        constructorMap.clear()
         scanner = createScanner()
     }
 
