@@ -41,7 +41,7 @@ abstract class ManifoldScene<R>() {
         }
     }
 
-    fun init() {
+    open fun init() {
 
     }
 
