@@ -1,5 +1,7 @@
 package io.github.notsyncing.manifold
 
+import java.util.*
+
 interface ManifoldDependencyProvider {
     fun reset()
 
@@ -18,4 +20,34 @@ interface ManifoldDependencyProvider {
     fun <T: S, S> registerMapping(instClass: Class<T>, intfClass: Class<S>)
 
     fun registerSingleton(type: Class<*>)
+
+    fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit)
+
+    fun <A: Annotation> getAllAnnotated(anno: Class<A>): Array<Class<*>> {
+        val list = ArrayList<Class<*>>()
+
+        getAllAnnotated(anno) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
+
+    fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit)
+
+    fun <S> getAllSubclasses(superClass: Class<S>): Array<Class<S>> {
+        val list = ArrayList<Class<S>>()
+
+        getAllSubclasses(superClass) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
+
+    fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit)
+
+    fun <S> getAllClassesImplemented(implInterface: Class<S>): Array<Class<S>> {
+        val list = ArrayList<Class<S>>()
+
+        getAllClassesImplemented(implInterface) { list.add(it) }
+
+        return list.toArray(arrayOf())
+    }
 }

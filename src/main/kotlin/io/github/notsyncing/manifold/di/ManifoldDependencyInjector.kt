@@ -108,39 +108,15 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         configs.put(type, config)
     }
 
-    fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
+    override fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
         scanner.matchClassesWithAnnotation(anno) { handler.invoke(it as Class<A>) }.scan()
     }
 
-    fun <A: Annotation> getAllAnnotated(anno: Class<A>): Array<Class<*>> {
-        val list = ArrayList<Class<*>>()
-
-        getAllAnnotated(anno) { list.add(it) }
-
-        return list.toArray(arrayOf())
-    }
-
-    fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
+    override fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
         scanner.matchSubclassesOf(superClass) { handler.invoke(it as Class<S>) }.scan()
     }
 
-    fun <S> getAllSubclasses(superClass: Class<S>): Array<Class<S>> {
-        val list = ArrayList<Class<S>>()
-
-        getAllSubclasses(superClass) { list.add(it) }
-
-        return list.toArray(arrayOf())
-    }
-
-    fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
+    override fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
         scanner.matchClassesImplementing(implInterface) { handler.invoke(it as Class<S>) }.scan()
-    }
-
-    fun <S> getAllClassesImplemented(implInterface: Class<S>): Array<Class<S>> {
-        val list = ArrayList<Class<S>>()
-
-        getAllClassesImplemented(implInterface) { list.add(it) }
-
-        return list.toArray(arrayOf())
     }
 }

@@ -1,9 +1,6 @@
 package io.github.notsyncing.manifold
 
-import io.github.notsyncing.manifold.action.ManifoldAction
-import io.github.notsyncing.manifold.action.ManifoldRunner
-import io.github.notsyncing.manifold.action.ManifoldRunnerContext
-import io.github.notsyncing.manifold.action.ManifoldTransaction
+import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.vertx.core.Vertx
@@ -25,6 +22,18 @@ object Manifold {
         vertx = Vertx.vertx()
 
         ManifoldEventBus.init(vertx!!)
+
+        processScenes()
+    }
+
+    private fun processScenes() {
+        dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
+            try {
+                it.newInstance().init()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun destroy(): CompletableFuture<Void> {
