@@ -41,7 +41,9 @@ abstract class ManifoldScene<R>() {
         }
     }
 
-    abstract fun init()
+    fun init() {
+
+    }
 
     abstract fun stage(): CompletableFuture<R>
 }
