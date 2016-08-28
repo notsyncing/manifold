@@ -69,7 +69,7 @@ class ManifoldEventNode(var id: String,
 
     fun send(targetId: String, event: ManifoldEvent<*>) = ManifoldEventBus.send(this, targetId, event)
 
-    fun <T: Enum<*>> sendAndWaitForReply(targetId: String, event: ManifoldEvent<*>, timeout: Long = 10000): CompletableFuture<ManifoldEvent<T>?> {
+    fun <T: Enum<*>> sendAndWaitForReply(targetId: String, event: ManifoldEvent<*>, timeout: Long, timeoutUnit: TimeUnit): CompletableFuture<ManifoldEvent<T>?> {
         val f = CompletableFuture<ManifoldEvent<T>?>()
         replyCallbacks.put(event.counter, f as CompletableFuture<ManifoldEvent<*>>)
 
@@ -82,12 +82,16 @@ class ManifoldEventNode(var id: String,
                 }
 
                 replyCallbackTimeoutSchedulers.remove(event.replyToCounter)
-            }, timeout, TimeUnit.MILLISECONDS)
+            }, timeout, timeoutUnit)
 
             replyCallbackTimeoutSchedulers.put(event.counter, s)
         }
 
         return f
+    }
+
+    fun <T: Enum<*>> sendAndWaitForReply(targetId: String, event: ManifoldEvent<*>, timeout: Long = 10000): CompletableFuture<ManifoldEvent<T>?> {
+        return sendAndWaitForReply(targetId, event, timeout, TimeUnit.MILLISECONDS)
     }
 
     fun sendToAnyInGroup(targetGroup: String, event: ManifoldEvent<*>)
