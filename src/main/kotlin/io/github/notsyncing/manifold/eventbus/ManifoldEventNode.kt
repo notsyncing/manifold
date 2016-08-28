@@ -28,7 +28,7 @@ class ManifoldEventNode(var id: String,
         if (event.replyToCounter > 0) {
             val f = replyCallbacks.remove(event.replyToCounter)
             replyCallbackTimeoutSchedulers.remove(event.replyToCounter)
-            f!!.complete(event)
+            f?.complete(event)
             return
         }
 
