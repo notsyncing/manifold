@@ -113,11 +113,18 @@ object Manifold {
         }
     }
 
-    fun <A: ManifoldAction<*, R, *, *>, R> run(context: ManifoldRunnerContext? = null,
-                                               f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+    fun <R> run(context: ManifoldRunnerContext? = null,
+                f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
         val t = transactionProvider?.get()
         val runner = ManifoldRunner(t, context)
 
         return f(runner)
+    }
+
+    fun <R> run(scene: ManifoldScene<R>): CompletableFuture<R> {
+        return run { m ->
+            scene.m = m
+            scene.stage()
+        }
     }
 }

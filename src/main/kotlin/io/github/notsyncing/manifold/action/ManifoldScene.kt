@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.action
 
+import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.*
@@ -8,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 abstract class ManifoldScene<R>() {
     protected var event: ManifoldEvent<*>? = null
+    lateinit var m: ManifoldRunner
 
     companion object {
         private val eventNodes = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<ManifoldEventNode>>()
@@ -37,7 +39,7 @@ abstract class ManifoldScene<R>() {
             constructor.isAccessible = true
 
             val scene = constructor.newInstance(it)
-            scene.stage()
+            Manifold.run(scene)
         }
     }
 
