@@ -7,17 +7,17 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
-class TestMessageActionB2 : ManifoldAction<String, ManifoldEvent<TestEvent>?, Any, ManifoldRunnerContext>(false, true, String::class.java) {
+class TestMessageActionB2 : ManifoldAction<String, ManifoldEvent?, Any, ManifoldRunnerContext>(false, true, String::class.java) {
     val node: ManifoldEventNode
-    val msg: ManifoldEvent<TestEvent>
+    val msg: ManifoldEvent
 
-    var received = CompletableFuture<ManifoldEvent<TestEvent>>()
+    var received = CompletableFuture<ManifoldEvent>()
 
     init {
         node = ManifoldEventBus.register("test.msg.action.B2", arrayOf("group2"))
         msg = ManifoldEvent(TestEvent.TestB, "2")
 
-        val replyMsg = ManifoldEvent<TestEvent>(TestEvent.TestB, "3")
+        val replyMsg = ManifoldEvent(TestEvent.TestB, "3")
 
         node.on(TestEvent.TestA) { e ->
             received.complete(e)

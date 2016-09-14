@@ -34,7 +34,7 @@ class ManifoldSceneTest {
     @Test
     fun testAwakeOnEvent() {
         val node = ManifoldEventBus.register("test.tester")
-        val eventSent = ManifoldEvent<TestEvent>(TestEvent.TestA, "test")
+        val eventSent = ManifoldEvent(TestEvent.TestA, "test")
         node.send("test.scene", eventSent)
 
         TestScene.recvEvent.thenAccept {

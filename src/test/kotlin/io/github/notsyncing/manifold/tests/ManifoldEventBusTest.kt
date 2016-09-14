@@ -75,7 +75,7 @@ class ManifoldEventBusTest {
             Assert.assertEquals("1", e1.data)
             Assert.assertFalse(f2.isDone)
             Assert.assertFalse(f3.isDone)
-            f1 = CompletableFuture<ManifoldEvent<TestEvent>>()
+            f1 = CompletableFuture<ManifoldEvent>()
             Manifold.getAction(TestMessageActionB1::class.java).received = f1
 
             Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
@@ -83,7 +83,7 @@ class ManifoldEventBusTest {
             Assert.assertEquals("1", e2.data)
             Assert.assertFalse(f1.isDone)
             Assert.assertFalse(f3.isDone)
-            f2 = CompletableFuture<ManifoldEvent<TestEvent>>()
+            f2 = CompletableFuture<ManifoldEvent>()
             Manifold.getAction(TestMessageActionB2::class.java).received = f2
 
             Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
@@ -91,7 +91,7 @@ class ManifoldEventBusTest {
             Assert.assertEquals("1", e3.data)
             Assert.assertFalse(f1.isDone)
             Assert.assertFalse(f2.isDone)
-            f3 = CompletableFuture<ManifoldEvent<TestEvent>>()
+            f3 = CompletableFuture<ManifoldEvent>()
             Manifold.getAction(TestMessageActionB3::class.java).received = f3
 
             Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
@@ -99,7 +99,7 @@ class ManifoldEventBusTest {
             Assert.assertEquals("1", e1.data)
             Assert.assertFalse(f2.isDone)
             Assert.assertFalse(f3.isDone)
-            f1 = CompletableFuture<ManifoldEvent<TestEvent>>()
+            f1 = CompletableFuture<ManifoldEvent>()
             Manifold.getAction(TestMessageActionB1::class.java).received = f1
         }.get()
     }

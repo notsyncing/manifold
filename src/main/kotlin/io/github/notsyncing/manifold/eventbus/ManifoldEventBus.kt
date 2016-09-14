@@ -95,7 +95,7 @@ object ManifoldEventBus {
 
     fun sendBeacon(node: ManifoldEventNode): CompletableFuture<Boolean> {
         val beaconData = BeaconData(node)
-        val beaconEvent = ManifoldEvent<BeaconEvent>(BeaconEvent.Beacon, beaconData)
+        val beaconEvent = ManifoldEvent(BeaconEvent.Beacon, beaconData)
         beaconEvent.source = node.id
         beaconEvent.type = EventType.Beacon
         beaconEvent.sendType = EventSendType.Broadcast
@@ -175,7 +175,7 @@ object ManifoldEventBus {
         debug("Unregistered local node ${node.id}")
 
         val beaconData = BeaconData(node)
-        val beaconEvent = ManifoldEvent<BeaconEvent>(BeaconEvent.Exit, beaconData)
+        val beaconEvent = ManifoldEvent(BeaconEvent.Exit, beaconData)
         beaconEvent.source = node.id
         beaconEvent.type = EventType.Beacon
         beaconEvent.sendType = EventSendType.Broadcast
@@ -185,7 +185,7 @@ object ManifoldEventBus {
         return sendToRemote(beaconEvent)
     }
 
-    fun send(node: ManifoldEventNode, targetId: String, event: ManifoldEvent<*>) {
+    fun send(node: ManifoldEventNode, targetId: String, event: ManifoldEvent) {
         event.source = node.id
         event.sendType = EventSendType.Unicast
         event.target = targetId
@@ -201,7 +201,7 @@ object ManifoldEventBus {
         targetNode.receive(event)
     }
 
-    fun sendToAnyInGroup(node: ManifoldEventNode, targetGroup: String, event: ManifoldEvent<*>) {
+    fun sendToAnyInGroup(node: ManifoldEventNode, targetGroup: String, event: ManifoldEvent) {
         event.source = node.id
         event.target = targetGroup
         event.sendType = EventSendType.GroupUnicast
@@ -217,7 +217,7 @@ object ManifoldEventBus {
         targetGroupNodes.receive(event)
     }
 
-    fun broadcast(node: ManifoldEventNode, event: ManifoldEvent<*>) {
+    fun broadcast(node: ManifoldEventNode, event: ManifoldEvent) {
         event.source = node.id
         event.sendType = EventSendType.Broadcast
 
@@ -228,7 +228,7 @@ object ManifoldEventBus {
         nodes.values.forEach { it.receive(event) }
     }
 
-    fun broadcastToGroup(node: ManifoldEventNode, group: String, event: ManifoldEvent<*>) {
+    fun broadcastToGroup(node: ManifoldEventNode, group: String, event: ManifoldEvent) {
         event.source = node.id
         event.sendType = EventSendType.Groupcast
         event.target = group
@@ -240,7 +240,7 @@ object ManifoldEventBus {
         groupNodes[group]?.receive(event)
     }
 
-    fun broadcastToAnyInGroups(node: ManifoldEventNode, event: ManifoldEvent<*>) {
+    fun broadcastToAnyInGroups(node: ManifoldEventNode, event: ManifoldEvent) {
         event.source = node.id
         event.sendType = EventSendType.MultiGroupUnicast
 
@@ -251,7 +251,7 @@ object ManifoldEventBus {
         groupNodes.values.forEach { it.receive(event) }
     }
 
-    fun sendToRemote(event: ManifoldEvent<*>, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
+    fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
         val buf = Buffer.buffer(event.serialize())
         val address: String
         val c = CompletableFuture<Boolean>()
@@ -294,7 +294,7 @@ object ManifoldEventBus {
         debug("Received remote event $event from packet (length ${data.size})")
 
         if (event.type == EventType.Beacon) {
-            val beaconEvent = event as ManifoldEvent<BeaconEvent>
+            val beaconEvent = event
             val beaconData = beaconEvent.getData(BeaconData::class.java)
 
             if (beaconEvent.event == BeaconEvent.Beacon) {
@@ -322,7 +322,7 @@ object ManifoldEventBus {
         } else if (event.type == EventType.Data) {
             if (event.sendType == EventSendType.Unicast) {
                 nodes[event.source]?.receive(event)
-            } else if ((event.type == EventSendType.GroupUnicast) || (event.type == EventSendType.Groupcast)) {
+            } else if ((event.sendType == EventSendType.GroupUnicast) || (event.sendType == EventSendType.Groupcast)) {
                 groupNodes[event.source]?.receive(event)
             } else if (event.sendType == EventSendType.Broadcast) {
                 nodes.values.forEach { it.receive(event) }

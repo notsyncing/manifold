@@ -8,12 +8,12 @@ import java.util.concurrent.CompletableFuture
 class TestScene : ManifoldScene<String> {
     companion object {
         var initExecuted = false
-        var recvEvent = CompletableFuture<ManifoldEvent<*>>()
+        var recvEvent = CompletableFuture<ManifoldEvent>()
     }
 
     constructor() : super()
 
-    constructor(event: ManifoldEvent<*>) : super(event)
+    constructor(event: ManifoldEvent) : super(event)
 
     override fun init() {
         val node = ManifoldEventBus.register("test.scene")

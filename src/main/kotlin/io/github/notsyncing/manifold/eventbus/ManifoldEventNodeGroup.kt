@@ -14,7 +14,7 @@ class ManifoldEventNodeGroup(val name: String) {
 
     fun remove(node: ManifoldEventNode) = nodes.remove(node)
 
-    fun receive(event: ManifoldEvent<*>) {
+    fun receive(event: ManifoldEvent) {
         if (nodes.size <= 0) {
             return
         }

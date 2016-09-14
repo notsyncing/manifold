@@ -1,7 +1,6 @@
-package io.github.notsyncing.manifold.eventbus.event;
+package io.github.notsyncing.manifold.eventbus.event
 
-public enum EventSendType
-{
+enum class EventSendType {
     Unicast,
     Groupcast,
     Broadcast,

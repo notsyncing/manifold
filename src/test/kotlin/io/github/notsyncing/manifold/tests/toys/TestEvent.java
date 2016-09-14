@@ -1,7 +1,7 @@
 package io.github.notsyncing.manifold.tests.toys;
 
-public enum TestEvent
+public class TestEvent
 {
-    TestA,
-    TestB
+    public static final String TestA = "manifold.test.TestA";
+    public static final String TestB = "manifold.test.TestB";
 }

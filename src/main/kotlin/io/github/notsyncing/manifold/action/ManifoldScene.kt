@@ -8,7 +8,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class ManifoldScene<R>() {
-    protected var event: ManifoldEvent<*>? = null
+    protected var event: ManifoldEvent? = null
     lateinit var m: ManifoldRunner
 
     companion object {
@@ -19,7 +19,7 @@ abstract class ManifoldScene<R>() {
         }
     }
 
-    constructor(event: ManifoldEvent<*>) : this() {
+    constructor(event: ManifoldEvent) : this() {
         this.event = event
     }
 
@@ -33,8 +33,8 @@ abstract class ManifoldScene<R>() {
         eventNodes[c]!!.add(node)
     }
 
-    protected fun awakeOnEvent(node: ManifoldEventNode, eventType: Enum<*>) {
-        node.on(eventType) {
+    protected fun awakeOnEvent(node: ManifoldEventNode, event: String) {
+        node.on(event) {
             val constructor = this.javaClass.getConstructor(ManifoldEvent::class.java)
             constructor.isAccessible = true
 

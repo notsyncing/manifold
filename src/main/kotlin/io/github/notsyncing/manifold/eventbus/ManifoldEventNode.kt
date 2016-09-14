@@ -13,18 +13,18 @@ class ManifoldEventNode(var id: String,
         private val replyCallbackTimeout = Executors.newScheduledThreadPool(1)
     }
 
-    typealias ManifoldEventHandler<TS> = (ManifoldEvent<TS>) -> Unit
+    typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
 
     var local: Boolean = address == null
         get() = address == null
 
-    val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler<*>>>()
-    val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent<*>>>()
+    val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler>>()
+    val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent>>()
     val replyCallbackTimeoutSchedulers = ConcurrentHashMap<Long, ScheduledFuture<*>>()
 
     val handlerThreadPool = if (ForkJoinPool.getCommonPoolParallelism() > 1) ForkJoinPool.commonPool() else ForkJoinPool(Runtime.getRuntime().availableProcessors())
 
-    private fun processEvent(event: ManifoldEvent<*>) {
+    private fun processEvent(event: ManifoldEvent) {
         if (event.replyToCounter > 0) {
             val f = replyCallbacks.remove(event.replyToCounter)
             replyCallbackTimeoutSchedulers.remove(event.replyToCounter)
@@ -59,19 +59,19 @@ class ManifoldEventNode(var id: String,
 
     fun unregister() = ManifoldEventBus.unregister(this)
 
-    fun <TS: Enum<*>> on(event: TS, handler: ManifoldEventHandler<TS>) {
+    fun on(event: String, handler: ManifoldEventHandler) {
         if (!handlers.containsKey(event)) {
             handlers.put(event, ArrayList())
         }
 
-        handlers[event]!!.add(handler as ManifoldEventHandler<*>)
+        handlers[event]!!.add(handler as ManifoldEventHandler)
     }
 
-    fun send(targetId: String, event: ManifoldEvent<*>) = ManifoldEventBus.send(this, targetId, event)
+    fun send(targetId: String, event: ManifoldEvent) = ManifoldEventBus.send(this, targetId, event)
 
-    fun <T: Enum<*>> sendAndWaitForReply(targetId: String, event: ManifoldEvent<*>, timeout: Long, timeoutUnit: TimeUnit): CompletableFuture<ManifoldEvent<T>?> {
-        val f = CompletableFuture<ManifoldEvent<T>?>()
-        replyCallbacks.put(event.counter, f as CompletableFuture<ManifoldEvent<*>>)
+    fun sendAndWaitForReply(targetId: String, event: ManifoldEvent, timeout: Long, timeoutUnit: TimeUnit): CompletableFuture<ManifoldEvent?> {
+        val f = CompletableFuture<ManifoldEvent?>()
+        replyCallbacks.put(event.counter, f as CompletableFuture<ManifoldEvent>)
 
         send(targetId, event)
 
@@ -90,16 +90,16 @@ class ManifoldEventNode(var id: String,
         return f
     }
 
-    fun <T: Enum<*>> sendAndWaitForReply(targetId: String, event: ManifoldEvent<*>, timeout: Long = 10000): CompletableFuture<ManifoldEvent<T>?> {
+    fun sendAndWaitForReply(targetId: String, event: ManifoldEvent, timeout: Long = 10000): CompletableFuture<ManifoldEvent?> {
         return sendAndWaitForReply(targetId, event, timeout, TimeUnit.MILLISECONDS)
     }
 
-    fun sendToAnyInGroup(targetGroup: String, event: ManifoldEvent<*>)
+    fun sendToAnyInGroup(targetGroup: String, event: ManifoldEvent)
             = ManifoldEventBus.sendToAnyInGroup(this, targetGroup, event)
 
-    fun <T: Enum<*>> sendToAnyInGroupAndWaitForReply(targetGroup: String, event: ManifoldEvent<*>, timeout: Long = 10000): CompletableFuture<ManifoldEvent<T>?> {
-        val f = CompletableFuture<ManifoldEvent<T>?>()
-        replyCallbacks.put(event.counter, f as CompletableFuture<ManifoldEvent<*>>)
+    fun sendToAnyInGroupAndWaitForReply(targetGroup: String, event: ManifoldEvent, timeout: Long = 10000): CompletableFuture<ManifoldEvent?> {
+        val f = CompletableFuture<ManifoldEvent?>()
+        replyCallbacks.put(event.counter, f as CompletableFuture<ManifoldEvent>)
 
         sendToAnyInGroup(targetGroup, event)
 
@@ -114,14 +114,14 @@ class ManifoldEventNode(var id: String,
         return f
     }
 
-    fun broadcast(event: ManifoldEvent<*>) = ManifoldEventBus.broadcast(this, event)
+    fun broadcast(event: ManifoldEvent) = ManifoldEventBus.broadcast(this, event)
 
-    fun broadcastToGroup(group: String, event: ManifoldEvent<*>) = ManifoldEventBus.broadcastToGroup(this, group, event)
+    fun broadcastToGroup(group: String, event: ManifoldEvent) = ManifoldEventBus.broadcastToGroup(this, group, event)
 
-    fun broadcastToAnyInGroups(event: ManifoldEvent<*>) = ManifoldEventBus.broadcastToAnyInGroups(this, event)
+    fun broadcastToAnyInGroups(event: ManifoldEvent) = ManifoldEventBus.broadcastToAnyInGroups(this, event)
 
-    fun <T: Enum<*>> reply(sourceEvent: ManifoldEvent<*>, newEvent: ManifoldEvent<T>?) {
-        val event = newEvent ?: ManifoldEvent<T>()
+    fun reply(sourceEvent: ManifoldEvent, newEvent: ManifoldEvent?) {
+        val event = newEvent ?: ManifoldEvent()
 
         event.replyToCounter = sourceEvent.counter
         event.source = this.id
@@ -130,7 +130,7 @@ class ManifoldEventNode(var id: String,
         send(event.target, event)
     }
 
-    fun receive(event: ManifoldEvent<*>) {
+    fun receive(event: ManifoldEvent) {
         if (local) {
             processEvent(event)
         } else {
