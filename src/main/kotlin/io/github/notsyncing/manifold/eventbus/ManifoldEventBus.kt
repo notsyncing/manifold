@@ -133,8 +133,8 @@ object ManifoldEventBus {
         }
     }
 
-    fun register(id: String, groups: Array<String>? = null): ManifoldEventNode {
-        val info = ManifoldEventNode(id, groups, 0, null)
+    fun register(id: String, vararg groups: String): ManifoldEventNode {
+        val info = ManifoldEventNode(id, groups as Array<String>, 0, null)
         addNode(info)
 
         debug("Registered local node $id, groups $groups")

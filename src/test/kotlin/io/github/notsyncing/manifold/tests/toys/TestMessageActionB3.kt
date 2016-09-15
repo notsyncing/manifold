@@ -14,7 +14,7 @@ class TestMessageActionB3 : ManifoldAction<String, ManifoldEvent?, Any, Manifold
     var received = CompletableFuture<ManifoldEvent>()
 
     init {
-        node = ManifoldEventBus.register("test.msg.action.B3", arrayOf("group2"))
+        node = ManifoldEventBus.register("test.msg.action.B3", "group2")
         msg = ManifoldEvent(TestEvent.TestB, "2")
 
         val replyMsg = ManifoldEvent(TestEvent.TestB, "3")

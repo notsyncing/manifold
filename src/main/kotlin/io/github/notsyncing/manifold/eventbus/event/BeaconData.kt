@@ -4,7 +4,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 
 class BeaconData {
     var id: String
-    var groups: Array<String>? = null
+    var groups: Array<String> = emptyArray()
     var load: Int
 
     constructor(node: ManifoldEventNode) {

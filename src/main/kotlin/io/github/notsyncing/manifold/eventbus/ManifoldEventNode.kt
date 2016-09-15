@@ -6,7 +6,7 @@ import java.util.*
 import java.util.concurrent.*
 
 class ManifoldEventNode(var id: String,
-                        var groups: Array<String>?,
+                        var groups: Array<String> = emptyArray(),
                         var load: Int,
                         var address: String?) {
     companion object {
@@ -64,7 +64,7 @@ class ManifoldEventNode(var id: String,
             handlers.put(event, ArrayList())
         }
 
-        handlers[event]!!.add(handler as ManifoldEventHandler)
+        handlers[event]!!.add(handler)
     }
 
     fun send(targetId: String, event: ManifoldEvent) = ManifoldEventBus.send(this, targetId, event)

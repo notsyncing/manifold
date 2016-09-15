@@ -12,7 +12,7 @@ class TestMessageActionA : ManifoldAction<String, ManifoldEvent?, Any, ManifoldR
     val msg: ManifoldEvent
 
     init {
-        node = ManifoldEventBus.register("test.msg.action.A", arrayOf("group1"))
+        node = ManifoldEventBus.register("test.msg.action.A", "group1")
         msg = ManifoldEvent(TestEvent.TestA, "1")
     }
 
