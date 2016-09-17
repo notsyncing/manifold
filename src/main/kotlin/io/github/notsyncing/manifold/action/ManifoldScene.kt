@@ -1,21 +1,36 @@
 package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class ManifoldScene<R>() {
+abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: String = "",
+                                eventNodeGroups: Array<String> = emptyArray()) {
     protected var event: ManifoldEvent? = null
+    protected var eventNode: ManifoldEventNode? = null
     lateinit var m: ManifoldRunner
 
     companion object {
-        private val eventNodes = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<ManifoldEventNode>>()
+        private val eventNodes = ConcurrentHashMap<Class<ManifoldScene<*>>, ManifoldEventNode>()
 
         fun reset() {
             eventNodes.clear()
+        }
+    }
+
+    init {
+        val c = this.javaClass as Class<ManifoldScene<*>>
+
+        if (enableEventNode) {
+            if (eventNodes.containsKey(c)) {
+                eventNode = eventNodes[c]
+            } else {
+                eventNode = ManifoldEventBus.register(eventNodeId, *eventNodeGroups)
+                eventNodes[c] = eventNode!!
+            }
         }
     }
 
@@ -23,24 +38,23 @@ abstract class ManifoldScene<R>() {
         this.event = event
     }
 
-    protected fun attachEventNode(node: ManifoldEventNode) {
-        val c = this.javaClass as Class<ManifoldScene<*>>
-
-        if (!eventNodes.containsKey(c)) {
-            eventNodes.put(c, ArrayList())
+    protected fun awakeOnEvent(event: String) {
+        eventNode?.on(event) {
+            Manifold.run(this.javaClass, it)
         }
-
-        eventNodes[c]!!.add(node)
     }
 
-    protected fun awakeOnEvent(node: ManifoldEventNode, event: String) {
-        node.on(event) {
-            val constructor = this.javaClass.getConstructor(ManifoldEvent::class.java)
-            constructor.isAccessible = true
+    protected fun transitionTo(targetEventGroup: String, event: String, data: Any) {
+        eventNode?.sendToAnyInGroup(targetEventGroup, ManifoldEvent(event, data))
+    }
 
-            val scene = constructor.newInstance(it)
-            Manifold.run(scene)
-        }
+    protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean): CompletableFuture<ManifoldEvent?> {
+        assert(waitForResult) { "You must specify value TRUE for parameter waitForResult!" }
+        return eventNode?.sendToAnyInGroupAndWaitForReply(targetEventGroup, ManifoldEvent(event, data)) ?: CompletableFuture.completedFuture(null as ManifoldEvent?)
+    }
+
+    protected fun <A> transitionTo(targetScene: Class<ManifoldScene<A>>, event: String, data: Any): CompletableFuture<A> {
+        return Manifold.run(targetScene, ManifoldEvent(event, data))
     }
 
     open fun init() {

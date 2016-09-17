@@ -5,6 +5,8 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.tests.toys.TestEvent
 import io.github.notsyncing.manifold.tests.toys.TestScene
+import io.github.notsyncing.manifold.tests.toys.TestSceneFirst
+import io.github.notsyncing.manifold.tests.toys.TestSceneSecond
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -18,6 +20,7 @@ class ManifoldSceneTest {
         TestScene.initExecuted = false
         TestScene.recvEvent = CompletableFuture()
 
+        ManifoldEventBus.debug = true
         Manifold.init()
     }
 
@@ -40,6 +43,16 @@ class ManifoldSceneTest {
         TestScene.recvEvent.thenAccept {
             Assert.assertNotNull(it)
             Assert.assertEquals(eventSent, it)
+        }.get(5, TimeUnit.SECONDS)
+    }
+
+    @Test
+    fun testTransitionToWithEvent() {
+        Manifold.run(TestSceneFirst())
+
+        TestSceneSecond.recvEvent.thenAccept {
+            Assert.assertNotNull(it)
+            Assert.assertEquals("Test data", it.data)
         }.get(5, TimeUnit.SECONDS)
     }
 }

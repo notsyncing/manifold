@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
+import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.vertx.core.Vertx
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -126,5 +127,13 @@ object Manifold {
             scene.m = m
             scene.stage()
         }
+    }
+
+    fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent): CompletableFuture<R> {
+        val constructor = scene.getConstructor(ManifoldEvent::class.java)
+        constructor.isAccessible = true
+
+        val s = constructor.newInstance(event)
+        return Manifold.run(s)
     }
 }

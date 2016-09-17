@@ -27,9 +27,7 @@ class ManifoldEvent() {
         this.type = EventType.Data
     }
 
-    constructor(event: String, data: Any) : this(event, "") {
-        this.data = JSON.toJSONString(data)
-    }
+    constructor(event: String, data: Any) : this(event, if (data is String) data else JSON.toJSONString(data))
 
     fun replyToCounter(counter: Long): ManifoldEvent {
         replyToCounter = counter

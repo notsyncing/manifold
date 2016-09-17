@@ -4,28 +4,19 @@ import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
-class TestScene : ManifoldScene<String> {
+class TestSceneFirst : ManifoldScene<String> {
     companion object {
-        var initExecuted = false
-        var recvEvent = CompletableFuture<ManifoldEvent>()
-
-        const val EventNodeId = "test.scene"
-        const val EventNodeGroup = "test.scene.group1"
+        const val EventNodeId = "test.scene.first"
+        const val EventNodeGroup = "test.scene.group.first"
     }
 
     constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
 
     constructor(event: ManifoldEvent) : super(event)
 
-    override fun init() {
-        awakeOnEvent(TestEvent.TestA)
-
-        initExecuted = true
-    }
-
     override fun stage(): CompletableFuture<String> {
-        recvEvent.complete(event)
+        transitionTo(TestSceneSecond.EventNodeGroup, TestEvent.TestB, "Test data")
 
-        return CompletableFuture.completedFuture("Hello!")
+        return CompletableFuture.completedFuture("Hello2!")
     }
 }
