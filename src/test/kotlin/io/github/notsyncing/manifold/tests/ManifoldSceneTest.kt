@@ -3,10 +3,7 @@ package io.github.notsyncing.manifold.tests
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import io.github.notsyncing.manifold.tests.toys.TestEvent
-import io.github.notsyncing.manifold.tests.toys.TestScene
-import io.github.notsyncing.manifold.tests.toys.TestSceneFirst
-import io.github.notsyncing.manifold.tests.toys.TestSceneSecond
+import io.github.notsyncing.manifold.tests.toys.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -53,6 +50,16 @@ class ManifoldSceneTest {
         TestSceneSecond.recvEvent.thenAccept {
             Assert.assertNotNull(it)
             Assert.assertEquals("Test data", it.data)
+        }.get(5, TimeUnit.SECONDS)
+    }
+
+    @Test
+    fun testTransitionToWithConstruct() {
+        Manifold.run(TestSceneFirst2())
+
+        TestSceneSecond.recvEvent.thenAccept {
+            Assert.assertEquals(2, TestSceneSecond.id)
+            Assert.assertEquals("Test data", TestSceneSecond.name)
         }.get(5, TimeUnit.SECONDS)
     }
 }

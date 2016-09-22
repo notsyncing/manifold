@@ -1,8 +1,10 @@
 package io.github.notsyncing.manifold.action
 
+import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
+import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -30,6 +32,8 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
             } else {
                 eventNode = ManifoldEventBus.register(eventNodeId, *eventNodeGroups)
                 eventNodes[c] = eventNode!!
+
+                awakeOnEvent(InternalEvent.TransitionToScene)
             }
         }
     }
@@ -44,17 +48,25 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
         }
     }
 
-    protected fun transitionTo(targetEventGroup: String, event: String, data: Any) {
-        eventNode?.sendToAnyInGroup(targetEventGroup, ManifoldEvent(event, data))
+    protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean = false): CompletableFuture<ManifoldEvent?> {
+        if (waitForResult) {
+            return eventNode?.sendToAnyInGroupAndWaitForReply(targetEventGroup, ManifoldEvent(event, data)) ?: CompletableFuture.completedFuture(null as ManifoldEvent?)
+        } else {
+            eventNode?.sendToAnyInGroup(targetEventGroup, ManifoldEvent(event, data))
+            return CompletableFuture.completedFuture(null)
+        }
     }
 
-    protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean): CompletableFuture<ManifoldEvent?> {
-        assert(waitForResult) { "You must specify value TRUE for parameter waitForResult!" }
-        return eventNode?.sendToAnyInGroupAndWaitForReply(targetEventGroup, ManifoldEvent(event, data)) ?: CompletableFuture.completedFuture(null as ManifoldEvent?)
-    }
+    protected inline fun <reified A: Any> transitionTo(targetSceneEventGroup: String, parameters: Array<Any>? = null, waitForResult: Boolean = false): CompletableFuture<A?> {
+        val d = JSON.toJSONString(parameters)
 
-    protected fun <A> transitionTo(targetScene: Class<ManifoldScene<A>>, event: String, data: Any): CompletableFuture<A> {
-        return Manifold.run(targetScene, ManifoldEvent(event, data))
+        if (waitForResult) {
+            return eventNode?.sendToAnyInGroupAndWaitForReply(targetSceneEventGroup, ManifoldEvent(InternalEvent.TransitionToScene, d))
+                    ?.thenApply { JSON.parseObject(it?.data, A::class.java) } ?: CompletableFuture.completedFuture(null as A)
+        } else {
+            eventNode?.sendToAnyInGroup(targetSceneEventGroup, ManifoldEvent(InternalEvent.TransitionToScene, d))
+            return CompletableFuture.completedFuture(null)
+        }
     }
 
     open fun init() {

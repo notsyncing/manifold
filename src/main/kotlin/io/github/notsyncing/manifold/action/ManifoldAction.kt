@@ -50,7 +50,7 @@ abstract class ManifoldAction<T, R, F, C: ManifoldRunnerContext>(private var use
                 }
 
                 if (!inTrans) {
-                    //await(transaction!!.end())
+                    await(transaction!!.end())
                 }
             }
 

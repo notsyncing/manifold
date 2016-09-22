@@ -1,10 +1,13 @@
 package io.github.notsyncing.manifold
 
+import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
+import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.vertx.core.Vertx
+import java.lang.reflect.Constructor
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -130,10 +133,28 @@ object Manifold {
     }
 
     fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent): CompletableFuture<R> {
-        val constructor = scene.getConstructor(ManifoldEvent::class.java)
+        val constructor: Constructor<ManifoldScene<R>>?
+        val params: Array<Any?>
+
+        if (event.event == InternalEvent.TransitionToScene) {
+            params = JSON.parseArray(event.data).toArray()
+            constructor = scene.constructors.firstOrNull { it.parameterCount == params.count() } as Constructor<ManifoldScene<R>>?
+
+            if (constructor == null) {
+                throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
+            }
+        } else {
+            params = arrayOf(event)
+            constructor = scene.getConstructor(ManifoldEvent::class.java)
+
+            if (constructor == null) {
+                throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
+            }
+        }
+
         constructor.isAccessible = true
 
-        val s = constructor.newInstance(event)
+        val s = constructor.newInstance(*params)
         return Manifold.run(s)
     }
 }
