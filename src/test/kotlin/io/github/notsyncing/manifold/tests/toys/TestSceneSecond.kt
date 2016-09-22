@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.tests.toys
 
+import io.github.notsyncing.manifold.action.ForTransition
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
@@ -19,6 +20,7 @@ class TestSceneSecond : ManifoldScene<String> {
 
     constructor(event: ManifoldEvent) : super(event)
 
+    @ForTransition
     constructor(id: Int, name: String) : this() {
         TestSceneSecond.id = id
         TestSceneSecond.name = name

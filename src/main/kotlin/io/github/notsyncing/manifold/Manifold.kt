@@ -108,7 +108,7 @@ object Manifold {
                                                                          context: C? = null,
                                                                          f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         try {
-            return getAction(actionClass).with(context).with(trans).execute(f)
+            return getAction(actionClass).withContext(context).withTransaction(trans).execute(f)
         } catch (e: Exception) {
             val c = CompletableFuture<R>()
             c.completeExceptionally(e)
@@ -138,7 +138,7 @@ object Manifold {
 
         if (event.event == InternalEvent.TransitionToScene) {
             params = JSON.parseArray(event.data).toArray()
-            constructor = scene.constructors.firstOrNull { it.parameterCount == params.count() } as Constructor<ManifoldScene<R>>?
+            constructor = scene.constructors.firstOrNull { it.isAnnotationPresent(ForTransition::class.java) } as Constructor<ManifoldScene<R>>?
 
             if (constructor == null) {
                 throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
