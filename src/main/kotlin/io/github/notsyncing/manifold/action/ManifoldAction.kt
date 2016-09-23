@@ -1,28 +1,54 @@
 package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.di.AutoProvide
 import kotlinx.coroutines.async
+import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.jvm.javaField
+import kotlin.reflect.memberProperties
 
-abstract class ManifoldAction<T, R, F, C: ManifoldRunnerContext>(private var useTrans: Boolean = true,
-                                                                 private var autoCommit: Boolean = true,
-                                                                 private var transClass: Class<T>) {
-    var transaction: ManifoldTransaction<T>? = null
-    var context: C? = null
+abstract class ManifoldAction<T, R>(private var useTrans: Boolean = true,
+                                    private var autoCommit: Boolean = true,
+                                    private var transClass: Class<T>) {
+    companion object {
+        val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*, *>>, ArrayList<KMutableProperty1<Any, Any?>>>()
 
-    abstract fun core(): F?
-
-    fun with(context: C?): ManifoldAction<T, R, F, C> {
-        this.context = context
-        return this
+        fun reset() {
+            actionAutoProvidePropertyCache.clear()
+        }
     }
 
-    fun with(trans: ManifoldTransaction<*>?): ManifoldAction<T, R, F, C> {
+    var transaction: ManifoldTransaction<T>? = null
+
+    init {
+        val c = this.javaClass as Class<ManifoldAction<*, *>>
+        val propList: ArrayList<KMutableProperty1<Any, Any?>>
+
+        if (!actionAutoProvidePropertyCache.containsKey(c)) {
+            propList = ArrayList()
+            actionAutoProvidePropertyCache[c] = propList
+
+            this.javaClass.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == AutoProvide::class } }
+                    .map { it as KMutableProperty1<Any, Any?>  }
+                    .forEach { propList.add(it) }
+        } else {
+            propList = actionAutoProvidePropertyCache[c]!!
+        }
+
+        propList.forEach { it.set(this, Manifold.dependencyProvider?.get(it.javaField!!.type)) }
+    }
+
+    abstract fun action(): CompletableFuture<R>
+
+    fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<T, R> {
         transaction = trans as ManifoldTransaction<T>?
         return this
     }
 
-    fun <A: ManifoldAction<*, R, *, *>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
+    fun <A: ManifoldAction<*, R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
         if ((useTrans) && (Manifold.transactionProvider == null) && (transaction == null)) {
             throw RuntimeException("Action ${this@ManifoldAction.javaClass} wants to use transaction, but no transaction provider, nor a transaction is provided!")
         }
@@ -62,5 +88,9 @@ abstract class ManifoldAction<T, R, F, C: ManifoldRunnerContext>(private var use
 
             throw e
         }
+    }
+
+    fun execute(): CompletableFuture<R> {
+        return execute<ManifoldAction<T, R>> { this.action() }
     }
 }

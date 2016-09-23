@@ -1,4 +1,4 @@
 package io.github.notsyncing.manifold.tests.toys
 
-class TestManager {
+open class TestManager {
 }

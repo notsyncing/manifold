@@ -3,7 +3,6 @@ package io.github.notsyncing.manifold.tests
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
-import io.github.notsyncing.manifold.action.ManifoldRunnerContext
 import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
@@ -31,7 +30,6 @@ class ManifoldTest {
 
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(null)
-        Mockito.`when`(Manifold.dependencyProvider?.get(TestAction::class.java)).thenReturn(TestAction(null, null))
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
             override fun get(): ManifoldTransaction<*> {
@@ -62,7 +60,7 @@ class ManifoldTest {
 
     @Test
     fun testExecute() {
-        val r = Manifold.run(TestAction::class.java) { it.hello() }.get()
+        val r = Manifold.run(TestAction()) { it.hello() }.get()
         Assert.assertEquals("Hello", r)
 
         Assert.assertFalse(beganWithTrans)
@@ -72,47 +70,13 @@ class ManifoldTest {
     }
 
     @Test
-    fun testRegisterAction() {
-        val a = TestAction(null, null)
-        Manifold.registerAction(a)
-
-        Assert.assertEquals(a, Manifold.getAction(TestAction::class.java))
-    }
-
-    @Test
-    fun testRunActionWithInvokeClosure() {
-        Manifold.run { m ->
-            async<Unit> {
-                val s = await(m(TestAction::class.java) { it.hello() })
-
-                Assert.assertEquals("Hello", s)
-            }
-        }.get()
-    }
-
-    @Test
     fun testRunActionWithInvoke() {
         Manifold.run { m ->
             async<Unit> {
-                val s = await(m(TestAction::class.java)())
+                val s = await(m(TestAction()))
 
                 Assert.assertEquals("Hello", s)
             }
-        }.get()
-    }
-
-    @Test
-    fun testRunActionWithContext() {
-        val c = object : ManifoldRunnerContext {
-            val data = 1
         }
-
-        Manifold.run(c) { m ->
-            async<String> {
-                return@async await(m(TestAction::class.java)())
-            }
-        }.get()
-
-        Assert.assertEquals(c, Manifold.getAction<TestAction>().context)
     }
 }

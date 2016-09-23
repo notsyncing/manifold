@@ -10,16 +10,28 @@ import org.junit.Test
 import org.mockito.Mockito
 
 class ManifoldActionTest {
+    private val testManager = Mockito.mock(TestManager::class.java)
+
     @Before
     fun setUp() {
         Manifold.reset()
+
+        Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
+        Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
     }
 
     @Test
     fun testExecute() {
-        val action = TestAction(null, null)
-        val s = action.hello().get()
+        val action = TestAction()
+        val s = action.action().get()
 
         Assert.assertEquals("Hello", s)
+    }
+
+    @Test
+    fun testAutoProvide() {
+        val action = TestAction()
+        Assert.assertEquals(testManager, action.testManager)
+        Assert.assertEquals(testManager, action.testManager2)
     }
 }

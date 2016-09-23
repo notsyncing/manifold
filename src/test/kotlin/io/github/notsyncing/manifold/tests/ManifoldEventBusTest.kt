@@ -2,11 +2,12 @@ package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
+import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.EventSendType
 import io.github.notsyncing.manifold.eventbus.event.EventType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
-import io.github.notsyncing.manifold.tests.toys.*
+import io.github.notsyncing.manifold.tests.toys.TestEvent
 import kotlinx.coroutines.async
 import org.junit.After
 import org.junit.Assert
@@ -16,15 +17,50 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeoutException
 
 class ManifoldEventBusTest {
+    lateinit var nodeA: ManifoldEventNode
+    lateinit var nodeB1: ManifoldEventNode
+    lateinit var nodeB2: ManifoldEventNode
+    lateinit var nodeB3: ManifoldEventNode
+    lateinit var msgA: ManifoldEvent
+    lateinit var receivedB1: CompletableFuture<ManifoldEvent>
+    lateinit var receivedB2: CompletableFuture<ManifoldEvent>
+    lateinit var receivedB3: CompletableFuture<ManifoldEvent>
+
     @Before
     fun setUp() {
         ManifoldEventBus.debug = true
         Manifold.init()
 
-        Manifold.registerAction(TestMessageActionA::class.java)
-        Manifold.registerAction(TestMessageActionB1::class.java)
-        Manifold.registerAction(TestMessageActionB2::class.java)
-        Manifold.registerAction(TestMessageActionB3::class.java)
+        receivedB1 = CompletableFuture<ManifoldEvent>()
+        receivedB2 = CompletableFuture<ManifoldEvent>()
+        receivedB3 = CompletableFuture<ManifoldEvent>()
+
+        nodeA = ManifoldEventBus.register("test.msg.action.A", "group1")
+        msgA = ManifoldEvent(TestEvent.TestA, "1")
+
+        nodeB1 = ManifoldEventBus.register("test.msg.action.B1", "group2")
+        nodeB2 = ManifoldEventBus.register("test.msg.action.B2", "group2")
+        nodeB3 = ManifoldEventBus.register("test.msg.action.B3", "group2")
+
+        val replyMsg = ManifoldEvent(TestEvent.TestB, "3")
+
+        nodeB1.on(TestEvent.TestA) { e ->
+            receivedB1.complete(e)
+
+            nodeB1.reply(e, replyMsg)
+        }
+
+        nodeB2.on(TestEvent.TestA) { e ->
+            receivedB2.complete(e)
+
+            nodeB2.reply(e, replyMsg)
+        }
+
+        nodeB3.on(TestEvent.TestA) { e ->
+            receivedB3.complete(e)
+
+            nodeB3.reply(e, replyMsg)
+        }
     }
 
     @After
@@ -35,9 +71,9 @@ class ManifoldEventBusTest {
     @Test
     fun testSendSimpleLocalMessage() {
         async<Unit> {
-            Manifold.run(TestMessageActionA::class.java) { it.send() }
+            nodeA.send("test.msg.action.B1", msgA)
 
-            val e = await(Manifold.getAction(TestMessageActionB1::class.java).received)
+            val e = await(receivedB1)
 
             Assert.assertEquals("1", e.data)
             Assert.assertEquals("test.msg.action.A", e.source)
@@ -51,7 +87,7 @@ class ManifoldEventBusTest {
     @Test
     fun testSendSimpleLocalMessageAndReply() {
         async<Unit> {
-            val r = await(Manifold.run(TestMessageActionA::class.java) { it.sendAndWaitForReply() })
+            val r = await(nodeA.sendAndWaitForReply("test.msg.action.B1", msgA))
             Assert.assertNotNull(r)
 
             Assert.assertEquals("3", r?.data)
@@ -65,60 +101,51 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessageToAnyInGroup() {
-        var f1 = Manifold.getAction(TestMessageActionB1::class.java).received
-        var f2 = Manifold.getAction(TestMessageActionB2::class.java).received
-        var f3 = Manifold.getAction(TestMessageActionB3::class.java).received
-
         async<Unit> {
-            Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
-            var e1 = await(Manifold.getAction(TestMessageActionB1::class.java).received)
+            nodeA.sendToAnyInGroup("group2", msgA)
+            var e1 = await(receivedB1)
             Assert.assertEquals("1", e1.data)
-            Assert.assertFalse(f2.isDone)
-            Assert.assertFalse(f3.isDone)
-            f1 = CompletableFuture<ManifoldEvent>()
-            Manifold.getAction(TestMessageActionB1::class.java).received = f1
+            Assert.assertFalse(receivedB2.isDone)
+            Assert.assertFalse(receivedB3.isDone)
+            receivedB1 = CompletableFuture<ManifoldEvent>()
 
-            Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
-            val e2 = await(Manifold.getAction(TestMessageActionB2::class.java).received)
+            nodeA.sendToAnyInGroup("group2", msgA)
+            val e2 = await(receivedB2)
             Assert.assertEquals("1", e2.data)
-            Assert.assertFalse(f1.isDone)
-            Assert.assertFalse(f3.isDone)
-            f2 = CompletableFuture<ManifoldEvent>()
-            Manifold.getAction(TestMessageActionB2::class.java).received = f2
+            Assert.assertFalse(receivedB1.isDone)
+            Assert.assertFalse(receivedB3.isDone)
+            receivedB2 = CompletableFuture<ManifoldEvent>()
 
-            Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
-            val e3 = await(Manifold.getAction(TestMessageActionB3::class.java).received)
+            nodeA.sendToAnyInGroup("group2", msgA)
+            val e3 = await(receivedB3)
             Assert.assertEquals("1", e3.data)
-            Assert.assertFalse(f1.isDone)
-            Assert.assertFalse(f2.isDone)
-            f3 = CompletableFuture<ManifoldEvent>()
-            Manifold.getAction(TestMessageActionB3::class.java).received = f3
+            Assert.assertFalse(receivedB1.isDone)
+            Assert.assertFalse(receivedB2.isDone)
+            receivedB3 = CompletableFuture<ManifoldEvent>()
 
-            Manifold.run(TestMessageActionA::class.java) { it.sendToAnyInGroup() }
-            e1 = await(Manifold.getAction(TestMessageActionB1::class.java).received)
+            nodeA.sendToAnyInGroup("group2", msgA)
+            e1 = await(receivedB1)
             Assert.assertEquals("1", e1.data)
-            Assert.assertFalse(f2.isDone)
-            Assert.assertFalse(f3.isDone)
-            f1 = CompletableFuture<ManifoldEvent>()
-            Manifold.getAction(TestMessageActionB1::class.java).received = f1
+            Assert.assertFalse(receivedB2.isDone)
+            Assert.assertFalse(receivedB3.isDone)
+            receivedB1 = CompletableFuture<ManifoldEvent>()
         }.get()
     }
 
     @Test
     fun testSendMessageToNonExistsNode() {
-        val f = Manifold.run(TestMessageActionA::class.java) { it.sendToNonExists() }
-
         try {
-            f.get()
+            nodeA.send("test.msg.action.NOTEXISTS", msgA)
             Assert.assertTrue(false)
         } catch (e: Exception) {
-            Assert.assertTrue(e.cause is NodeNotFoundException)
+            Assert.assertTrue(e is NodeNotFoundException)
         }
     }
 
     @Test
     fun testSendMessageAndReplyTimeout() {
-        val f = Manifold.run(TestMessageActionA::class.java) { it.sendAndWaitForReplyTimeout() }
+        msgA.event = TestEvent.TestB
+        val f = nodeA.sendAndWaitForReply("test.msg.action.B1", msgA, 2000)
 
         try {
             f.get()
