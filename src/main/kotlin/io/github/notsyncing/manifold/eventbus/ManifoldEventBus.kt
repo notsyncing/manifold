@@ -108,7 +108,7 @@ object ManifoldEventBus {
     private fun addNode(node: ManifoldEventNode) {
         nodes.put(node.id, node)
 
-        node.groups?.forEach {
+        node.groups.forEach {
             if (!groupNodes.containsKey(it)) {
                 groupNodes.put(it, ManifoldEventNodeGroup(it))
             }
@@ -161,7 +161,7 @@ object ManifoldEventBus {
     fun unregister(node: ManifoldEventNode): CompletableFuture<Boolean> {
         nodes.remove(node.id)
 
-        node.groups?.forEach {
+        node.groups.forEach {
             if (groupNodes.containsKey(it)) {
                 groupNodes[it]!!.remove(node)
             }
@@ -260,7 +260,7 @@ object ManifoldEventBus {
             address = "255.255.255.255"
         } else {
             if (targetNode?.address == null) {
-                c.completeExceptionally(RuntimeException("Event $event is unicast-like, but the target node is null or doesn't contain an address!"))
+                c.completeExceptionally(RuntimeException("Event $event is unicast-like, but its target node is null or doesn't contain an address!"))
                 return c
             }
 
