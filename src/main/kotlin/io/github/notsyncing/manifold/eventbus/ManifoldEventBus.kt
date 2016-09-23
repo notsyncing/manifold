@@ -267,7 +267,7 @@ object ManifoldEventBus {
             address = targetNode!!.address!!
         }
 
-        sendSocket!!.send(buf, listenPort, address) {
+        sendSocket?.send(buf, listenPort, address) {
             if (it.failed()) {
                 c.completeExceptionally(it.cause())
             } else {

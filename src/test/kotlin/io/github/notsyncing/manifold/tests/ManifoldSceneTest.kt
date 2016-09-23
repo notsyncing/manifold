@@ -17,6 +17,8 @@ class ManifoldSceneTest {
         TestScene.initExecuted = false
         TestScene.recvEvent = CompletableFuture()
 
+        TestSceneSecond.recvEvent = CompletableFuture()
+
         ManifoldEventBus.debug = true
         Manifold.init()
     }
