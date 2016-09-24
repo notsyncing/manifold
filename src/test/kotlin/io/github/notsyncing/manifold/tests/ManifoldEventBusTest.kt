@@ -45,21 +45,21 @@ class ManifoldEventBusTest {
         val replyMsg = ManifoldEvent(TestEvent.TestB, "3")
 
         nodeB1.on(TestEvent.TestA) { e ->
-            receivedB1.complete(e)
-
             nodeB1.reply(e, replyMsg)
+
+            receivedB1.complete(e)
         }
 
         nodeB2.on(TestEvent.TestA) { e ->
-            receivedB2.complete(e)
-
             nodeB2.reply(e, replyMsg)
+
+            receivedB2.complete(e)
         }
 
         nodeB3.on(TestEvent.TestA) { e ->
-            receivedB3.complete(e)
-
             nodeB3.reply(e, replyMsg)
+
+            receivedB3.complete(e)
         }
     }
 

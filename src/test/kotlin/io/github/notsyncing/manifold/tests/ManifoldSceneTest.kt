@@ -17,7 +17,7 @@ class ManifoldSceneTest {
         TestScene.initExecuted = false
         TestScene.recvEvent = CompletableFuture()
 
-        TestSceneSecond.recvEvent = CompletableFuture()
+        TestSceneSecond.reset()
 
         ManifoldEventBus.debug = true
         Manifold.init()
@@ -59,7 +59,7 @@ class ManifoldSceneTest {
     fun testTransitionToWithConstruct() {
         Manifold.run(TestSceneFirst2())
 
-        TestSceneSecond.recvEvent.thenAccept {
+        TestSceneSecond.contEvent.thenAccept {
             Assert.assertEquals(2, TestSceneSecond.id)
             Assert.assertEquals("Test data", TestSceneSecond.name)
         }.get(5, TimeUnit.SECONDS)

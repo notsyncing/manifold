@@ -14,6 +14,14 @@ class TestSceneSecond : ManifoldScene<String> {
 
         const val EventNodeId = "test.scene.second"
         const val EventNodeGroup = "test.scene.group.second"
+
+        fun reset() {
+            id = 0
+            name = ""
+
+            recvEvent = CompletableFuture()
+            contEvent = CompletableFuture()
+        }
     }
 
     constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))

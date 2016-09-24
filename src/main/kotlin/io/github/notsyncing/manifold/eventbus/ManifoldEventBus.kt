@@ -3,11 +3,6 @@ package io.github.notsyncing.manifold.eventbus
 import io.github.notsyncing.manifold.eventbus.event.*
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeGroupNotFoundException
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
-import io.vertx.core.Vertx
-import io.vertx.core.buffer.Buffer
-import io.vertx.core.datagram.DatagramPacket
-import io.vertx.core.datagram.DatagramSocket
-import io.vertx.core.datagram.DatagramSocketOptions
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -17,12 +12,10 @@ object ManifoldEventBus {
     var beaconInterval = 10000L
     var debug = false
 
-    private var vertx: Vertx? = null
+    private lateinit var worker: EventBusNetWorker
 
     private val nodes = ConcurrentHashMap<String, ManifoldEventNode>()
     private val groupNodes = ConcurrentHashMap<String, ManifoldEventNodeGroup>()
-    private var sendSocket: DatagramSocket? = null
-    private var recvSocket: DatagramSocket? = null
 
     private var beaconTimers = ConcurrentHashMap<String, Timer>()
 
@@ -32,23 +25,11 @@ object ManifoldEventBus {
         }
     }
 
-    fun init(vertx: Vertx, listenPort: Int = 8500, beaconInterval: Long = 10000L) {
+    fun init(listenPort: Int = 8500, beaconInterval: Long = 10000L) {
         this.listenPort = listenPort
         this.beaconInterval = beaconInterval
 
-        this.vertx = vertx
-
-        sendSocket = vertx.createDatagramSocket(DatagramSocketOptions().setBroadcast(true))
-        recvSocket = vertx.createDatagramSocket()
-
-        recvSocket?.listen(listenPort, "0.0.0.0") {
-            if (it.succeeded()) {
-                it.result().handler(this::receivedRemoteEvent)
-            } else {
-                System.out.println("Failed to receive some packets: " + it.cause().message)
-                it.cause().printStackTrace()
-            }
-        }
+        worker = EventBusNetWorker(listenPort, listenPort, this::receivedRemoteEvent)
 
         debug("Manifold event bus initialized")
     }
@@ -60,37 +41,7 @@ object ManifoldEventBus {
         beaconTimers.values.forEach { it.cancel() }
         beaconTimers.clear()
 
-        val cs = CompletableFuture<Void>()
-
-        if (sendSocket == null) {
-            cs.complete(null)
-        } else {
-            sendSocket?.close {
-                if (it.succeeded()) {
-                    sendSocket = null
-                    cs.complete(it.result())
-                } else {
-                    cs.completeExceptionally(it.cause())
-                }
-            }
-        }
-
-        val rs = CompletableFuture<Void>()
-
-        if (recvSocket == null) {
-            rs.complete(null)
-        } else {
-            recvSocket?.close {
-                if (it.succeeded()) {
-                    recvSocket = null
-                    rs.complete(it.result())
-                } else {
-                    rs.completeExceptionally(it.cause())
-                }
-            }
-        }
-
-        return CompletableFuture.allOf(cs, rs)
+        return worker.close()
     }
 
     fun sendBeacon(node: ManifoldEventNode): CompletableFuture<Boolean> {
@@ -134,14 +85,19 @@ object ManifoldEventBus {
     }
 
     fun register(id: String, vararg groups: String): ManifoldEventNode {
-        val info = ManifoldEventNode(id, groups as Array<String>, 0, null)
+        val info = ManifoldEventNode(id, groups as Array<String>, 0, null, listenPort)
         addNode(info)
 
-        debug("Registered local node $id, groups $groups")
+        debug("Registered local node $id, groups ${groups.joinToString { it }}")
 
         val beaconTimer = Timer()
         beaconTimer.schedule(object : TimerTask() {
             override fun run() {
+                if (!nodes.containsKey(id)) {
+                    beaconTimer.cancel()
+                    return
+                }
+
                 val node = nodes[id]!!
 
                 sendBeacon(node).exceptionally<Boolean> {
@@ -251,47 +207,14 @@ object ManifoldEventBus {
         groupNodes.values.forEach { it.receive(event) }
     }
 
-    fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
-        val buf = Buffer.buffer(event.serialize())
-        val address: String
-        val c = CompletableFuture<Boolean>()
+    fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null) = worker.send(event, targetNode)
 
-        if ((event.sendType == EventSendType.MultiGroupUnicast) || (event.sendType == EventSendType.Broadcast) || (event.sendType == EventSendType.Groupcast)) {
-            address = "255.255.255.255"
-        } else {
-            if (targetNode?.address == null) {
-                c.completeExceptionally(RuntimeException("Event $event is unicast-like, but its target node is null or doesn't contain an address!"))
-                return c
-            }
-
-            address = targetNode!!.address!!
-        }
-
-        sendSocket?.send(buf, listenPort, address) {
-            if (it.failed()) {
-                c.completeExceptionally(it.cause())
-            } else {
-                debug("Sent event $event to remote $address")
-                c.complete(true)
-            }
-        }
-
-        return c
-    }
-
-    private fun receivedRemoteEvent(packet: DatagramPacket) {
-        val data = packet.data().bytes
-        val event = ManifoldEvent.parse(data)
-
-        if (event == null) {
-            return
-        }
-
+    private fun receivedRemoteEvent(event: ManifoldEvent, senderAddress: String) {
         if (nodes[event.source]?.local == true) {
             return
         }
 
-        debug("Received remote event $event from packet (length ${data.size})")
+        debug("Received remote event $event")
 
         if (event.type == EventType.Beacon) {
             val beaconEvent = event
@@ -303,15 +226,16 @@ object ManifoldEventBus {
                 if (nodes.containsKey(beaconData.id)) {
                     node = nodes[beaconData.id]!!
 
-                    if (node.address == null) {
+                    if (node.host == null) {
                         return
                     }
 
                     node.groups = beaconData.groups
                     node.load = beaconData.load
-                    node.address = packet.sender().host()
+                    node.host = senderAddress
+                    node.port = listenPort
                 } else {
-                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, packet.sender().host())
+                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, senderAddress, listenPort)
                     addNode(node)
                 }
             } else if (beaconEvent.event == BeaconEvent.Exit) {

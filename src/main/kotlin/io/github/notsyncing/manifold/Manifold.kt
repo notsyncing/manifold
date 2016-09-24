@@ -3,10 +3,10 @@ package io.github.notsyncing.manifold
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
+import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import io.vertx.core.Vertx
 import java.lang.reflect.Constructor
 import java.util.concurrent.CompletableFuture
 
@@ -14,16 +14,12 @@ object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
 
-    private var vertx: Vertx? = null
-
     fun init() {
         if (dependencyProvider == null) {
             dependencyProvider = ManifoldDependencyInjector()
         }
 
-        vertx = Vertx.vertx()
-
-        ManifoldEventBus.init(vertx!!)
+        ManifoldEventBus.init()
 
         processScenes()
     }
@@ -42,22 +38,7 @@ object Manifold {
         reset()
 
         return ManifoldEventBus.stop().thenCompose {
-            val c = CompletableFuture<Void>()
-
-            if (vertx == null) {
-                c.complete(null)
-            } else {
-                vertx?.close {
-                    if (it.failed()) {
-                        c.completeExceptionally(it.cause())
-                    } else {
-                        vertx = null
-                        c.complete(it.result())
-                    }
-                }
-            }
-
-            return@thenCompose c
+            EventBusNetWorker.close()
         }
     }
 

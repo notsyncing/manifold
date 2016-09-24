@@ -7,16 +7,17 @@ import java.util.concurrent.*
 
 class ManifoldEventNode(var id: String,
                         var groups: Array<String> = emptyArray(),
-                        var load: Int,
-                        var address: String?) {
+                        var load: Int = 0,
+                        var host: String?,
+                        var port: Int) {
     companion object {
         private val replyCallbackTimeout = Executors.newScheduledThreadPool(1)
     }
 
     typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
 
-    var local: Boolean = address == null
-        get() = address == null
+    var local: Boolean = host == null
+        get() = host == null
 
     val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler>>()
     val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent>>()
