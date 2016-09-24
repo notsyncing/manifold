@@ -155,7 +155,7 @@ class EventBusNetWorkerTest {
     }
 
     @Test
-    fun testStringThroughTcp(context: TestContext) {
+    fun testSendStringThroughTcp(context: TestContext) {
         EventBusNetWorker.UDP_DATA_LENGTH_LIMIT = 1
         val event = ManifoldEvent("event", "Test data 3")
         val async = context.async()
