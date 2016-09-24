@@ -47,6 +47,8 @@ class ReadInputStream(val readStream: ReadStream<Buffer>) : InputStream() {
     }
 
     override fun close() {
+        ended = true
+
         readStream.handler(null)
         readStream.endHandler(null)
 
