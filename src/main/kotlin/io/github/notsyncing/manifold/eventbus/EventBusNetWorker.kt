@@ -17,7 +17,7 @@ import java.io.DataOutputStream
 import java.io.IOException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.Executors
 
 class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
                         val eventRecvHandler: ((ManifoldEvent, String) -> Unit)? = null) {
@@ -50,6 +50,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
     private val udpRecvSocket: DatagramSocket
     private val tcpServer: NetServer
     private val tcpConnectionCache = ConcurrentHashMap<String, NetSocket>()
+    private val threadPool = Executors.newFixedThreadPool(20)
 
     init {
         if (vertx == null) {
@@ -103,7 +104,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
     }
 
     private fun onTcpInboundConnected(socket: NetSocket) {
-        ForkJoinPool.commonPool().submit {
+        threadPool.submit {
             val stream = ReadInputStream(socket)
             val ds = DataInputStream(stream)
 
@@ -205,7 +206,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             ws = WriteOutputStream(it)
             val s = DataOutputStream(ws)
 
-            return@thenCompose event.serialize(s)
+            return@thenCompose event.serialize(s, threadPool)
         }.thenApply {
             ws?.close()
             true

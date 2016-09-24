@@ -5,6 +5,8 @@ import io.github.notsyncing.manifold.utils.StreamUtils
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.atomic.AtomicLong
 
 class ManifoldEvent() {
@@ -64,7 +66,7 @@ class ManifoldEvent() {
         }
     }
 
-    fun serialize(stream: DataOutputStream): CompletableFuture<Void> {
+    fun serialize(stream: DataOutputStream, executor: Executor = ForkJoinPool.commonPool()): CompletableFuture<Void> {
         stream.writeChar(MAGIC.toInt())
         stream.writeByte(VERSION.toInt())
         stream.writeLong(counter)
@@ -94,7 +96,7 @@ class ManifoldEvent() {
             stream.writeByte(1)
             stream.writeLong(dataLength)
 
-            return StreamUtils.pump(dataStream!!, stream).thenApply { null }
+            return StreamUtils.pump(dataStream!!, stream, executor).thenApply { null }
         } else {
             s = dataBytes!!
             stream.writeByte(0)

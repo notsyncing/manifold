@@ -3,11 +3,14 @@ package io.github.notsyncing.manifold.utils
 import java.io.*
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
+import java.util.concurrent.ForkJoinPool
+import java.util.function.Supplier
 import java.util.stream.Collectors
 
 object StreamUtils {
-    fun pump(input: InputStream, output: OutputStream): CompletableFuture<Long> {
-        return CompletableFuture.supplyAsync {
+    fun pump(input: InputStream, output: OutputStream, executor: Executor = ForkJoinPool.commonPool()): CompletableFuture<Long> {
+        return CompletableFuture.supplyAsync(Supplier {
             val buffer = ByteArray(1024)
             var totalRead: Long = 0
             var bytesRead: Int
@@ -23,8 +26,8 @@ object StreamUtils {
                 totalRead += bytesRead
             }
 
-            return@supplyAsync totalRead
-        }
+            return@Supplier totalRead
+        }, executor)
     }
 
     fun stringToStream(s: String): InputStream {
