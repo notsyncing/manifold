@@ -45,4 +45,11 @@ class ReadInputStream(val readStream: ReadStream<Buffer>) : InputStream() {
     override fun available(): Int {
         return buf?.length() ?: 0
     }
+
+    override fun close() {
+        readStream.handler(null)
+        readStream.endHandler(null)
+
+        super.close()
+    }
 }

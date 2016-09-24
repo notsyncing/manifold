@@ -34,9 +34,16 @@ object StreamUtils {
         return ByteArrayInputStream(s.toByteArray(StandardCharsets.UTF_8))
     }
 
-    fun streamToString(s: InputStream): String {
-        return BufferedReader(InputStreamReader(s))
-                .lines()
-                .collect(Collectors.joining("\n"))
+    fun streamToString(s: InputStream, byteLength: Int = 0): String {
+        if (byteLength == 0) {
+            return BufferedReader(InputStreamReader(s))
+                    .lines()
+                    .collect(Collectors.joining("\n"))
+        } else {
+            val buf = ByteArray(byteLength)
+            s.read(buf, 0, byteLength)
+
+            return String(buf, StandardCharsets.UTF_8)
+        }
     }
 }

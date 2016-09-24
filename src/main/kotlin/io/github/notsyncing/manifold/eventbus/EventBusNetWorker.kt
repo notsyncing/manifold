@@ -110,6 +110,8 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
 
             while (!stream.ended) {
                 ManifoldEvent.parse(ds).thenAccept {
+                    stream.close()
+
                     if (it != null) {
                         eventRecvHandler?.invoke(it, socket.remoteAddress().host())
                     }

@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.tests
 import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.utils.ReadInputStream
 import io.github.notsyncing.manifold.utils.StreamUtils
 import io.vertx.core.Vertx
 import io.vertx.ext.unit.TestContext
@@ -15,6 +16,7 @@ import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ForkJoinPool
 
 @RunWith(VertxUnitRunner::class)
 class EventBusNetWorkerTest {
@@ -63,7 +65,10 @@ class EventBusNetWorkerTest {
                                 }
                     } else {
                         event = ManifoldEvent.parse(it.data().bytes)
-                        c.complete(event)
+
+                        rs.close {
+                            c.complete(event)
+                        }
                     }
                 }
             } else {
@@ -74,8 +79,40 @@ class EventBusNetWorkerTest {
         return c
     }
 
+    private fun listenTcpForEvent(): Pair<CompletableFuture<Void>, CompletableFuture<ManifoldEvent?>> {
+        val ce = CompletableFuture<ManifoldEvent?>()
+        val cc = CompletableFuture<Void>()
+        val server = vertx.createNetServer()
+
+        server.connectHandler { socket ->
+            ForkJoinPool.commonPool().submit {
+                val rs = ReadInputStream(socket)
+                val s = DataInputStream(rs)
+
+                ManifoldEvent.parse(s).thenAccept { e ->
+                    socket.close()
+
+                    server.close {
+                        ce.complete(e)
+                    }
+                }
+            }
+        }
+
+        server.listen(8501, "0.0.0.0") {
+            if (it.failed()) {
+                cc.completeExceptionally(it.cause())
+            } else {
+                cc.complete(null)
+            }
+        }
+
+        return Pair(cc, ce)
+    }
+
     @Test
-    fun testSendShortStringThroughUdp(context: TestContext) {
+    fun testSendStringThroughUdp(context: TestContext) {
+        EventBusNetWorker.UDP_DATA_LENGTH_LIMIT = 256
         val event = ManifoldEvent("event", "Test data")
         val async = context.async()
 
@@ -95,7 +132,8 @@ class EventBusNetWorkerTest {
     }
 
     @Test
-    fun testSendShortStreamThroughUdp(context: TestContext) {
+    fun testSendStreamThroughUdp(context: TestContext) {
+        EventBusNetWorker.UDP_DATA_LENGTH_LIMIT = 256
         val s = "Test data 2"
         val event = ManifoldEvent("event", StreamUtils.stringToStream(s), s.toByteArray(StandardCharsets.UTF_8).size.toLong())
         val async = context.async()
@@ -113,6 +151,58 @@ class EventBusNetWorkerTest {
         worker.send(event, fakeEventNode).exceptionally {
             context.fail(it)
             return@exceptionally false
+        }
+    }
+
+    @Test
+    fun testStringThroughTcp(context: TestContext) {
+        EventBusNetWorker.UDP_DATA_LENGTH_LIMIT = 1
+        val event = ManifoldEvent("event", "Test data 3")
+        val async = context.async()
+
+        val (cc, ce) = listenTcpForEvent()
+
+        ce.thenAccept {
+            context.assertNotNull(it)
+            context.assertEquals("Test data 3", it!!.data)
+            async.complete()
+        }.exceptionally {
+            context.fail(it)
+            return@exceptionally null
+        }
+
+        cc.thenAccept {
+            worker.send(event, fakeEventNode).exceptionally {
+                context.fail(it)
+                return@exceptionally false
+            }
+        }
+    }
+
+    @Test
+    fun testSendStreamThroughTcp(context: TestContext) {
+        EventBusNetWorker.UDP_DATA_LENGTH_LIMIT = 1
+        val s = "Test data 4"
+        val event = ManifoldEvent("event", StreamUtils.stringToStream(s), s.toByteArray(StandardCharsets.UTF_8).size.toLong())
+        val async = context.async()
+
+        val (cc, ce) = listenTcpForEvent()
+
+        ce.thenAccept {
+            context.assertNotNull(it)
+            context.assertNotNull(it!!.dataStream)
+            context.assertEquals(s, StreamUtils.streamToString(it.dataStream!!, it.dataLength.toInt()))
+            async.complete()
+        }.exceptionally {
+            context.fail(it)
+            return@exceptionally null
+        }
+
+        cc.thenAccept {
+            worker.send(event, fakeEventNode).exceptionally {
+                context.fail(it)
+                return@exceptionally false
+            }
         }
     }
 }
