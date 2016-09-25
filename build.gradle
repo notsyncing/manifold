@@ -50,13 +50,13 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile 'org.jetbrains.kotlinx:kotlinx-coroutines-async:0.1-alpha'
-    compile 'io.vertx:vertx-core:3.3.2'
-    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.16'
-    compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.1'
+    compile 'io.vertx:vertx-core:3.3.3'
+    compile group: 'com.alibaba', name: 'fastjson', version: '1.2.17'
+    compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.3'
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:1.10.19'
-    testCompile 'io.vertx:vertx-unit:3.3.2'
+    testCompile 'org.mockito:mockito-core:2.1.0-RC.1'
+    testCompile 'io.vertx:vertx-unit:3.3.3'
 }
 
 task sourceJar(type: Jar) {
