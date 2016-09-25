@@ -77,19 +77,19 @@ class ManifoldEvent() {
         var s: ByteArray
 
         s = event.toByteArray(StandardCharsets.UTF_8)
-        stream.writeInt(s.size)
+        stream.writeShort(s.size)
         stream.write(s)
 
         s = source.toByteArray(StandardCharsets.UTF_8)
-        stream.writeInt(s.size)
+        stream.writeShort(s.size)
         stream.write(s)
 
         if (!target.isEmpty()) {
             s = target.toByteArray(StandardCharsets.UTF_8)
-            stream.writeInt(s.size)
+            stream.writeShort(s.size)
             stream.write(s)
         } else {
-            stream.writeInt(0)
+            stream.writeShort(0)
         }
 
         if (dataStream != null) {
@@ -151,7 +151,7 @@ class ManifoldEvent() {
             var en: ByteArray
             var len: Int
 
-            val eventLength = stream.readInt()
+            val eventLength = stream.readUnsignedShort()
             en = ByteArray(eventLength)
             len = stream.read(en, 0, eventLength)
 
@@ -161,7 +161,7 @@ class ManifoldEvent() {
 
             event.event = String(en)
 
-            val eventSourceLength = stream.readInt()
+            val eventSourceLength = stream.readUnsignedShort()
             en = ByteArray(eventSourceLength)
             len = stream.read(en, 0, eventSourceLength)
 
@@ -171,7 +171,7 @@ class ManifoldEvent() {
 
             event.source = String(en)
 
-            val eventTargetLength = stream.readInt()
+            val eventTargetLength = stream.readUnsignedShort()
 
             if (eventTargetLength > 0) {
                 en = ByteArray(eventTargetLength)

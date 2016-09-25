@@ -239,22 +239,28 @@ class EventBusNetWorkerTest {
                 return@connect
             }
 
+            val socket = it.result()
+
+            socket.exceptionHandler { c.completeExceptionally(it) }
+            socket.closeHandler { c.complete(null) }
+
             if (useStream) {
-                val ws = WriteOutputStream(it.result())
-                val s = DataOutputStream(ws)
+                ForkJoinPool.commonPool().submit {
+                    val ws = WriteOutputStream(it.result())
+                    val s = DataOutputStream(ws)
 
-                event.serialize(s).thenAccept {
-                    ws.close()
+                    event.serialize(s).thenAccept {
+                        ws.close()
 
-                    c.complete(null)
-
-                    n.close()
+                        n.close()
+                    }.exceptionally {
+                        c.completeExceptionally(it)
+                        return@exceptionally null
+                    }
                 }
             } else {
                 val buf = event.serialize()
                 it.result().write(Buffer.buffer(buf))
-
-                c.complete(null)
 
                 n.close()
             }
@@ -286,6 +292,9 @@ class EventBusNetWorkerTest {
         }.thenAccept {
             context.assertEquals("Test data 6", it.data)
             async.complete()
+        }.exceptionally {
+            context.fail(it)
+            return@exceptionally null
         }.get(5, TimeUnit.SECONDS)
     }
 
@@ -301,6 +310,9 @@ class EventBusNetWorkerTest {
             context.assertNotNull(it.dataStream)
             context.assertEquals("Test data 7", StreamUtils.streamToString(it.dataStream!!, it.dataLength.toInt()))
             async.complete()
+        }.exceptionally {
+            context.fail(it)
+            return@exceptionally null
         }.get(5, TimeUnit.SECONDS)
     }
 }
