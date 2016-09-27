@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.di.AutoProvide
 import kotlinx.coroutines.async
 import java.util.*
@@ -22,6 +23,7 @@ abstract class ManifoldAction<T, R>(private var useTrans: Boolean = true,
     }
 
     var transaction: ManifoldTransaction<T>? = null
+    var sessionIdentifier: String? = null
 
     init {
         val c = this.javaClass as Class<ManifoldAction<*, *>>
@@ -46,6 +48,19 @@ abstract class ManifoldAction<T, R>(private var useTrans: Boolean = true,
     fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<T, R> {
         transaction = trans as ManifoldTransaction<T>?
         return this
+    }
+
+    fun withSession(sid: String?): ManifoldAction<T, R> {
+        sessionIdentifier = sid
+        return this
+    }
+
+    fun <T> putTimedSessionVariable(key: String, value: TimedVar<T>) {
+        if (sessionIdentifier == null) {
+            return
+        }
+
+        Manifold.sessionStorageProvider?.put<T>(sessionIdentifier!!, key, value)
     }
 
     fun <A: ManifoldAction<*, R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {

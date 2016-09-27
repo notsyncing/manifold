@@ -44,6 +44,8 @@ repositories {
     maven {
         url "http://dl.bintray.com/kotlin/kotlinx.coroutines"
     }
+
+    jcenter()
 }
 
 dependencies {
@@ -56,6 +58,7 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.1.0-RC.1'
+    testCompile "com.nhaarman:mockito-kotlin:0.6.0"
     testCompile 'io.vertx:vertx-unit:3.3.3'
 }
 

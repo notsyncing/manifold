@@ -2,6 +2,8 @@ package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.action.*
+import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
+import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
@@ -13,10 +15,15 @@ import java.util.concurrent.CompletableFuture
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
+    var sessionStorageProvider: ManifoldSessionStorageProvider? = null
 
     fun init() {
         if (dependencyProvider == null) {
             dependencyProvider = ManifoldDependencyInjector()
+        }
+
+        if (sessionStorageProvider == null) {
+            sessionStorageProvider = ManifoldSessionStorage()
         }
 
         ManifoldEventBus.init()
@@ -44,6 +51,7 @@ object Manifold {
 
     fun reset() {
         dependencyProvider = null
+        sessionStorageProvider = null
 
         ManifoldScene.reset()
 
@@ -63,21 +71,21 @@ object Manifold {
         }
     }
 
-    fun <R> run(f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+    fun <R> run(sessionIdentifier: String? = null, f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
         val t = transactionProvider?.get()
-        val runner = ManifoldRunner(t)
+        val runner = ManifoldRunner(sessionIdentifier, t)
 
         return f(runner)
     }
 
-    fun <R> run(scene: ManifoldScene<R>): CompletableFuture<R> {
-        return run { m ->
+    fun <R> run(scene: ManifoldScene<R>, sessionIdentifier: String? = null): CompletableFuture<R> {
+        return run(sessionIdentifier) { m ->
             scene.m = m
             scene.stage()
         }
     }
 
-    fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent): CompletableFuture<R> {
+    fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent, sessionIdentifier: String? = null): CompletableFuture<R> {
         val constructor: Constructor<ManifoldScene<R>>?
         val params: Array<Any?>
 
@@ -100,6 +108,6 @@ object Manifold {
         constructor.isAccessible = true
 
         val s = constructor.newInstance(*params)
-        return Manifold.run(s)
+        return Manifold.run(s, sessionIdentifier)
     }
 }
