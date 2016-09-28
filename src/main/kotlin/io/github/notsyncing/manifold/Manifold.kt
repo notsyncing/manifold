@@ -10,6 +10,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.lang.reflect.Constructor
+import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 
 object Manifold {
@@ -33,10 +34,12 @@ object Manifold {
 
     private fun processScenes() {
         dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
-            try {
-                it.newInstance().init()
-            } catch (e: Exception) {
-                e.printStackTrace()
+            if (!Modifier.isAbstract(it.modifiers)) {
+                try {
+                    it.newInstance().init()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
         }
     }
