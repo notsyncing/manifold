@@ -28,14 +28,16 @@ class EventBusNetWorkerTest {
     private lateinit var fakeEventNode: ManifoldEventNode
     private lateinit var worker: EventBusNetWorker
     private var recvEvent: CompletableFuture<ManifoldEvent> = CompletableFuture()
+    private var thisPort = 8500
+    private var otherPort = 8501
 
     @Before
     fun setUp() {
         vertx = Vertx.vertx()
         recvEvent = CompletableFuture()
 
-        fakeEventNode = ManifoldEventNode("test", host = "127.0.0.1", port = 8501)
-        worker = EventBusNetWorker(8500, 8500) { ev, host -> recvEvent.complete(ev) }
+        fakeEventNode = ManifoldEventNode("test", host = "127.0.0.1", port = otherPort)
+        worker = EventBusNetWorker(thisPort, thisPort) { ev, host -> recvEvent.complete(ev) }
     }
 
     @After
@@ -48,13 +50,16 @@ class EventBusNetWorkerTest {
 
             return@thenCompose c
         }.get()
+
+        otherPort++
+        thisPort++
     }
 
     private fun listenUdpForEvent(parseStream: Boolean = false): CompletableFuture<ManifoldEvent?> {
         val c = CompletableFuture<ManifoldEvent?>()
         val rs = vertx.createDatagramSocket()
 
-        rs.listen(8501, "0.0.0.0") {
+        rs.listen(otherPort, "0.0.0.0") {
             if (it.succeeded()) {
                 val p = it.result()
 
@@ -105,7 +110,7 @@ class EventBusNetWorkerTest {
             }
         }
 
-        server.listen(8501, "0.0.0.0") {
+        server.listen(otherPort, "0.0.0.0") {
             if (it.failed()) {
                 cc.completeExceptionally(it.cause())
             } else {
@@ -216,7 +221,7 @@ class EventBusNetWorkerTest {
         val c = CompletableFuture<Void>()
         val s = vertx.createDatagramSocket()
 
-        s.send(Buffer.buffer(event.serialize()), 8500, "127.0.0.1") {
+        s.send(Buffer.buffer(event.serialize()), thisPort, "127.0.0.1") {
             if (it.succeeded()) {
                 c.complete(null)
             } else {
@@ -233,7 +238,7 @@ class EventBusNetWorkerTest {
         val c = CompletableFuture<Void>()
         val n = vertx.createNetClient()
 
-        n.connect(8500, "127.0.0.1") {
+        n.connect(thisPort, "127.0.0.1") {
             if (it.failed()) {
                 c.completeExceptionally(it.cause())
                 return@connect
