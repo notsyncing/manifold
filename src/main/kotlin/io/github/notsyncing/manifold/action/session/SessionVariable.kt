@@ -13,11 +13,15 @@ class SessionVariable<T>(val name: String? = null) {
         return Manifold.sessionStorageProvider?.get<T>(thisRef!!.sessionIdentifier!!, name ?: property.name)
     }
 
-    operator fun setValue(thisRef: ManifoldAction<*, *>?, property: KProperty<*>, value: T) {
+    operator fun setValue(thisRef: ManifoldAction<*, *>?, property: KProperty<*>, value: T?) {
         if (thisRef?.sessionIdentifier == null) {
             return
         }
 
-        Manifold.sessionStorageProvider?.put<T>(thisRef!!.sessionIdentifier!!, name ?: property.name, value as Any)
+        if (value == null) {
+            Manifold.sessionStorageProvider?.remove<T>(thisRef!!.sessionIdentifier!!, name ?: property.name)
+        } else {
+            Manifold.sessionStorageProvider?.put<T>(thisRef!!.sessionIdentifier!!, name ?: property.name, value as Any)
+        }
     }
 }
