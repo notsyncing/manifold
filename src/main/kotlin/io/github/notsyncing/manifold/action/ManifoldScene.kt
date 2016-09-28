@@ -15,6 +15,9 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
     protected var eventNode: ManifoldEventNode? = null
     lateinit var m: ManifoldRunner
 
+    val sessionIdentifier: String?
+        get() = m.sessionIdentifier
+
     companion object {
         private val eventNodes = ConcurrentHashMap<Class<ManifoldScene<*>>, ManifoldEventNode>()
 
