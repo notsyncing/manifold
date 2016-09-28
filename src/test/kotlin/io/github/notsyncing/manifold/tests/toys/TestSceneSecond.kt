@@ -11,6 +11,7 @@ class TestSceneSecond : ManifoldScene<String> {
         var contEvent = CompletableFuture<Any?>()
         var id: Int = 0
         var name: String = ""
+        var sessionId: String = ""
 
         const val EventNodeId = "test.scene.second"
         const val EventNodeGroup = "test.scene.group.second"
@@ -39,6 +40,8 @@ class TestSceneSecond : ManifoldScene<String> {
     }
 
     override fun stage(): CompletableFuture<String> {
+        TestSceneSecond.sessionId = m.sessionIdentifier ?: ""
+
         TestSceneSecond.recvEvent.complete(event)
         TestSceneSecond.contEvent.complete(null)
 

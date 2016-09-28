@@ -18,6 +18,7 @@ class ManifoldEvent() {
     var event: String = ""
     var source: String = ""
     var target: String = ""
+    var sessionId: String? = null
 
     var data: String = ""
         set(value) {
@@ -92,6 +93,14 @@ class ManifoldEvent() {
             stream.writeShort(0)
         }
 
+        if (sessionId?.isEmpty() == false) {
+            s = sessionId!!.toByteArray(StandardCharsets.UTF_8)
+            stream.writeShort(s.size)
+            stream.write(s)
+        } else {
+            stream.writeShort(0)
+        }
+
         if (dataStream != null) {
             stream.writeByte(1)
             stream.writeLong(dataLength)
@@ -110,7 +119,8 @@ class ManifoldEvent() {
     override fun toString(): String {
         return "${this.javaClass.simpleName} { $source $sendType $type to $target" +
                 (if (replyToCounter > 0) " reply $replyToCounter" else "") + " event $event " +
-                (if (dataStream != null) "data stream $dataStream (length $dataLength)" else "data $data }")
+                (if (dataStream != null) "data stream $dataStream (length $dataLength) " else "data $data ") +
+                (if (sessionId?.isEmpty() == false) "session $sessionId" else "") + " }"
     }
 
     companion object {
@@ -182,6 +192,19 @@ class ManifoldEvent() {
                 }
 
                 event.target = String(en)
+            }
+
+            val eventSessionIdLength = stream.readUnsignedShort()
+
+            if (eventSessionIdLength > 0) {
+                en = ByteArray(eventSessionIdLength)
+                len = stream.read(en, 0, eventSessionIdLength)
+
+                if (len != eventSessionIdLength) {
+                    throw IOException("Short read when parsing event: event session id indicated length $eventTargetLength, read length $len")
+                }
+
+                event.sessionId = String(en)
             }
 
             val isStream = stream.readByte() > 0

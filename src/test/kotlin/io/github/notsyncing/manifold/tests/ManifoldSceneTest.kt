@@ -64,4 +64,13 @@ class ManifoldSceneTest {
             Assert.assertEquals("Test data", TestSceneSecond.name)
         }.get(5, TimeUnit.SECONDS)
     }
+
+    @Test
+    fun testTransitionToWithSessionIdentifier() {
+        Manifold.run(TestSceneFirst(), "test_session")
+
+        TestSceneSecond.recvEvent.thenAccept {
+            Assert.assertEquals("test_session", TestSceneSecond.sessionId)
+        }.get(5, TimeUnit.SECONDS)
+    }
 }

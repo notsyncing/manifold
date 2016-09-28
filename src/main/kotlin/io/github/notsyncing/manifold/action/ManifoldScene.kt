@@ -44,27 +44,32 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
 
     protected fun awakeOnEvent(event: String) {
         eventNode?.on(event) {
-            Manifold.run(this.javaClass, it)
+            Manifold.run(this.javaClass, it, it.sessionId)
         }
     }
 
     protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean = false): CompletableFuture<ManifoldEvent?> {
+        val e = ManifoldEvent(event, data)
+        e.sessionId = m.sessionIdentifier ?: ""
+
         if (waitForResult) {
-            return eventNode?.sendToAnyInGroupAndWaitForReply(targetEventGroup, ManifoldEvent(event, data)) ?: CompletableFuture.completedFuture(null as ManifoldEvent?)
+            return eventNode?.sendToAnyInGroupAndWaitForReply(targetEventGroup, e) ?: CompletableFuture.completedFuture(null as ManifoldEvent?)
         } else {
-            eventNode?.sendToAnyInGroup(targetEventGroup, ManifoldEvent(event, data))
+            eventNode?.sendToAnyInGroup(targetEventGroup, e)
             return CompletableFuture.completedFuture(null)
         }
     }
 
     protected inline fun <reified A: Any> transitionTo(targetSceneEventGroup: String, parameters: Array<Any>? = null, waitForResult: Boolean = false): CompletableFuture<A?> {
         val d = JSON.toJSONString(parameters)
+        val e = ManifoldEvent(InternalEvent.TransitionToScene, d)
+        e.sessionId = m.sessionIdentifier ?: ""
 
         if (waitForResult) {
-            return eventNode?.sendToAnyInGroupAndWaitForReply(targetSceneEventGroup, ManifoldEvent(InternalEvent.TransitionToScene, d))
+            return eventNode?.sendToAnyInGroupAndWaitForReply(targetSceneEventGroup, e)
                     ?.thenApply { JSON.parseObject(it?.data, A::class.java) } ?: CompletableFuture.completedFuture(null as A)
         } else {
-            eventNode?.sendToAnyInGroup(targetSceneEventGroup, ManifoldEvent(InternalEvent.TransitionToScene, d))
+            eventNode?.sendToAnyInGroup(targetSceneEventGroup, e)
             return CompletableFuture.completedFuture(null)
         }
     }

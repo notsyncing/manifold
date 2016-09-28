@@ -105,6 +105,7 @@ object Manifold {
             }
         }
 
+        // TODO: Cache this constructor
         constructor.isAccessible = true
 
         val s = constructor.newInstance(*params)
