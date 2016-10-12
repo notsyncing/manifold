@@ -26,11 +26,11 @@ class SessionVariable<T>(val name: String? = null) {
         }
     }
 
-    operator fun getValue(thisRef: ManifoldAction<*, *>?, property: KProperty<*>): T? {
+    operator fun getValue(thisRef: ManifoldAction<*>?, property: KProperty<*>): T? {
         return getValue(thisRef!!.sessionIdentifier, property)
     }
 
-    operator fun setValue(thisRef: ManifoldAction<*, *>?, property: KProperty<*>, value: T?) {
+    operator fun setValue(thisRef: ManifoldAction<*>?, property: KProperty<*>, value: T?) {
         setValue(thisRef!!.sessionIdentifier!!, property, value)
     }
 

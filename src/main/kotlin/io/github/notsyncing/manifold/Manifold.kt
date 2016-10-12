@@ -68,8 +68,7 @@ object Manifold {
         ManifoldAction.reset()
     }
 
-    fun <A: ManifoldAction<*, R>, R> run(action: A,
-                                         trans: ManifoldTransaction<*>? = null): CompletableFuture<R> {
+    fun <R> run(action: ManifoldAction<R>, trans: ManifoldTransaction<*>? = null): CompletableFuture<R> {
         try {
             return action.withTransaction(trans).execute()
         } catch (e: Exception) {

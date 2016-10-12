@@ -6,15 +6,15 @@ import java.util.concurrent.CompletableFuture
 
 abstract class ManifoldDatabaseAction<T, R>(private var useTrans: Boolean = true,
                                             private var autoCommit: Boolean = true,
-                                            private var transClass: Class<T>) : ManifoldAction<T, R>() {
+                                            private var transClass: Class<T>) : ManifoldAction<R>() {
     protected var transaction: ManifoldTransaction<T>? = null
 
-    override fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<T, R> {
+    override fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<R> {
         transaction = trans as ManifoldTransaction<T>?
         return super.withTransaction(trans)
     }
 
-    override fun <A: ManifoldAction<*, R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
+    override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
         if ((useTrans) && (Manifold.transactionProvider == null) && (transaction == null)) {
             throw RuntimeException("Action ${this@ManifoldDatabaseAction.javaClass} wants to use transaction, but no transaction provider, nor a transaction is provided!")
         }

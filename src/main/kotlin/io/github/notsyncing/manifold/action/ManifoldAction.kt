@@ -10,9 +10,9 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.jvm.javaField
 import kotlin.reflect.memberProperties
 
-abstract class ManifoldAction<T, R> {
+abstract class ManifoldAction<R> {
     companion object {
-        private val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*, *>>, ArrayList<KMutableProperty1<Any, Any?>>>()
+        private val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<KMutableProperty1<Any, Any?>>>()
 
         fun reset() {
             actionAutoProvidePropertyCache.clear()
@@ -22,7 +22,7 @@ abstract class ManifoldAction<T, R> {
     var sessionIdentifier: String? = null
 
     init {
-        val c = this.javaClass as Class<ManifoldAction<*, *>>
+        val c = this.javaClass as Class<ManifoldAction<*>>
         val propList: ArrayList<KMutableProperty1<Any, Any?>>
 
         if (!actionAutoProvidePropertyCache.containsKey(c)) {
@@ -41,11 +41,11 @@ abstract class ManifoldAction<T, R> {
 
     abstract protected fun action(): CompletableFuture<R>
 
-    open fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<T, R> {
+    open fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<R> {
         return this
     }
 
-    fun withSession(sid: String?): ManifoldAction<T, R> {
+    fun withSession(sid: String?): ManifoldAction<R> {
         sessionIdentifier = sid
         return this
     }
@@ -58,9 +58,9 @@ abstract class ManifoldAction<T, R> {
         Manifold.sessionStorageProvider?.put<T>(sessionIdentifier!!, key, value)
     }
 
-    open protected fun <A: ManifoldAction<*, R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
+    open protected fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
 
     fun execute(): CompletableFuture<R> {
-        return execute<ManifoldAction<T, R>> { this.action() }
+        return execute<ManifoldAction<R>> { this.action() }
     }
 }
