@@ -12,7 +12,7 @@ import kotlin.reflect.memberProperties
 
 abstract class ManifoldAction<T, R> {
     companion object {
-        val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*, *>>, ArrayList<KMutableProperty1<Any, Any?>>>()
+        private val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*, *>>, ArrayList<KMutableProperty1<Any, Any?>>>()
 
         fun reset() {
             actionAutoProvidePropertyCache.clear()
