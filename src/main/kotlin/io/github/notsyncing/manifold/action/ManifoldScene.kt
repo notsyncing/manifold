@@ -81,7 +81,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
 
     }
 
-    abstract fun stage(): CompletableFuture<R>
+    abstract protected fun stage(): CompletableFuture<R>
 
     fun execute(): CompletableFuture<R> {
         return stage()
