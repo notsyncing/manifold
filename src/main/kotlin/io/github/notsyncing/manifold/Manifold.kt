@@ -110,7 +110,6 @@ object Manifold {
                     throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
                 }
 
-                constructor.isAccessible = true
                 sceneTransitionConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
             }
         } else {
@@ -124,7 +123,6 @@ object Manifold {
                     throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
                 }
 
-                constructor.isAccessible = true
                 sceneEventConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
             }
         }
