@@ -2,10 +2,13 @@ package io.github.notsyncing.manifold.action
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
+import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import kotlinx.coroutines.async
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -83,7 +86,31 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
 
     abstract protected fun stage(): CompletableFuture<R>
 
-    fun execute(): CompletableFuture<R> {
-        return stage()
+    fun execute() = async<R> {
+        val interceptorClasses = Manifold.sceneInterceptors[this@ManifoldScene.javaClass as Class<ManifoldScene<*>>]
+        val functor = { stage() }
+
+        if (interceptorClasses != null) {
+            val context = SceneInterceptorContext(this@ManifoldScene)
+            val interceptors = interceptorClasses.map { it.newInstance() }
+
+            interceptors.forEach {
+                await(it.before(context))
+
+                if (context.interceptorResult == InterceptorResult.Stop) {
+                    throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}")
+                }
+            }
+
+            context.result = await(functor())
+
+            interceptors.forEach {
+                await(it.after(context))
+            }
+
+            return@async context.result as R
+        }
+
+        return@async await(functor())
     }
 }

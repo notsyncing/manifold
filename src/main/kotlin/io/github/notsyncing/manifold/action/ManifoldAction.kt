@@ -1,8 +1,11 @@
 package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
+import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
 import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.di.AutoProvide
+import kotlinx.coroutines.async
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -60,7 +63,31 @@ abstract class ManifoldAction<R> {
 
     open protected fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
 
-    fun execute(): CompletableFuture<R> {
-        return execute<ManifoldAction<R>> { this.action() }
+    fun execute() = async<R> {
+        val interceptorClasses = Manifold.actionInterceptors[this@ManifoldAction.javaClass as Class<ManifoldAction<*>>]
+        val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
+
+        if (interceptorClasses != null) {
+            val context = ActionInterceptorContext(this@ManifoldAction)
+            val interceptors = interceptorClasses.map { it.newInstance() }
+
+            interceptors.forEach {
+                await(it.before(context))
+
+                if (context.interceptorResult == InterceptorResult.Stop) {
+                    throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}")
+                }
+            }
+
+            context.result = await(functor())
+
+            interceptors.forEach {
+                await(it.after(context))
+            }
+
+            return@async context.result as R
+        }
+
+        return@async await(functor())
     }
 }

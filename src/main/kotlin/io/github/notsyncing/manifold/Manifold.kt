@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.action.*
+import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
@@ -9,8 +10,10 @@ import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import java.io.InvalidClassException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -19,8 +22,11 @@ object Manifold {
     var transactionProvider: ManifoldTransactionProvider? = null
     var sessionStorageProvider: ManifoldSessionStorageProvider? = null
 
-    val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
-    val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
+    private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
+    private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
+
+    val sceneInterceptors = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<Class<SceneInterceptor>>>()
+    val actionInterceptors = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<Class<ActionInterceptor>>>()
 
     fun init() {
         if (dependencyProvider == null) {
@@ -34,6 +40,8 @@ object Manifold {
         ManifoldEventBus.init()
 
         processScenes()
+
+        processInterceptors()
     }
 
     private fun processScenes() {
@@ -44,6 +52,46 @@ object Manifold {
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
+            }
+        }
+    }
+
+    private fun processInterceptors() {
+        dependencyProvider?.getAllClassesImplemented(Interceptor::class.java) { c ->
+            if (Modifier.isAbstract(c.modifiers)) {
+                return@getAllClassesImplemented
+            }
+
+            if (SceneInterceptor::class.java.isAssignableFrom(c)) {
+                val a = c.getAnnotation(ForScenes::class.java)
+
+                a.value.forEach {
+                    val jc = it.java as Class<ManifoldScene<*>>
+                    var list = sceneInterceptors[jc]
+
+                    if (list == null) {
+                        list = ArrayList()
+                        sceneInterceptors[jc] = list
+                    }
+
+                    list.add(c as Class<SceneInterceptor>)
+                }
+            } else if (ActionInterceptor::class.java.isAssignableFrom(c)) {
+                val a = c.getAnnotation(ForActions::class.java)
+
+                for (cl in a.value) {
+                    val jc = cl.java as Class<ManifoldAction<*>>
+                    var list2 = actionInterceptors[jc]
+
+                    if (list2 == null) {
+                        list2 = ArrayList()
+                        actionInterceptors[jc] = list2
+                    }
+
+                    list2.add(c as Class<ActionInterceptor>)
+                }
+            } else {
+                throw InvalidClassException(c.canonicalName, "${c.canonicalName} is not an interceptor class")
             }
         }
     }
@@ -62,6 +110,9 @@ object Manifold {
 
         sceneTransitionConstructorCache.clear()
         sceneEventConstructorCache.clear()
+
+        sceneInterceptors.clear()
+        actionInterceptors.clear()
 
         ManifoldScene.reset()
 
