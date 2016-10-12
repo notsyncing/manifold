@@ -91,7 +91,7 @@ object Manifold {
     fun <R> run(scene: ManifoldScene<R>, sessionIdentifier: String? = null): CompletableFuture<R> {
         return run(sessionIdentifier) { m ->
             scene.m = m
-            scene.stage()
+            scene.execute()
         }
     }
 
