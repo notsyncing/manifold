@@ -69,10 +69,9 @@ object Manifold {
     }
 
     fun <A: ManifoldAction<*, R>, R> run(action: A,
-                                         trans: ManifoldTransaction<*>? = null,
-                                         f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
+                                         trans: ManifoldTransaction<*>? = null): CompletableFuture<R> {
         try {
-            return action.withTransaction(trans).execute(f)
+            return action.withTransaction(trans).execute()
         } catch (e: Exception) {
             val c = CompletableFuture<R>()
             c.completeExceptionally(e)

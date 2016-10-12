@@ -60,7 +60,7 @@ class ManifoldTest {
 
     @Test
     fun testExecute() {
-        val r = Manifold.run(TestAction()) { it.hello() }.get()
+        val r = Manifold.run(TestAction()).get()
         Assert.assertEquals("Hello", r)
 
         Assert.assertFalse(beganWithTrans)
