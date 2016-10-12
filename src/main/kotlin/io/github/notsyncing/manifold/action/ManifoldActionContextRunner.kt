@@ -2,7 +2,7 @@ package io.github.notsyncing.manifold.action
 
 import java.util.concurrent.CompletableFuture
 
-class ManifoldRunner(val sessionIdentifier: String? = null, val trans: ManifoldTransaction<*>? = null) {
+class ManifoldActionContextRunner(val sessionIdentifier: String? = null, val trans: ManifoldTransaction<*>? = null) {
     operator fun <A: ManifoldAction<*, R>, R> invoke(a: A, f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         a.withTransaction(trans).withSession(sessionIdentifier)
 

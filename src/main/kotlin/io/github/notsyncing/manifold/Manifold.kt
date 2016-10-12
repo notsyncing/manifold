@@ -81,9 +81,9 @@ object Manifold {
         }
     }
 
-    fun <R> run(sessionIdentifier: String? = null, f: (ManifoldRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+    fun <R> run(sessionIdentifier: String? = null, f: (ManifoldActionContextRunner) -> CompletableFuture<R>): CompletableFuture<R> {
         val t = transactionProvider?.get()
-        val runner = ManifoldRunner(sessionIdentifier, t)
+        val runner = ManifoldActionContextRunner(sessionIdentifier, t)
 
         return f(runner)
     }

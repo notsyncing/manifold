@@ -13,7 +13,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
                                 eventNodeGroups: Array<String> = emptyArray()) {
     protected var event: ManifoldEvent? = null
     protected var eventNode: ManifoldEventNode? = null
-    lateinit var m: ManifoldRunner
+    lateinit var m: ManifoldActionContextRunner
 
     val sessionIdentifier: String?
         get() = m.sessionIdentifier
