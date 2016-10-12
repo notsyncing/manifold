@@ -12,11 +12,15 @@ import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
     var sessionStorageProvider: ManifoldSessionStorageProvider? = null
+
+    val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
+    val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
 
     fun init() {
         if (dependencyProvider == null) {
@@ -56,6 +60,9 @@ object Manifold {
         dependencyProvider = null
         sessionStorageProvider = null
 
+        sceneTransitionConstructorCache.clear()
+        sceneEventConstructorCache.clear()
+
         ManifoldScene.reset()
 
         ManifoldAction.reset()
@@ -89,29 +96,40 @@ object Manifold {
     }
 
     fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent, sessionIdentifier: String? = null): CompletableFuture<R> {
-        val constructor: Constructor<ManifoldScene<R>>?
+        var constructor: Constructor<ManifoldScene<*>>?
         val params: Array<Any?>
 
         if (event.event == InternalEvent.TransitionToScene) {
             params = JSON.parseArray(event.data).toArray()
-            constructor = scene.constructors.firstOrNull { it.isAnnotationPresent(ForTransition::class.java) } as Constructor<ManifoldScene<R>>?
+            constructor = sceneTransitionConstructorCache[scene as Class<ManifoldScene<*>>]
 
             if (constructor == null) {
-                throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
+                constructor = scene.constructors.firstOrNull { it.isAnnotationPresent(ForTransition::class.java) } as Constructor<ManifoldScene<*>>?
+
+                if (constructor == null) {
+                    throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
+                }
+
+                constructor.isAccessible = true
+                sceneTransitionConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
             }
         } else {
             params = arrayOf(event)
-            constructor = scene.getConstructor(ManifoldEvent::class.java)
+            constructor = sceneEventConstructorCache[scene as Class<ManifoldScene<*>>]
 
             if (constructor == null) {
-                throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
+                try {
+                    constructor = scene.getConstructor(ManifoldEvent::class.java) as Constructor<ManifoldScene<*>>
+                } catch (e: NoSuchMethodException) {
+                    throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
+                }
+
+                constructor.isAccessible = true
+                sceneEventConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
             }
         }
 
-        // TODO: Cache this constructor
-        constructor.isAccessible = true
-
         val s = constructor.newInstance(*params)
-        return Manifold.run(s, sessionIdentifier)
+        return Manifold.run(s, sessionIdentifier) as CompletableFuture<R>
     }
 }
