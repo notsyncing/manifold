@@ -5,7 +5,7 @@ import io.github.notsyncing.manifold.action.session.SessionVariable
 import io.github.notsyncing.manifold.di.AutoProvide
 import java.util.concurrent.CompletableFuture
 
-class TestAction : ManifoldDatabaseAction<String, String>(true, true, String::class.java) {
+class TestAction : ManifoldDatabaseAction<String, String>(true, String::class.java) {
     @AutoProvide
     var testManager: TestManager? = null
 
