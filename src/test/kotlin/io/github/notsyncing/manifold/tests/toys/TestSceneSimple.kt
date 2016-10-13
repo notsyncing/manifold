@@ -5,7 +5,6 @@ import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
 class TestSceneSimple : ManifoldScene<String> {
-
     constructor() : super(enableEventNode = false)
 
     constructor(event: ManifoldEvent) : super(event)

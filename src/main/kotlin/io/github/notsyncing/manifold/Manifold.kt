@@ -65,8 +65,8 @@ object Manifold {
             if (SceneInterceptor::class.java.isAssignableFrom(c)) {
                 val a = c.getAnnotation(ForScenes::class.java)
 
-                a.value.forEach {
-                    val jc = it.java as Class<ManifoldScene<*>>
+                for (cl in a.value) {
+                    val jc = cl.java as Class<ManifoldScene<*>>
                     var list = sceneInterceptors[jc]
 
                     if (list == null) {
