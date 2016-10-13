@@ -1,8 +1,7 @@
 package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
-import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
+import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.di.AutoProvide
 import kotlinx.coroutines.async
@@ -64,15 +63,62 @@ abstract class ManifoldAction<R> {
     open protected fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
 
     fun execute() = async<R> {
-        val interceptorClasses = Manifold.actionInterceptors[this@ManifoldAction.javaClass as Class<ManifoldAction<*>>]
+        val c = this@ManifoldAction.javaClass as Class<ManifoldAction<*>>
+
+        if (!Manifold.actionInterceptorMap.containsKey(c)) {
+            val addToList = { info: ActionInterceptorInfo ->
+                var list = Manifold.actionInterceptorMap[c]
+
+                if (list == null) {
+                    list = ArrayList()
+                    Manifold.actionInterceptorMap[c] = list
+                }
+
+                list.add(info)
+            }
+
+            Manifold.actionInterceptors.forEach {
+                val forActions = it.getAnnotation(ForActions::class.java)
+
+                if (forActions != null) {
+                    for (cl in forActions.value) {
+                        if (cl.java == c) {
+                            addToList(ActionInterceptorInfo(it, null))
+                            break
+                        }
+                    }
+                }
+
+                val forAnnos = it.getAnnotation(ForActionsAnnotatedWith::class.java)
+
+                if (forAnnos != null) {
+                    for (cl in forAnnos.value) {
+                        val a = c.getAnnotation(cl.java as Class<Annotation>)
+
+                        if (a != null) {
+                            addToList(ActionInterceptorInfo(it, a))
+                        }
+                    }
+                }
+            }
+
+            if (!Manifold.actionInterceptorMap.containsKey(c)) {
+                Manifold.actionInterceptorMap.put(c, ArrayList())
+            }
+        }
+
+        val interceptorClasses = Manifold.actionInterceptorMap[c]!!
         val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
 
-        if (interceptorClasses != null) {
+        if (interceptorClasses.size > 0) {
             val context = ActionInterceptorContext(this@ManifoldAction)
-            val interceptors = interceptorClasses.map { it.newInstance() }
+            val interceptors = interceptorClasses.map { Pair(it, it.interceptorClass.newInstance()) }
 
             interceptors.forEach {
-                await(it.before(context))
+                val (info, i) = it
+
+                context.annotation = info.forAnnotation
+                await(i.before(context))
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
                     throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}")
@@ -82,7 +128,10 @@ abstract class ManifoldAction<R> {
             context.result = await(functor())
 
             interceptors.forEach {
-                await(it.after(context))
+                val (info, i) = it
+
+                context.annotation = info.forAnnotation
+                await(i.after(context))
             }
 
             return@async context.result as R

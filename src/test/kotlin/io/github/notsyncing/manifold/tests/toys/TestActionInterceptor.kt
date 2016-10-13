@@ -1,12 +1,10 @@
 package io.github.notsyncing.manifold.tests.toys
 
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
-import io.github.notsyncing.manifold.action.interceptors.ForActions
-import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
+import io.github.notsyncing.manifold.action.interceptors.*
 import java.util.concurrent.CompletableFuture
 
 @ForActions(TestActionSimple::class)
+@ForActionsAnnotatedWith(TestActionInterceptorAnno::class)
 class TestActionInterceptor : ActionInterceptor {
     companion object {
         var context: ActionInterceptorContext? = null

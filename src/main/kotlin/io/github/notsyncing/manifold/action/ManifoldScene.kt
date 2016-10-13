@@ -2,13 +2,13 @@ package io.github.notsyncing.manifold.action
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.Manifold
-import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
+import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import kotlinx.coroutines.async
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -87,15 +87,62 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
     abstract protected fun stage(): CompletableFuture<R>
 
     fun execute() = async<R> {
-        val interceptorClasses = Manifold.sceneInterceptors[this@ManifoldScene.javaClass as Class<ManifoldScene<*>>]
+        val c = this@ManifoldScene.javaClass as Class<ManifoldScene<*>>
+
+        if (!Manifold.sceneInterceptorMap.containsKey(c)) {
+            val addToList = { info: SceneInterceptorInfo ->
+                var list = Manifold.sceneInterceptorMap[c]
+
+                if (list == null) {
+                    list = ArrayList()
+                    Manifold.sceneInterceptorMap[c] = list
+                }
+
+                list.add(info)
+            }
+
+            Manifold.sceneInterceptors.forEach {
+                val forScenes = it.getAnnotation(ForScenes::class.java)
+
+                if (forScenes != null) {
+                    for (cl in forScenes.value) {
+                        if (cl.java == c) {
+                            addToList(SceneInterceptorInfo(it, null))
+                            break
+                        }
+                    }
+                }
+
+                val forAnnos = it.getAnnotation(ForScenesAnnotatedWith::class.java)
+
+                if (forAnnos != null) {
+                    for (cl in forAnnos.value) {
+                        val a = c.getAnnotation(cl.java as Class<Annotation>)
+
+                        if (a != null) {
+                            addToList(SceneInterceptorInfo(it, a))
+                        }
+                    }
+                }
+            }
+
+            if (!Manifold.sceneInterceptorMap.containsKey(c)) {
+                Manifold.sceneInterceptorMap.put(c, ArrayList())
+            }
+        }
+
+        val interceptorClasses = Manifold.sceneInterceptorMap[c]!!
         val functor = { stage() }
 
-        if (interceptorClasses != null) {
+        if (interceptorClasses.size > 0) {
             val context = SceneInterceptorContext(this@ManifoldScene)
-            val interceptors = interceptorClasses.map { it.newInstance() }
+            val interceptors = interceptorClasses.map { Pair(it, it.interceptorClass.newInstance()) }
 
             interceptors.forEach {
-                await(it.before(context))
+                val (info, i) = it
+
+                context.annotation = info.forAnnotation
+                await(i.before(context))
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
                     throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}")
@@ -105,7 +152,10 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
             context.result = await(functor())
 
             interceptors.forEach {
-                await(it.after(context))
+                val (info, i) = it
+
+                context.annotation = info.forAnnotation
+                await(i.after(context))
             }
 
             return@async context.result as R

@@ -25,8 +25,10 @@ object Manifold {
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
 
-    val sceneInterceptors = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<Class<SceneInterceptor>>>()
-    val actionInterceptors = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<Class<ActionInterceptor>>>()
+    val sceneInterceptors = ArrayList<Class<SceneInterceptor>>()
+    val sceneInterceptorMap = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<SceneInterceptorInfo>>()
+    val actionInterceptors = ArrayList<Class<ActionInterceptor>>()
+    val actionInterceptorMap = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<ActionInterceptorInfo>>()
 
     fun init() {
         if (dependencyProvider == null) {
@@ -63,33 +65,9 @@ object Manifold {
             }
 
             if (SceneInterceptor::class.java.isAssignableFrom(c)) {
-                val a = c.getAnnotation(ForScenes::class.java)
-
-                for (cl in a.value) {
-                    val jc = cl.java as Class<ManifoldScene<*>>
-                    var list = sceneInterceptors[jc]
-
-                    if (list == null) {
-                        list = ArrayList()
-                        sceneInterceptors[jc] = list
-                    }
-
-                    list.add(c as Class<SceneInterceptor>)
-                }
+                sceneInterceptors.add(c as Class<SceneInterceptor>)
             } else if (ActionInterceptor::class.java.isAssignableFrom(c)) {
-                val a = c.getAnnotation(ForActions::class.java)
-
-                for (cl in a.value) {
-                    val jc = cl.java as Class<ManifoldAction<*>>
-                    var list2 = actionInterceptors[jc]
-
-                    if (list2 == null) {
-                        list2 = ArrayList()
-                        actionInterceptors[jc] = list2
-                    }
-
-                    list2.add(c as Class<ActionInterceptor>)
-                }
+                actionInterceptors.add(c as Class<ActionInterceptor>)
             } else {
                 throw InvalidClassException(c.canonicalName, "${c.canonicalName} is not an interceptor class")
             }
@@ -112,7 +90,9 @@ object Manifold {
         sceneEventConstructorCache.clear()
 
         sceneInterceptors.clear()
+        sceneInterceptorMap.clear()
         actionInterceptors.clear()
+        actionInterceptorMap.clear()
 
         ManifoldScene.reset()
 

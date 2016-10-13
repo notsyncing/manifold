@@ -1,12 +1,10 @@
 package io.github.notsyncing.manifold.tests.toys
 
-import io.github.notsyncing.manifold.action.interceptors.ForScenes
-import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptor
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
+import io.github.notsyncing.manifold.action.interceptors.*
 import java.util.concurrent.CompletableFuture
 
 @ForScenes(TestSceneSimple::class)
+@ForScenesAnnotatedWith(TestSceneInterceptorAnno::class)
 class TestSceneInterceptor : SceneInterceptor {
     companion object {
         var context: SceneInterceptorContext? = null

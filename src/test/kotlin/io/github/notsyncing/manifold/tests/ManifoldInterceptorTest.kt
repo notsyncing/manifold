@@ -2,10 +2,7 @@ package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
-import io.github.notsyncing.manifold.tests.toys.TestActionInterceptor
-import io.github.notsyncing.manifold.tests.toys.TestActionSimple
-import io.github.notsyncing.manifold.tests.toys.TestSceneInterceptor
-import io.github.notsyncing.manifold.tests.toys.TestSceneSimple
+import io.github.notsyncing.manifold.tests.toys.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -32,6 +29,7 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestActionInterceptor.context)
         Assert.assertTrue(TestActionInterceptor.beforeCalled)
         Assert.assertTrue(TestActionInterceptor.afterCalled)
+        Assert.assertNull(TestActionInterceptor.context?.annotation)
         Assert.assertEquals("Hello", TestActionInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestActionInterceptor.context?.interceptorResult)
     }
@@ -72,6 +70,7 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestSceneInterceptor.context)
         Assert.assertTrue(TestSceneInterceptor.beforeCalled)
         Assert.assertTrue(TestSceneInterceptor.afterCalled)
+        Assert.assertNull(TestSceneInterceptor.context?.annotation)
         Assert.assertEquals("Hello!", TestSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestSceneInterceptor.context?.interceptorResult)
     }
@@ -103,5 +102,21 @@ class ManifoldInterceptorTest {
         Assert.assertTrue(TestSceneInterceptor.afterCalled)
         Assert.assertEquals("Changed", TestSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestSceneInterceptor.context?.interceptorResult)
+    }
+
+    @Test
+    fun testSceneInterceptorForAnnotation() {
+        Manifold.run(TestSceneSimple2()).get()
+
+        Assert.assertNotNull(TestSceneInterceptor.context)
+        Assert.assertEquals(TestSceneInterceptorAnno::class, TestSceneInterceptor.context?.annotation?.annotationClass)
+    }
+
+    @Test
+    fun testActionInterceptorForAnnotation() {
+        Manifold.run(TestActionSimple2()).get()
+
+        Assert.assertNotNull(TestActionInterceptor.context)
+        Assert.assertEquals(TestActionInterceptorAnno::class, TestActionInterceptor.context?.annotation?.annotationClass)
     }
 }
