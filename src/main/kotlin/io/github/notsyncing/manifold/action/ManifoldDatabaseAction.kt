@@ -4,46 +4,32 @@ import io.github.notsyncing.manifold.Manifold
 import kotlinx.coroutines.async
 import java.util.concurrent.CompletableFuture
 
-abstract class ManifoldDatabaseAction<T, R>(private var autoCommit: Boolean = true,
-                                            private var transClass: Class<T>) : ManifoldAction<R>() {
+abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : ManifoldAction<R>() {
     protected var transaction: ManifoldTransaction<T>? = null
 
-    override fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<R> {
-        transaction = trans as ManifoldTransaction<T>?
-        return super.withTransaction(trans)
-    }
-
     override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
-        if ((Manifold.transactionProvider == null) && (transaction == null)) {
-            throw RuntimeException("Action ${this@ManifoldDatabaseAction.javaClass} wants to use transaction, but no transaction provider, nor a transaction is provided!")
+        if (Manifold.transactionProvider == null) {
+            throw RuntimeException("Action ${this@ManifoldDatabaseAction.javaClass} wants to use transaction, but no transaction provider found!")
         }
 
-        var inTrans = false
-
-        if (transaction == null) {
-            transaction = Manifold.transactionProvider!!.get(transClass)
-        } else {
-            inTrans = true
+        if (context.transaction == null) {
+            context.transaction = Manifold.transactionProvider!!.get(transClass)
         }
 
-        await(transaction!!.begin(!autoCommit))
+        transaction = context.transaction as ManifoldTransaction<T>?
+
+        await(context.transaction!!.begin(!context.autoCommit))
 
         try {
             val r = await(super.execute(f))
 
-            if ((!autoCommit) && (!inTrans)) {
-                await(transaction!!.commit())
-            }
-
-            if (!inTrans) {
-                await(transaction!!.end())
+            if (context.autoCommit) {
+                await(context.transaction!!.end())
             }
 
             return@async r
         } catch (e: Exception) {
-            if (!inTrans) {
-                await(transaction!!.end())
-            }
+            await(context.transaction!!.end())
 
             throw e
         }

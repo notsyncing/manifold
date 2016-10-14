@@ -5,6 +5,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
 import io.github.notsyncing.manifold.action.ManifoldTransaction
+import io.github.notsyncing.manifold.action.SceneContext
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
@@ -49,7 +50,8 @@ class ManifoldActionTest {
 
     @Test
     fun testExecute() {
-        val action = TestAction().withTransaction(Manifold.transactionProvider?.get())
+        val action = TestAction()
+        action.context = SceneContext()
         val s = action.execute().get()
 
         Assert.assertEquals("Hello", s)
@@ -58,6 +60,7 @@ class ManifoldActionTest {
     @Test
     fun testAutoProvide() {
         val action = TestAction()
+        action.context = SceneContext()
         Assert.assertEquals(testManager, action.testManager)
         Assert.assertEquals(testManager, action.testManager2)
     }

@@ -99,9 +99,9 @@ object Manifold {
         ManifoldAction.reset()
     }
 
-    fun <R> run(action: ManifoldAction<R>, trans: ManifoldTransaction<*>? = null): CompletableFuture<R> {
+    fun <R> run(action: ManifoldAction<R>): CompletableFuture<R> {
         try {
-            return action.withTransaction(trans).execute()
+            return action.execute()
         } catch (e: Exception) {
             val c = CompletableFuture<R>()
             c.completeExceptionally(e)
@@ -110,15 +110,14 @@ object Manifold {
         }
     }
 
-    fun <R> run(sessionIdentifier: String? = null, f: (ManifoldActionContextRunner) -> CompletableFuture<R>): CompletableFuture<R> {
-        val t = transactionProvider?.get()
-        val runner = ManifoldActionContextRunner(sessionIdentifier, t)
+    fun <R> run(sessionIdentifier: String? = null, sceneContext: SceneContext? = null, f: (ManifoldActionContextRunner) -> CompletableFuture<R>): CompletableFuture<R> {
+        val runner = ManifoldActionContextRunner(sessionIdentifier, sceneContext)
 
         return f(runner)
     }
 
     fun <R> run(scene: ManifoldScene<R>, sessionIdentifier: String? = null): CompletableFuture<R> {
-        return run(sessionIdentifier) { m ->
+        return run(sessionIdentifier, scene.context) { m ->
             scene.m = m
             scene.execute()
         }

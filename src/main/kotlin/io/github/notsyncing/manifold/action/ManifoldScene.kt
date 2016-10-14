@@ -12,10 +12,13 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: String = "",
-                                eventNodeGroups: Array<String> = emptyArray()) {
+abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
+                                eventNodeId: String = "",
+                                eventNodeGroups: Array<String> = emptyArray(),
+                                val context: SceneContext = SceneContext()) {
     protected var event: ManifoldEvent? = null
     protected var eventNode: ManifoldEventNode? = null
+
     lateinit var m: ManifoldActionContextRunner
 
     val sessionIdentifier: String?
@@ -78,6 +81,10 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
             eventNode?.sendToAnyInGroup(targetSceneEventGroup, e)
             return CompletableFuture.completedFuture(null)
         }
+    }
+
+    protected fun useTransaction() {
+        context.autoCommit = false
     }
 
     open fun init() {
@@ -158,9 +165,24 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true, eventNodeId: St
                 await(i.after(context))
             }
 
+            await(afterExecution())
+
             return@async context.result as R
         }
 
-        return@async await(functor())
+        val r = await(functor())
+
+        await(afterExecution())
+
+        return@async r
+    }
+
+    private fun afterExecution() = async<Unit> {
+        if (context.transaction != null) {
+            if (!context.autoCommit) {
+                await(context.transaction!!.commit())
+                await(context.transaction!!.end())
+            }
+        }
     }
 }

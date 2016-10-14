@@ -4,8 +4,10 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.ManifoldTransactionProvider
 import io.github.notsyncing.manifold.action.ManifoldTransaction
+import io.github.notsyncing.manifold.action.SceneContext
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
+import io.github.notsyncing.manifold.tests.toys.TestSceneTransaction
 import kotlinx.coroutines.async
 import org.junit.Assert
 import org.junit.Before
@@ -59,9 +61,38 @@ class ManifoldTest {
     }
 
     @Test
-    fun testExecute() {
-        val r = Manifold.run(TestAction()).get()
+    fun testExecuteAction() {
+        val a = TestAction()
+        a.context = SceneContext()
+
+        val r = Manifold.run(a).get()
         Assert.assertEquals("Hello", r)
+
+        Assert.assertFalse(beganWithTrans)
+        Assert.assertTrue(beganWithoutTrans)
+        Assert.assertFalse(committed)
+        Assert.assertTrue(ended)
+    }
+
+    @Test
+    fun testExecuteSceneWithTransaction() {
+        val s = TestSceneTransaction()
+
+        val r = Manifold.run(s).get()
+        Assert.assertEquals("Hello!", r)
+
+        Assert.assertTrue(beganWithTrans)
+        Assert.assertFalse(beganWithoutTrans)
+        Assert.assertTrue(committed)
+        Assert.assertTrue(ended)
+    }
+
+    @Test
+    fun testExecuteSceneWithoutTransaction() {
+        val s = TestSceneTransaction(useTrans = false)
+
+        val r = Manifold.run(s).get()
+        Assert.assertEquals("Hello!", r)
 
         Assert.assertFalse(beganWithTrans)
         Assert.assertTrue(beganWithoutTrans)

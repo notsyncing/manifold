@@ -22,6 +22,7 @@ abstract class ManifoldAction<R> {
     }
 
     var sessionIdentifier: String? = null
+    lateinit var context: SceneContext
 
     init {
         val c = this.javaClass as Class<ManifoldAction<*>>
@@ -43,12 +44,16 @@ abstract class ManifoldAction<R> {
 
     abstract protected fun action(): CompletableFuture<R>
 
-    open fun withTransaction(trans: ManifoldTransaction<*>?): ManifoldAction<R> {
+    fun withSession(sid: String?): ManifoldAction<R> {
+        sessionIdentifier = sid
         return this
     }
 
-    fun withSession(sid: String?): ManifoldAction<R> {
-        sessionIdentifier = sid
+    fun withContext(ctx: SceneContext?): ManifoldAction<R> {
+        if (ctx != null) {
+            this.context = ctx
+        }
+
         return this
     }
 

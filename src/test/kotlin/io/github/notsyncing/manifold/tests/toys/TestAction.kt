@@ -5,7 +5,7 @@ import io.github.notsyncing.manifold.action.session.SessionVariable
 import io.github.notsyncing.manifold.di.AutoProvide
 import java.util.concurrent.CompletableFuture
 
-class TestAction : ManifoldDatabaseAction<String, String>(true, String::class.java) {
+class TestAction : ManifoldDatabaseAction<String, String>(String::class.java) {
     @AutoProvide
     var testManager: TestManager? = null
 
@@ -13,8 +13,6 @@ class TestAction : ManifoldDatabaseAction<String, String>(true, String::class.ja
     var testManager2: TestManager? = null
 
     var testVar: String? by SessionVariable<String?>()
-
-    fun hello() = action()
 
     override fun action(): CompletableFuture<String> {
         return CompletableFuture.completedFuture("Hello")
