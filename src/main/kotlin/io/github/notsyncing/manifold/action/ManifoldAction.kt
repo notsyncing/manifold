@@ -3,48 +3,20 @@ package io.github.notsyncing.manifold.action
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.action.session.TimedVar
-import io.github.notsyncing.manifold.di.AutoProvide
 import io.github.notsyncing.manifold.storage.ManifoldStorage
+import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.async
 import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.jvm.javaField
-import kotlin.reflect.memberProperties
 
 abstract class ManifoldAction<R> {
-    companion object {
-        private val actionAutoProvidePropertyCache = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<KMutableProperty1<Any, Any?>>>()
-
-        fun reset() {
-            actionAutoProvidePropertyCache.clear()
-        }
-    }
-
     var sessionIdentifier: String? = null
     lateinit var context: SceneContext
 
     protected val storageList = ArrayList<ManifoldStorage<*>>()
 
     init {
-        val c = this.javaClass as Class<ManifoldAction<*>>
-        val propList: ArrayList<KMutableProperty1<Any, Any?>>
-
-        if (!actionAutoProvidePropertyCache.containsKey(c)) {
-            propList = ArrayList()
-            actionAutoProvidePropertyCache[c] = propList
-
-            this.javaClass.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == AutoProvide::class } }
-                    .map { it as KMutableProperty1<Any, Any?>  }
-                    .forEach { propList.add(it) }
-        } else {
-            propList = actionAutoProvidePropertyCache[c]!!
-        }
-
-        propList.forEach {
-            it.set(this, provideDependency(it.javaField!!.type))
-        }
+        DependencyProviderUtils.autoProvideProperties(this.javaClass, this::provideDependency)
     }
 
     open protected fun provideDependency(t: Class<*>): Any? {

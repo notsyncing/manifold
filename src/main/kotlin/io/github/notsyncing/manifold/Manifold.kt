@@ -10,6 +10,7 @@ import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import java.io.InvalidClassException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
@@ -96,7 +97,7 @@ object Manifold {
 
         ManifoldScene.reset()
 
-        ManifoldAction.reset()
+        DependencyProviderUtils.reset()
     }
 
     fun <R> run(action: ManifoldAction<R>): CompletableFuture<R> {

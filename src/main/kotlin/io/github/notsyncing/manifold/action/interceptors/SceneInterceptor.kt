@@ -1,4 +1,7 @@
 package io.github.notsyncing.manifold.action.interceptors
 
-interface SceneInterceptor : Interceptor<SceneInterceptorContext> {
+import io.github.notsyncing.manifold.action.ManifoldActionContextRunner
+
+abstract class SceneInterceptor : Interceptor<SceneInterceptorContext>() {
+    lateinit var m: ManifoldActionContextRunner
 }

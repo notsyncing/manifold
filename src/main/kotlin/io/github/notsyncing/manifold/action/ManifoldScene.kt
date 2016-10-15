@@ -45,6 +45,8 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 awakeOnEvent(InternalEvent.TransitionToScene)
             }
         }
+
+        context.sessionIdentifier = sessionIdentifier
     }
 
     constructor(event: ManifoldEvent) : this() {
@@ -149,7 +151,9 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i.before(context))
+
+                i.m = m
+                i.before(context)
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
                     throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}")
@@ -162,7 +166,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i.after(context))
+                i.after(context)
             }
 
             await(afterExecution())
