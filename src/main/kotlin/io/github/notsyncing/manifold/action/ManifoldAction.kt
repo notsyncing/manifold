@@ -4,6 +4,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.di.AutoProvide
+import io.github.notsyncing.manifold.storage.ManifoldStorage
 import kotlinx.coroutines.async
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -24,6 +25,8 @@ abstract class ManifoldAction<R> {
     var sessionIdentifier: String? = null
     lateinit var context: SceneContext
 
+    protected val storageList = ArrayList<ManifoldStorage<*>>()
+
     init {
         val c = this.javaClass as Class<ManifoldAction<*>>
         val propList: ArrayList<KMutableProperty1<Any, Any?>>
@@ -39,7 +42,13 @@ abstract class ManifoldAction<R> {
             propList = actionAutoProvidePropertyCache[c]!!
         }
 
-        propList.forEach { it.set(this, Manifold.dependencyProvider?.get(it.javaField!!.type)) }
+        propList.forEach {
+            it.set(this, provideDependency(it.javaField!!.type))
+        }
+    }
+
+    open protected fun provideDependency(t: Class<*>): Any? {
+        return Manifold.dependencyProvider?.get(t)
     }
 
     abstract protected fun action(): CompletableFuture<R>

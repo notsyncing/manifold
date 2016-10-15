@@ -9,6 +9,7 @@ import io.github.notsyncing.manifold.action.SceneContext
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
+import io.github.notsyncing.manifold.tests.toys.TestStorage
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -21,6 +22,7 @@ class ManifoldActionTest {
     @Before
     fun setUp() {
         Manifold.reset()
+        TestStorage.reset()
 
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
@@ -31,7 +33,7 @@ class ManifoldActionTest {
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
             override fun get(): ManifoldTransaction<*> {
-                return object : ManifoldTransaction<String>("") {
+                return object : ManifoldTransaction<String>("storage") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         return CompletableFuture.completedFuture(null)
                     }
@@ -61,8 +63,19 @@ class ManifoldActionTest {
     fun testAutoProvide() {
         val action = TestAction()
         action.context = SceneContext()
+
         Assert.assertEquals(testManager, action.testManager)
         Assert.assertEquals(testManager, action.testManager2)
+    }
+
+    @Test
+    fun testStorage() {
+        val action = TestAction()
+        action.context = SceneContext()
+
+        action.execute().get()
+
+        Assert.assertEquals("storage", TestStorage.result)
     }
 
     @Test
