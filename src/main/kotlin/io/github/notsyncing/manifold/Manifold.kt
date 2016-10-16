@@ -49,6 +49,11 @@ object Manifold {
         processInterceptors()
     }
 
+    inline fun <reified T: AuthenticateInformationProvider> authInfoProvider(): Manifold {
+        authInfoProvider = dependencyProvider!!.get(T::class.java)
+        return this
+    }
+
     private fun processScenes() {
         dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
             if (!Modifier.isAbstract(it.modifiers)) {
