@@ -15,7 +15,8 @@ object DependencyProviderUtils {
         propertyCache.clear()
     }
 
-    fun autoProvideProperties(c: Class<*>, provideDependency: (Class<*>) -> Any? = { Manifold.dependencyProvider?.get(it) }) {
+    fun autoProvideProperties(o: Any, provideDependency: (Class<*>) -> Any? = { Manifold.dependencyProvider?.get(it) }) {
+        val c = o.javaClass
         val propList: ArrayList<KMutableProperty1<Any, Any?>>
 
         if (!propertyCache.containsKey(c)) {
@@ -30,7 +31,7 @@ object DependencyProviderUtils {
         }
 
         propList.forEach {
-            it.set(this, provideDependency(it.javaField!!.type))
+            it.set(o, provideDependency(it.javaField!!.type))
         }
     }
 }

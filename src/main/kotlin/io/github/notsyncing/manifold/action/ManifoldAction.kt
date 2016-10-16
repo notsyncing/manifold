@@ -16,7 +16,7 @@ abstract class ManifoldAction<R> {
     protected val storageList = ArrayList<ManifoldStorage<*>>()
 
     init {
-        DependencyProviderUtils.autoProvideProperties(this.javaClass, this::provideDependency)
+        DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
     }
 
     open protected fun provideDependency(t: Class<*>): Any? {
