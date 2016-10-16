@@ -49,8 +49,6 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             } else {
                 constructorMap.put(t, constructor)
             }
-
-            constructor.isAccessible = true
         }
 
         val o: T
