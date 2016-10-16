@@ -6,4 +6,11 @@ abstract class Interceptor<C: InterceptorContext> {
     open fun before(context: C): CompletableFuture<Unit> = CompletableFuture.completedFuture(Unit)
 
     open fun after(context: C): CompletableFuture<Unit> = CompletableFuture.completedFuture(Unit)
+
+    protected fun C.stop(e: Exception? = null) {
+        this.interceptorResult = InterceptorResult.Stop
+        this.exception = e
+
+        return
+    }
 }

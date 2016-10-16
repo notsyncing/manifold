@@ -1,4 +1,4 @@
-package io.github.notsyncing.manifold.tests.toys
+package io.github.notsyncing.manifold.tests.toys.di
 
 import io.github.notsyncing.manifold.di.NoProvide
 import io.github.notsyncing.manifold.di.ProvideAsSingleton

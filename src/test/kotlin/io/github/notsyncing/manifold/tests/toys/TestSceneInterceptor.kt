@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture
 
 @ForScenes(TestSceneSimple::class)
 @ForScenesAnnotatedWith(TestSceneInterceptorAnno::class)
-class TestSceneInterceptor : SceneInterceptor {
+class TestSceneInterceptor : SceneInterceptor() {
     companion object {
         var context: SceneInterceptorContext? = null
         var beforeCalled = false

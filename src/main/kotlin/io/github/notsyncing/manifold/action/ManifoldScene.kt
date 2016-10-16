@@ -45,8 +45,6 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 awakeOnEvent(InternalEvent.TransitionToScene)
             }
         }
-
-        context.sessionIdentifier = sessionIdentifier
     }
 
     constructor(event: ManifoldEvent) : this() {
@@ -96,6 +94,8 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
     abstract protected fun stage(): CompletableFuture<R>
 
     fun execute() = async<R> {
+        context.sessionIdentifier = sessionIdentifier
+
         val c = this@ManifoldScene.javaClass as Class<ManifoldScene<*>>
 
         if (!Manifold.sceneInterceptorMap.containsKey(c)) {

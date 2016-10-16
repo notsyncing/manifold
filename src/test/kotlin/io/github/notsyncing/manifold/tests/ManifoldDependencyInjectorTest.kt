@@ -1,7 +1,8 @@
 package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
-import io.github.notsyncing.manifold.tests.toys.*
+import io.github.notsyncing.manifold.tests.toys.TestAnno
+import io.github.notsyncing.manifold.tests.toys.di.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before

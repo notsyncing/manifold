@@ -5,6 +5,7 @@ import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
+import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
@@ -22,6 +23,7 @@ object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
     var sessionStorageProvider: ManifoldSessionStorageProvider? = null
+    lateinit var authInfoProvider: AuthenticateInformationProvider
 
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
@@ -62,6 +64,10 @@ object Manifold {
     private fun processInterceptors() {
         dependencyProvider?.getAllClassesImplemented(Interceptor::class.java) { c ->
             if (Modifier.isAbstract(c.modifiers)) {
+                return@getAllClassesImplemented
+            }
+
+            if (c.annotations.size <= 0) {
                 return@getAllClassesImplemented
             }
 

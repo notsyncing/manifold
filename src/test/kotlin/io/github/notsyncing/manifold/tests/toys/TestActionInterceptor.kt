@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture
 
 @ForActions(TestActionSimple::class)
 @ForActionsAnnotatedWith(TestActionInterceptorAnno::class)
-class TestActionInterceptor : ActionInterceptor {
+class TestActionInterceptor : ActionInterceptor() {
     companion object {
         var context: ActionInterceptorContext? = null
         var beforeCalled = false
