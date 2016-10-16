@@ -98,7 +98,7 @@ abstract class ManifoldAction<R> {
 
         if (interceptorClasses.size > 0) {
             val context = ActionInterceptorContext(this@ManifoldAction)
-            val interceptors = interceptorClasses.map { Pair(it, it.interceptorClass.newInstance()) }
+            val interceptors = interceptorClasses.map { Pair(it, Manifold.dependencyProvider!!.get(it.interceptorClass)) }
 
             interceptors.forEach {
                 val (info, i) = it

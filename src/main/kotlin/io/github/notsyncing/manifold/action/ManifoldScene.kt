@@ -145,7 +145,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
 
         if (interceptorClasses.size > 0) {
             val interceptorContext = SceneInterceptorContext(this@ManifoldScene)
-            val interceptors = interceptorClasses.map { Pair(it, it.interceptorClass.newInstance()) }
+            val interceptors = interceptorClasses.map { Pair(it, Manifold.dependencyProvider!!.get(it.interceptorClass)) }
 
             interceptors.forEach {
                 val (info, i) = it
