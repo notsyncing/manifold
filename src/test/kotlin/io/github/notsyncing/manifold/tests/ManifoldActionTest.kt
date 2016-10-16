@@ -26,6 +26,7 @@ class ManifoldActionTest {
 
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
+        Mockito.`when`(Manifold.dependencyProvider?.get(TestStorage::class.java)).thenReturn(TestStorage())
 
         Manifold.sessionStorageProvider = Mockito.mock(ManifoldSessionStorageProvider::class.java)
         Mockito.`when`(Manifold.sessionStorageProvider?.get<String>(eq("test_session"), eq("testVar")))

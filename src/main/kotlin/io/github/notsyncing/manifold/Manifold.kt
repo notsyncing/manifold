@@ -67,13 +67,13 @@ object Manifold {
     }
 
     private fun processInterceptors() {
-        dependencyProvider?.getAllClassesImplemented(Interceptor::class.java) { c ->
+        dependencyProvider?.getAllSubclasses(Interceptor::class.java) { c ->
             if (Modifier.isAbstract(c.modifiers)) {
-                return@getAllClassesImplemented
+                return@getAllSubclasses
             }
 
             if (c.annotations.size <= 0) {
-                return@getAllClassesImplemented
+                return@getAllSubclasses
             }
 
             if (SceneInterceptor::class.java.isAssignableFrom(c)) {
