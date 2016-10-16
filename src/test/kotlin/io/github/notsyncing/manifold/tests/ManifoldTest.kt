@@ -8,6 +8,7 @@ import io.github.notsyncing.manifold.action.SceneContext
 import io.github.notsyncing.manifold.tests.toys.TestAction
 import io.github.notsyncing.manifold.tests.toys.TestManager
 import io.github.notsyncing.manifold.tests.toys.TestSceneTransaction
+import io.github.notsyncing.manifold.tests.toys.TestStorage
 import kotlinx.coroutines.async
 import org.junit.Assert
 import org.junit.Before
@@ -32,6 +33,7 @@ class ManifoldTest {
 
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(null)
+        Mockito.`when`(Manifold.dependencyProvider?.get(TestStorage::class.java)).thenReturn(TestStorage())
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
             override fun get(): ManifoldTransaction<*> {
