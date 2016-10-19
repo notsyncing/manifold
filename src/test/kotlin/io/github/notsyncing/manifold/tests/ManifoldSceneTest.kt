@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.tests.toys.*
@@ -8,16 +9,24 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 class ManifoldSceneTest {
+    private val testManager = Mockito.mock(TestManager::class.java)
+
     @Before
     fun setUp() {
         TestScene.initExecuted = false
         TestScene.recvEvent = CompletableFuture()
 
         TestSceneSecond.reset()
+
+        Manifold.reset()
+
+        Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
+        Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
 
         ManifoldEventBus.debug = true
         Manifold.init()
@@ -31,6 +40,14 @@ class ManifoldSceneTest {
     @Test
     fun testInit() {
         Assert.assertTrue(TestScene.initExecuted)
+    }
+
+    @Test
+    fun testAutoProvide() {
+        val scene = TestScene()
+
+        Assert.assertEquals(testManager, scene.testManager)
+        Assert.assertEquals(testManager, scene.testManager2)
     }
 
     @Test

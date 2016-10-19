@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.di.AutoProvide
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.concurrent.CompletableFuture
 
@@ -12,6 +13,12 @@ class TestScene : ManifoldScene<String> {
         const val EventNodeId = "test.scene"
         const val EventNodeGroup = "test.scene.group1"
     }
+
+    @AutoProvide
+    lateinit var testManager: TestManager
+
+    @AutoProvide
+    lateinit var testManager2: TestManager
 
     constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
 

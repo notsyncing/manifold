@@ -7,6 +7,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.async
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -35,6 +36,8 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
     init {
         val c = this.javaClass as Class<ManifoldScene<*>>
 
+        DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
+
         if (enableEventNode) {
             if (eventNodes.containsKey(c)) {
                 eventNode = eventNodes[c]
@@ -49,6 +52,10 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
 
     constructor(event: ManifoldEvent) : this() {
         this.event = event
+    }
+
+    open protected fun provideDependency(t: Class<*>): Any? {
+        return Manifold.dependencyProvider?.get(t)
     }
 
     protected fun awakeOnEvent(event: String) {
