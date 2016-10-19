@@ -25,9 +25,6 @@ class ManifoldSceneTest {
 
         Manifold.reset()
 
-        Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
-        Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
-
         ManifoldEventBus.debug = true
         Manifold.init()
     }
@@ -44,6 +41,9 @@ class ManifoldSceneTest {
 
     @Test
     fun testAutoProvide() {
+        Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
+        Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(testManager)
+
         val scene = TestScene()
 
         Assert.assertEquals(testManager, scene.testManager)
