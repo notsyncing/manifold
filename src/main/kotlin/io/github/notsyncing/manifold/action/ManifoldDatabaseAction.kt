@@ -11,7 +11,11 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
     override fun provideDependency(t: Class<*>): Any? {
         if (ManifoldStorage::class.java.isAssignableFrom(t)) {
             val o = super.provideDependency(t)
-            storageList.add(o as ManifoldStorage<*>)
+
+            if (o != null) {
+                storageList.add(o as ManifoldStorage<*>)
+            }
+
             return o
         } else {
             return super.provideDependency(t)

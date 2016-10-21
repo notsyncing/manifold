@@ -31,7 +31,11 @@ object DependencyProviderUtils {
         }
 
         propList.forEach {
-            it.set(o, provideDependency(it.javaField!!.type))
+            val d = provideDependency(it.javaField!!.type)
+
+            if (d != null) {
+                it.set(o, d)
+            }
         }
     }
 }
