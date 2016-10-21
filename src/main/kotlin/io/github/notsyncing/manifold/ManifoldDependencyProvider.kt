@@ -7,11 +7,11 @@ interface ManifoldDependencyProvider {
 
     fun init()
 
-    fun <T> get(type: Class<T>): T {
+    fun <T> get(type: Class<T>): T? {
         return get(type, false)
     }
 
-    fun <T> get(type: Class<T>, singleton: Boolean = false): T
+    fun <T> get(type: Class<T>, singleton: Boolean = false): T?
 
     fun register(obj: Any)
 

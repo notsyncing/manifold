@@ -159,7 +159,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
 
                 interceptorContext.annotation = info.forAnnotation
 
-                i.m = m
+                i!!.m = m
                 i.before(interceptorContext)
 
                 if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
@@ -173,7 +173,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 val (info, i) = it
 
                 interceptorContext.annotation = info.forAnnotation
-                i.after(interceptorContext)
+                i!!.after(interceptorContext)
             }
 
             await(afterExecution())

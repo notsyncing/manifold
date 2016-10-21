@@ -23,7 +23,7 @@ object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
     var sessionStorageProvider: ManifoldSessionStorageProvider? = null
-    lateinit var authInfoProvider: AuthenticateInformationProvider
+    var authInfoProvider: AuthenticateInformationProvider? = null
 
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()

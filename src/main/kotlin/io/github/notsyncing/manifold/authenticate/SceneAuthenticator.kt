@@ -47,7 +47,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
             return@async
         }
 
-        val role = await(Manifold.authInfoProvider.getRole(id))
+        val role = await(Manifold.authInfoProvider!!.getRole(id))
 
         if (role == null) {
             return@async context.stop(NoPermissionException("Role $id not found", context))

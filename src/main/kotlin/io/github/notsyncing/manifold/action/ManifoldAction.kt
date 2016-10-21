@@ -104,7 +104,7 @@ abstract class ManifoldAction<R> {
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i.before(context))
+                await(i!!.before(context))
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
                     throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}")
@@ -117,7 +117,7 @@ abstract class ManifoldAction<R> {
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i.after(context))
+                await(i!!.after(context))
             }
 
             return@async context.result as R

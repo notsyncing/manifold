@@ -15,13 +15,15 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         var scanner = createScanner()
 
         private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
+
+        var keepQuietOnResolveFailure = true
     }
 
     override fun init() {
         scanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
     }
 
-    override fun <T> get(type: Class<T>, singleton: Boolean): T {
+    override fun <T> get(type: Class<T>, singleton: Boolean): T? {
         if (singletons.containsKey(type)) {
             return singletons[type] as T
         }
@@ -42,7 +44,11 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             } else if (type.constructors.size == 1) {
                 constructor = t.constructors.first()
             } else {
-                throw InstantiationException("Type $type has no constructor, maybe you forgot to provide an implementation?")
+                if (!keepQuietOnResolveFailure) {
+                    throw InstantiationException("Type $type has no constructor, maybe you forgot to provide an implementation?")
+                } else {
+                    return null
+                }
             }
 
             if (constructor == null) {
