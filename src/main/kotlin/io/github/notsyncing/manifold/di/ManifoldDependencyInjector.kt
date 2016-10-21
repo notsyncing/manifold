@@ -39,8 +39,10 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         if (constructor == null) {
             if (type.constructors.size > 1) {
                 constructor = t.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
-            } else {
+            } else if (type.constructors.size == 1) {
                 constructor = t.constructors.first()
+            } else {
+                throw InstantiationException("Type $type has no constructor, maybe you forgot to provide an implementation?")
             }
 
             if (constructor == null) {
