@@ -46,6 +46,8 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
 
             return@async r
         } catch (e: Exception) {
+            e.printStackTrace()
+
             await(context.transaction!!.end())
 
             throw e
