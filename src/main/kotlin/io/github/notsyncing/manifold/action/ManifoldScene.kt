@@ -163,7 +163,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 i.before(interceptorContext)
 
                 if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
-                    throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}")
+                    throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
                 }
             }
 

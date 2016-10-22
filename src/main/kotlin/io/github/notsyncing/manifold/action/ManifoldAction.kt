@@ -107,7 +107,7 @@ abstract class ManifoldAction<R> {
                 await(i!!.before(context))
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
-                    throw InterruptedException("Interceptor ${it.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}")
+                    throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}", context.exception)
                 }
             }
 
