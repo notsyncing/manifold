@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture
 
 open class ScenePermissionAuthenticator(private val authModule: Enum<*>,
                                         private val authType: Enum<*>) : SceneAuthenticator() {
-    override fun authenticate(context: SceneInterceptorContext): CompletableFuture<Unit> {
+    override fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit> {
         return context.checkPermission(authModule, authType)
     }
 }
