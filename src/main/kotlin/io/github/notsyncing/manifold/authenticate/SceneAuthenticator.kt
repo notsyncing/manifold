@@ -34,7 +34,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         return CompletableFuture.completedFuture(Unit)
     }
 
-    abstract fun authenticate(context: SceneInterceptorContext): CompletableFuture<Unit>
+    abstract fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit>
 
     override fun before(context: SceneInterceptorContext) = async<Unit> {
         val id = context.sceneContext.sessionIdentifier
@@ -55,7 +55,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
         currentRole = role
 
-        return@async await(authenticate(context))
+        return@async await(authenticate(context, currentRole))
     }
 
     protected fun SceneInterceptorContext.aggregatePermissions(): AggregatedPermissions {
