@@ -29,8 +29,8 @@ class ManifoldDependencyInjectorTest {
         val c = di.get(C::class.java)
 
         Assert.assertNotNull(c)
-        Assert.assertNotNull(c.a)
-        Assert.assertNotNull(c.b)
+        Assert.assertNotNull(c?.a)
+        Assert.assertNotNull(c?.b)
     }
 
     @Test
@@ -38,10 +38,10 @@ class ManifoldDependencyInjectorTest {
         val d = di.get(D::class.java)
 
         Assert.assertNotNull(d)
-        Assert.assertNotNull(d.b)
-        Assert.assertNotNull(d.c)
-        Assert.assertNotNull(d.c?.a)
-        Assert.assertNotNull(d.c?.b)
+        Assert.assertNotNull(d?.b)
+        Assert.assertNotNull(d?.c)
+        Assert.assertNotNull(d?.c?.a)
+        Assert.assertNotNull(d?.c?.b)
     }
 
     @Test
@@ -49,9 +49,9 @@ class ManifoldDependencyInjectorTest {
         val e = di.get(E::class.java)
 
         Assert.assertNotNull(e)
-        Assert.assertNotNull(e.a)
-        Assert.assertNotNull(e.b)
-        Assert.assertNull(e.c)
+        Assert.assertNotNull(e?.a)
+        Assert.assertNotNull(e?.b)
+        Assert.assertNull(e?.c)
     }
 
     @Test
@@ -74,7 +74,7 @@ class ManifoldDependencyInjectorTest {
         di.register(a)
         val c = di.get(C::class.java)
 
-        Assert.assertEquals(a, c.a)
+        Assert.assertEquals(a, c?.a)
     }
 
     @Test
@@ -83,7 +83,7 @@ class ManifoldDependencyInjectorTest {
         di.registerAs(ac, A::class.java)
         val c = di.get(C::class.java)
 
-        Assert.assertEquals(ac, c.a)
+        Assert.assertEquals(ac, c?.a)
     }
 
     @Test
@@ -91,7 +91,7 @@ class ManifoldDependencyInjectorTest {
         di.registerMapping(A::class.java, IA::class.java)
         val a = di.get(IA::class.java)
 
-        Assert.assertEquals(A::class.java, a.javaClass)
+        Assert.assertEquals(A::class.java, a?.javaClass)
     }
 
     @Test

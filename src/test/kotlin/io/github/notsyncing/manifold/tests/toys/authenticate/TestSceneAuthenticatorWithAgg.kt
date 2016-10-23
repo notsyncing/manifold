@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.tests.toys.authenticate
 
 import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
+import io.github.notsyncing.manifold.authenticate.AuthRole
 import io.github.notsyncing.manifold.authenticate.Permission
 import io.github.notsyncing.manifold.authenticate.SceneAuthenticator
 import java.util.concurrent.CompletableFuture
@@ -14,7 +15,7 @@ class TestSceneAuthenticatorWithAgg : SceneAuthenticator() {
         }
     }
 
-    override fun authenticate(context: SceneInterceptorContext): CompletableFuture<Unit> {
+    override fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit> {
         context.aggregatePermissions()
 
         val a = context.annotation as TestAuthAnno
