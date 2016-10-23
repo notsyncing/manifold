@@ -39,7 +39,7 @@ class ManifoldActionTest {
                         return CompletableFuture.completedFuture(null)
                     }
 
-                    override fun commit(): CompletableFuture<Void> {
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
                         return CompletableFuture.completedFuture(null)
                     }
 

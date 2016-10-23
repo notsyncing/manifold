@@ -103,7 +103,7 @@ class ManifoldSceneTest {
                         return CompletableFuture.completedFuture(null)
                     }
 
-                    override fun commit(): CompletableFuture<Void> {
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
                         TestSceneWithBackground.add(TestSceneWithBackground.TRANS_COMMIT)
                         return CompletableFuture.completedFuture(null)
                     }

@@ -94,6 +94,14 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
         context.autoCommit = false
     }
 
+    protected fun splitTransaction() = async<Unit> {
+        if ((context.transaction == null) || (context.autoCommit)) {
+            return@async
+        }
+
+        await(context.transaction!!.commit(false))
+    }
+
     protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit) {
         if (keepTransaction) {
             context.transactionRefCount++
