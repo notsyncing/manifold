@@ -142,4 +142,15 @@ class ManifoldSceneTest {
                 TestSceneWithBackground.TRANS_END, TestSceneWithBackground.RUN_BG_END)
         Assert.assertArrayEquals(expected, TestSceneWithBackground.list.toTypedArray())
     }
+
+    @Test
+    fun testExceptionInStage() {
+        try {
+            Manifold.run(TestSceneSimpleException()).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e.cause is RuntimeException)
+            Assert.assertEquals("Here!", e.cause?.message)
+        }
+    }
 }
