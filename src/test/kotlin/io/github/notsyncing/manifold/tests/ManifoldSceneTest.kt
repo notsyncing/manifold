@@ -2,6 +2,8 @@ package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
+import io.github.notsyncing.manifold.ManifoldTransactionProvider
+import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.tests.toys.*
@@ -22,6 +24,7 @@ class ManifoldSceneTest {
         TestScene.recvEvent = CompletableFuture()
 
         TestSceneSecond.reset()
+        TestSceneWithBackground.reset()
 
         Manifold.reset()
 
@@ -89,5 +92,54 @@ class ManifoldSceneTest {
         TestSceneSecond.recvEvent.thenAccept {
             Assert.assertEquals("test_session", TestSceneSecond.sessionId)
         }.get(5, TimeUnit.SECONDS)
+    }
+
+    private fun createTransProviderForBackground() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneWithBackground.add(TestSceneWithBackground.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(): CompletableFuture<Void> {
+                        TestSceneWithBackground.add(TestSceneWithBackground.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneWithBackground.add(TestSceneWithBackground.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testRunInBackgroundWithTrans() {
+        createTransProviderForBackground()
+        Manifold.run(TestSceneWithBackground(keepTrans = true), "test_bg_session")
+
+        Thread.sleep(1000)
+
+        val expected = arrayOf(TestSceneWithBackground.SCENE_START, TestSceneWithBackground.TRANS_START,
+                TestSceneWithBackground.SCENE_END, TestSceneWithBackground.RUN_BG_END,
+                TestSceneWithBackground.TRANS_COMMIT, TestSceneWithBackground.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneWithBackground.list.toTypedArray())
+    }
+
+    @Test
+    fun testRunInBackgroundWithoutTrans() {
+        createTransProviderForBackground()
+        Manifold.run(TestSceneWithBackground(keepTrans = false), "test_bg_session")
+
+        Thread.sleep(1000)
+
+        val expected = arrayOf(TestSceneWithBackground.SCENE_START, TestSceneWithBackground.TRANS_START,
+                TestSceneWithBackground.SCENE_END, TestSceneWithBackground.TRANS_COMMIT,
+                TestSceneWithBackground.TRANS_END, TestSceneWithBackground.RUN_BG_END)
+        Assert.assertArrayEquals(expected, TestSceneWithBackground.list.toTypedArray())
     }
 }

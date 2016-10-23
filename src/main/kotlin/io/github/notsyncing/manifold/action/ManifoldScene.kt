@@ -94,6 +94,24 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
         context.autoCommit = false
     }
 
+    protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit) {
+        if (keepTransaction) {
+            context.transactionRefCount++
+        }
+
+        CompletableFuture.runAsync(func).thenCompose {
+            if (keepTransaction) {
+                context.transactionRefCount--
+
+                if (context.transactionRefCount <= 0) {
+                    return@thenCompose endTransaction()
+                }
+            }
+
+            return@thenCompose CompletableFuture.completedFuture(Unit)
+        }
+    }
+
     open fun init() {
 
     }
@@ -188,12 +206,18 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
         return@async r
     }
 
-    private fun afterExecution() = async<Unit> {
+    private fun endTransaction() = async<Unit> {
         if (context.transaction != null) {
             if (!context.autoCommit) {
                 await(context.transaction!!.commit())
                 await(context.transaction!!.end())
             }
+        }
+    }
+
+    private fun afterExecution() = async<Unit> {
+        if (context.transactionRefCount <= 0) {
+            await(endTransaction())
         }
     }
 }

@@ -7,6 +7,7 @@ class SceneContext {
 
     var transaction: ManifoldTransaction<*>? = null
     var autoCommit = true
+    var transactionRefCount = 0
 
     var permissions: AggregatedPermissions? = null
 }
