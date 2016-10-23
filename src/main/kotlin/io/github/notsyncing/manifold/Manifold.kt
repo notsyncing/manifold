@@ -18,6 +18,7 @@ import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
@@ -32,6 +33,8 @@ object Manifold {
     val sceneInterceptorMap = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<SceneInterceptorInfo>>()
     val actionInterceptors = ArrayList<Class<ActionInterceptor>>()
     val actionInterceptorMap = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<ActionInterceptorInfo>>()
+
+    val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
 
     fun init() {
         if (dependencyProvider == null) {

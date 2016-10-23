@@ -107,7 +107,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
             context.transactionRefCount++
         }
 
-        CompletableFuture.runAsync(func).thenCompose {
+        CompletableFuture.runAsync(Runnable { func() }, Manifold.sceneBgWorkerPool).thenCompose {
             if (keepTransaction) {
                 context.transactionRefCount--
 
