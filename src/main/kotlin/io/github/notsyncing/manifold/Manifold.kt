@@ -142,7 +142,7 @@ object Manifold {
                 return@getAllSubclasses
             }
 
-            if (c.annotations.size <= 0) {
+            if (c.annotations.isEmpty()) {
                 return@getAllSubclasses
             }
 
@@ -225,7 +225,7 @@ object Manifold {
                     throw NoSuchMethodException("No constructor of scene $scene has parameter count of ${params.count()}")
                 }
 
-                sceneTransitionConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
+                sceneTransitionConstructorCache[scene] = constructor
             }
         } else {
             params = arrayOf(event)
@@ -238,7 +238,7 @@ object Manifold {
                     throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
                 }
 
-                sceneEventConstructorCache[scene as Class<ManifoldScene<*>>] = constructor
+                sceneEventConstructorCache[scene] = constructor
             }
         }
 
