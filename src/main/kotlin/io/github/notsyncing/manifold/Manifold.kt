@@ -12,6 +12,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.feature.Feature
+import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import io.vertx.core.impl.ConcurrentHashSet
 import java.io.InvalidClassException
@@ -44,6 +45,8 @@ object Manifold {
     val enabledFeatureGroups = ConcurrentHashSet<String>()
     val disabledFeatures = ConcurrentHashSet<String>()
     val disabledFeatureGroups = ConcurrentHashSet<String>()
+
+    var featurePublisher: FeaturePublisher? = null
 
     fun init() {
         if (dependencyProvider == null) {
@@ -132,6 +135,10 @@ object Manifold {
                 it.newInstance().init()
             } catch (e: Exception) {
                 e.printStackTrace()
+            }
+
+            if (featurePublisher != null) {
+                featurePublisher!!.publishFeature(it)
             }
         }
     }
