@@ -11,7 +11,9 @@ import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
+import io.vertx.core.impl.ConcurrentHashSet
 import java.io.InvalidClassException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
@@ -36,6 +38,13 @@ object Manifold {
 
     val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
 
+    var enableFeatureManagement = true
+
+    val enabledFeatures = ConcurrentHashSet<String>()
+    val enabledFeatureGroups = ConcurrentHashSet<String>()
+    val disabledFeatures = ConcurrentHashSet<String>()
+    val disabledFeatureGroups = ConcurrentHashSet<String>()
+
     fun init() {
         if (dependencyProvider == null) {
             dependencyProvider = ManifoldDependencyInjector()
@@ -57,14 +66,72 @@ object Manifold {
         return this
     }
 
+    fun enableFeatures(vararg features: String) {
+        features.forEach { enabledFeatures.add(it) }
+    }
+
+    fun disableFeatures(vararg features: String) {
+        features.forEach {
+            enabledFeatures.remove(it)
+            disabledFeatures.add(it)
+        }
+    }
+
+    fun enableFeatureGroups(vararg featureGroups: String) {
+        featureGroups.forEach { enabledFeatureGroups.add(it) }
+    }
+
+    fun disableFeatureGroups(vararg featureGroups: String) {
+        featureGroups.forEach {
+            enabledFeatureGroups.remove(it)
+            disabledFeatureGroups.add(it)
+        }
+    }
+
+    fun <T: ManifoldScene<*>> isFeatureEnabled(sceneClass: Class<T>): Boolean {
+        if (!enableFeatureManagement) {
+            return true
+        }
+
+        val featureAnno = sceneClass.getAnnotation(Feature::class.java)
+
+        if (featureAnno == null) {
+            return false
+        }
+
+        if (disabledFeatures.contains(featureAnno.value)) {
+            return false
+        }
+
+        if (featureAnno.groups.any { disabledFeatureGroups.contains(it) }) {
+            return false
+        }
+
+        if (enabledFeatures.contains(featureAnno.value)) {
+            return true
+        }
+
+        if (featureAnno.groups.any { enabledFeatureGroups.contains(it) }) {
+            return true
+        }
+
+        return false
+    }
+
     private fun processScenes() {
         dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
-            if (!Modifier.isAbstract(it.modifiers)) {
-                try {
-                    it.newInstance().init()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+            if (Modifier.isAbstract(it.modifiers)) {
+                return@getAllSubclasses
+            }
+
+            if (!isFeatureEnabled(it)) {
+                return@getAllSubclasses
+            }
+
+            try {
+                it.newInstance().init()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -108,6 +175,11 @@ object Manifold {
         sceneInterceptorMap.clear()
         actionInterceptors.clear()
         actionInterceptorMap.clear()
+
+        enabledFeatures.clear()
+        enabledFeatureGroups.clear()
+        disabledFeatures.clear()
+        disabledFeatureGroups.clear()
 
         ManifoldScene.reset()
 
