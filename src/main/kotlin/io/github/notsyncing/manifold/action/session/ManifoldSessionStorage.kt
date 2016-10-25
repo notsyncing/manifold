@@ -31,10 +31,6 @@ class ManifoldSessionStorage : ManifoldSessionStorageProvider {
             return null
         }
 
-        if (r is TimedVar<*>) {
-            return r.value as T?
-        }
-
         return r as T?
     }
 
