@@ -193,39 +193,64 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 }
             }
 
-            interceptorContext.result = await(functor())
+            try {
+                interceptorContext.result = await(functor())
 
-            interceptors.forEach {
-                val (info, i) = it
+                interceptors.forEach {
+                    val (info, i) = it
 
-                interceptorContext.annotation = info.forAnnotation
-                i!!.after(interceptorContext)
+                    interceptorContext.annotation = info.forAnnotation
+                    i!!.after(interceptorContext)
+                }
+
+                await(afterExecution())
+            } catch (e: Exception) {
+                await(afterExecution(false))
+
+                if (e is SceneFailedException) {
+                    interceptorContext.result = e.data
+                } else {
+                    throw e
+                }
             }
-
-            await(afterExecution())
 
             return@async interceptorContext.result as R
         }
 
-        val r = await(functor())
+        var r: R
 
-        await(afterExecution())
+        try {
+            r = await(functor())
+
+            await(afterExecution())
+        } catch (e: Exception) {
+            await(afterExecution(false))
+
+            if (e is SceneFailedException) {
+                r = e.data as R
+            } else {
+                throw e
+            }
+        }
 
         return@async r
     }
 
-    private fun endTransaction() = async<Unit> {
+    private fun endTransaction(commit: Boolean = true) = async<Unit> {
         if (context.transaction != null) {
             if (!context.autoCommit) {
-                await(context.transaction!!.commit())
+                if (commit) {
+                    await(context.transaction!!.commit())
+                }
+
                 await(context.transaction!!.end())
             }
         }
     }
 
-    private fun afterExecution() = async<Unit> {
+    private fun afterExecution(commit: Boolean = true) = async<Unit> {
         if (context.transactionRefCount <= 0) {
-            await(endTransaction())
+            await(endTransaction(commit))
         }
     }
 }

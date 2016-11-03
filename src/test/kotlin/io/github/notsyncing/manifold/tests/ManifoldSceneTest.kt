@@ -25,6 +25,8 @@ class ManifoldSceneTest {
 
         TestSceneSecond.reset()
         TestSceneWithBackground.reset()
+        TestSceneFailedException.reset()
+        TestSceneTransaction.reset()
 
         Manifold.reset()
 
@@ -152,5 +154,76 @@ class ManifoldSceneTest {
             Assert.assertTrue(e.cause is RuntimeException)
             Assert.assertEquals("Here!", e.cause?.message)
         }
+    }
+
+    private fun createTransProviderForFailedException() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneFailedException.add(TestSceneWithBackground.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneFailedException.add(TestSceneWithBackground.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneFailedException.add(TestSceneWithBackground.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testSceneFailedExceptionInStage() {
+        createTransProviderForFailedException()
+
+        val r = Manifold.run(TestSceneFailedException()).get()
+        Assert.assertEquals("Failed!", r)
+
+        val expected = arrayOf(TestSceneFailedException.SCENE_START, TestSceneFailedException.TRANS_START,
+                TestSceneFailedException.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneFailedException.list.toTypedArray())
+    }
+
+    private fun createTransProvider() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransaction.add(TestSceneWithBackground.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransaction.add(TestSceneWithBackground.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneTransaction.add(TestSceneWithBackground.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testSceneWithTransaction() {
+        createTransProvider()
+
+        val r = Manifold.run(TestSceneTransaction()).get()
+        Assert.assertEquals("Hello!", r)
+
+        val expected = arrayOf(TestSceneTransaction.SCENE_START, TestSceneTransaction.TRANS_START,
+                TestSceneTransaction.SCENE_END, TestSceneTransaction.TRANS_COMMIT,
+                TestSceneTransaction.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneTransaction.list.toTypedArray())
     }
 }

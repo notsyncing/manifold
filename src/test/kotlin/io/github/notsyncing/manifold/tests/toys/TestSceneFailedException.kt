@@ -1,10 +1,12 @@
 package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.action.SceneFailedException
+import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import kotlinx.coroutines.async
 import java.util.*
 
-class TestSceneTransaction(val useTrans: Boolean = true) : ManifoldScene<String>(enableEventNode = false) {
+class TestSceneFailedException : ManifoldScene<String> {
     companion object {
         const val SCENE_START = 1
         const val SCENE_END = 3
@@ -25,17 +27,17 @@ class TestSceneTransaction(val useTrans: Boolean = true) : ManifoldScene<String>
         }
     }
 
+    constructor() : super(enableEventNode = false)
+
+    constructor(event: ManifoldEvent) : super(event)
+
     override fun stage() = async<String> {
-        if (useTrans) {
-            useTransaction()
-        }
+        useTransaction()
 
         add(SCENE_START)
 
-        await(m(TestAction()))
+        await(m(TestDbActionSimple()))
 
-        add(SCENE_END)
-
-        return@async "Hello!"
+        throw SceneFailedException("Failed!")
     }
 }
