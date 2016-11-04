@@ -46,6 +46,10 @@ class ManifoldActionTest {
                     override fun end(): CompletableFuture<Void> {
                         return CompletableFuture.completedFuture(null)
                     }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        return CompletableFuture.completedFuture(null)
+                    }
                 }
             }
         }

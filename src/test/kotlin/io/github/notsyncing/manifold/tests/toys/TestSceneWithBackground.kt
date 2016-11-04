@@ -12,8 +12,11 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
         const val TRANS_START = 4
         const val TRANS_COMMIT = 5
         const val TRANS_END = 6
+        const val TRANS_ROLLBACK = 7
+        const val RUN_BG_EXCEPTION = 8
 
         val list = ArrayList<Int>()
+        var ex: Throwable? = null
 
         fun add(i: Int) {
             synchronized(list) {
@@ -23,13 +26,16 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
 
         fun reset() {
             list.clear()
+            ex = null
         }
     }
 
     private var keepTrans: Boolean = false
+    private var throwException: Boolean = false
 
-    constructor(keepTrans: Boolean) : this() {
+    constructor(keepTrans: Boolean, throwException: Boolean = false) : this() {
         this.keepTrans = keepTrans
+        this.throwException = throwException
     }
 
     override fun stage() = async<String> {
@@ -39,10 +45,18 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
 
         await(m(TestDbActionSimple()))
 
-        runInBackground(keepTrans) {
+        runInBackground(keepTrans, {
             Thread.sleep(500)
+
+            if (throwException) {
+                throw RuntimeException("test")
+            }
+
             add(RUN_BG_END)
-        }
+        }, {
+            add(RUN_BG_EXCEPTION)
+            ex = it
+        })
 
         add(SCENE_END)
 

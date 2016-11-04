@@ -5,5 +5,6 @@ import java.util.concurrent.CompletableFuture
 abstract class ManifoldTransaction<T>(var body: T) {
     abstract fun begin(withTransaction: Boolean = false): CompletableFuture<Void>
     abstract fun commit(endTransaction: Boolean = true): CompletableFuture<Void>
+    abstract fun rollback(endTransaction: Boolean = true): CompletableFuture<Void>
     abstract fun end(): CompletableFuture<Void>
 }

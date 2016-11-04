@@ -114,6 +114,11 @@ class ManifoldSceneTest {
                         TestSceneWithBackground.add(TestSceneWithBackground.TRANS_END)
                         return CompletableFuture.completedFuture(null)
                     }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneWithBackground.add(TestSceneWithBackground.TRANS_ROLLBACK)
+                        return CompletableFuture.completedFuture(null)
+                    }
                 }
             }
         }
@@ -129,6 +134,22 @@ class ManifoldSceneTest {
         val expected = arrayOf(TestSceneWithBackground.SCENE_START, TestSceneWithBackground.TRANS_START,
                 TestSceneWithBackground.SCENE_END, TestSceneWithBackground.RUN_BG_END,
                 TestSceneWithBackground.TRANS_COMMIT, TestSceneWithBackground.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneWithBackground.list.toTypedArray())
+    }
+
+    @Test
+    fun testRunInBackgroundWithTransAndException() {
+        createTransProviderForBackground()
+        Manifold.run(TestSceneWithBackground(keepTrans = true, throwException = true), "test_bg_session_exp")
+
+        Thread.sleep(1000)
+
+        Assert.assertEquals("test", TestSceneWithBackground.ex?.message)
+
+        val expected = arrayOf(TestSceneWithBackground.SCENE_START, TestSceneWithBackground.TRANS_START,
+                TestSceneWithBackground.SCENE_END, TestSceneWithBackground.TRANS_ROLLBACK,
+                TestSceneWithBackground.RUN_BG_EXCEPTION, TestSceneWithBackground.TRANS_COMMIT,
+                TestSceneWithBackground.TRANS_END)
         Assert.assertArrayEquals(expected, TestSceneWithBackground.list.toTypedArray())
     }
 
@@ -174,6 +195,10 @@ class ManifoldSceneTest {
                         TestSceneFailedException.add(TestSceneWithBackground.TRANS_END)
                         return CompletableFuture.completedFuture(null)
                     }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        return CompletableFuture.completedFuture(null)
+                    }
                 }
             }
         }
@@ -207,6 +232,10 @@ class ManifoldSceneTest {
 
                     override fun end(): CompletableFuture<Void> {
                         TestSceneTransaction.add(TestSceneWithBackground.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
                         return CompletableFuture.completedFuture(null)
                     }
                 }

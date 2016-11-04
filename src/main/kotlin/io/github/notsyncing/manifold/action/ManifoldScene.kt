@@ -102,12 +102,29 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
         await(context.transaction!!.commit(false))
     }
 
-    protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit) {
+    protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit,
+                                  onException: ((Exception) -> Unit)? = null): CompletableFuture<Unit> {
         if (keepTransaction) {
             context.transactionRefCount++
         }
 
-        CompletableFuture.runAsync(Runnable { func() }, Manifold.sceneBgWorkerPool).thenCompose {
+        val f = CompletableFuture<Unit>()
+        var ex: Exception? = null
+
+        CompletableFuture.runAsync(Runnable {
+            try {
+                func()
+            } catch (e: Exception) {
+                context.transaction!!.rollback(false).get()
+                ex = e
+            }
+        }, Manifold.sceneBgWorkerPool).thenCompose {
+            if (ex != null) {
+                if (onException != null) {
+                    onException(ex!!)
+                }
+            }
+
             if (keepTransaction) {
                 context.transactionRefCount--
 
@@ -117,7 +134,18 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
             }
 
             return@thenCompose CompletableFuture.completedFuture(Unit)
+        }.thenAccept {
+            if (ex == null) {
+                f.complete(it)
+            } else {
+                f.completeExceptionally(ex)
+            }
+        }.exceptionally {
+            f.completeExceptionally(it.cause)
+            return@exceptionally null
         }
+
+        return f
     }
 
     open fun init() {
@@ -244,6 +272,14 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
                 }
 
                 await(context.transaction!!.end())
+            }
+        }
+    }
+
+    protected fun rollbackTransaction() = async<Unit> {
+        if (context.transaction != null) {
+            if (!context.autoCommit) {
+                await(context.transaction!!.rollback(false))
             }
         }
     }
