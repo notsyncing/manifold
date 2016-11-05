@@ -14,10 +14,9 @@ import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import io.github.notsyncing.manifold.feature.Feature
+import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
-import io.vertx.core.impl.ConcurrentHashSet
 import java.io.InvalidClassException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
@@ -38,14 +37,19 @@ object Manifold {
 
     val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
 
-    var enableFeatureManagement = true
+    val features = FeatureManager()
 
-    val enabledFeatures = ConcurrentHashSet<String>()
-    val enabledFeatureGroups = ConcurrentHashSet<String>()
-    val disabledFeatures = ConcurrentHashSet<String>()
-    val disabledFeatureGroups = ConcurrentHashSet<String>()
+    var enableFeatureManagement: Boolean
+        get() = features.enableFeatureManagement
+        set(value) {
+            features.enableFeatureManagement = value
+        }
 
-    var featurePublisher: FeaturePublisher? = null
+    var featurePublisher: FeaturePublisher?
+        get() = features.featurePublisher
+        set(value) {
+            features.featurePublisher = value
+        }
 
     fun init() {
         if (dependencyProvider == null) {
@@ -63,70 +67,13 @@ object Manifold {
         processInterceptors()
     }
 
-    inline fun <reified T: AuthenticateInformationProvider> authInfoProvider(): Manifold {
-        authInfoProvider = dependencyProvider!!.get(T::class.java)
-        return this
-    }
-
-    fun enableFeatures(vararg features: String) {
-        features.forEach { enabledFeatures.add(it) }
-    }
-
-    fun disableFeatures(vararg features: String) {
-        features.forEach {
-            enabledFeatures.remove(it)
-            disabledFeatures.add(it)
-        }
-    }
-
-    fun enableFeatureGroups(vararg featureGroups: String) {
-        featureGroups.forEach { enabledFeatureGroups.add(it) }
-    }
-
-    fun disableFeatureGroups(vararg featureGroups: String) {
-        featureGroups.forEach {
-            enabledFeatureGroups.remove(it)
-            disabledFeatureGroups.add(it)
-        }
-    }
-
-    fun <T: ManifoldScene<*>> isFeatureEnabled(sceneClass: Class<T>): Boolean {
-        if (!enableFeatureManagement) {
-            return true
-        }
-
-        val featureAnno = sceneClass.getAnnotation(Feature::class.java)
-
-        if (featureAnno == null) {
-            return false
-        }
-
-        if (disabledFeatures.contains(featureAnno.value)) {
-            return false
-        }
-
-        if (featureAnno.groups.any { disabledFeatureGroups.contains(it) }) {
-            return false
-        }
-
-        if (enabledFeatures.contains(featureAnno.value)) {
-            return true
-        }
-
-        if (featureAnno.groups.any { enabledFeatureGroups.contains(it) }) {
-            return true
-        }
-
-        return false
-    }
-
     private fun processScenes() {
         dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
             if (Modifier.isAbstract(it.modifiers)) {
                 return@getAllSubclasses
             }
 
-            if (!isFeatureEnabled(it)) {
+            if (!features.isFeatureEnabled(it)) {
                 return@getAllSubclasses
             }
 
@@ -136,9 +83,7 @@ object Manifold {
                 e.printStackTrace()
             }
 
-            if (featurePublisher != null) {
-                featurePublisher!!.publishFeature(it)
-            }
+            features.publishFeature(it)
         }
     }
 
@@ -179,10 +124,7 @@ object Manifold {
 
         interceptors.reset()
 
-        enabledFeatures.clear()
-        enabledFeatureGroups.clear()
-        disabledFeatures.clear()
-        disabledFeatureGroups.clear()
+        features.reset()
 
         ManifoldScene.reset()
 
