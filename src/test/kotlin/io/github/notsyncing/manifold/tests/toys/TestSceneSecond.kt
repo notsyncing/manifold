@@ -25,7 +25,7 @@ class TestSceneSecond : ManifoldScene<String> {
         }
     }
 
-    constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
+    constructor() : super(enableEventNode = true, eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
 
     constructor(event: ManifoldEvent) : super(event)
 
@@ -36,6 +36,8 @@ class TestSceneSecond : ManifoldScene<String> {
     }
 
     override fun init() {
+        super.init()
+
         awakeOnEvent(TestEvent.TestB)
     }
 

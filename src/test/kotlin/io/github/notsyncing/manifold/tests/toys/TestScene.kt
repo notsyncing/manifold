@@ -20,11 +20,13 @@ class TestScene : ManifoldScene<String> {
     @AutoProvide
     lateinit var testManager2: TestManager
 
-    constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
+    constructor() : super(enableEventNode = true, eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
 
     constructor(event: ManifoldEvent) : super(event)
 
     override fun init() {
+        super.init()
+
         awakeOnEvent(TestEvent.TestA)
 
         initExecuted = true

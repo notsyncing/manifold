@@ -36,6 +36,10 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
     init {
         DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
+
+        if (enableEventNode) {
+            eventNode = eventNodes[this.javaClass as Class<ManifoldScene<*>>]
+        }
     }
 
     constructor(event: ManifoldEvent) : this() {
@@ -47,12 +51,20 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     }
 
     protected fun awakeOnEvent(event: String) {
+        if (eventNode == null) {
+            throw IllegalAccessException("Scene ${this.javaClass} wants to be awaken on event $event, but it has no event node!")
+        }
+
         eventNode?.on(event) {
             Manifold.run(this.javaClass, it, it.sessionId)
         }
     }
 
     protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean = false): CompletableFuture<ManifoldEvent?> {
+        if (eventNode == null) {
+            throw IllegalAccessException("Scene ${this.javaClass} wants to transition to $targetEventGroup with event $event, but it has no event node!")
+        }
+
         val e = ManifoldEvent(event, data)
         e.sessionId = m.sessionIdentifier ?: ""
 
