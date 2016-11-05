@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.interceptors.InterceptorException
 import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
 import io.github.notsyncing.manifold.tests.toys.*
 import org.junit.After
@@ -41,7 +42,7 @@ class ManifoldInterceptorTest {
         try {
             Manifold.run(TestActionSimple()).get()
         } catch (e: Exception) {
-            Assert.assertTrue(e.cause is InterruptedException)
+            Assert.assertTrue(e.cause is InterceptorException)
         }
 
         Assert.assertNotNull(TestActionInterceptor.context)
@@ -82,7 +83,7 @@ class ManifoldInterceptorTest {
         try {
             Manifold.run(TestSceneSimple()).get()
         } catch (e: Exception) {
-            Assert.assertTrue(e.cause is InterruptedException)
+            Assert.assertTrue(e.cause is InterceptorException)
         }
 
         Assert.assertNotNull(TestSceneInterceptor.context)
