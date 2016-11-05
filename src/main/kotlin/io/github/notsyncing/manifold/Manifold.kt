@@ -73,18 +73,10 @@ object Manifold {
                 return@getAllSubclasses
             }
 
-            if (!features.isFeatureEnabled(it)) {
-                return@getAllSubclasses
-            }
-
-            try {
-                it.newInstance().init()
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            features.publishFeature(it)
+            features.registerFeature(it)
         }
+
+        features.publishFeatures()
     }
 
     private fun processInterceptors() {
@@ -124,7 +116,7 @@ object Manifold {
 
         interceptors.reset()
 
-        features.reset()
+        features.destroy()
 
         ManifoldScene.reset()
 

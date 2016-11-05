@@ -14,9 +14,9 @@ import kotlinx.coroutines.async
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
-abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
-                                eventNodeId: String = "",
-                                eventNodeGroups: Array<String> = emptyArray(),
+abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
+                                private val eventNodeId: String = "",
+                                private val eventNodeGroups: Array<String> = emptyArray(),
                                 val context: SceneContext = SceneContext()) {
     protected var event: ManifoldEvent? = null
     protected var eventNode: ManifoldEventNode? = null
@@ -35,20 +35,7 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
     }
 
     init {
-        val c = this.javaClass as Class<ManifoldScene<*>>
-
         DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
-
-        if (enableEventNode) {
-            if (eventNodes.containsKey(c)) {
-                eventNode = eventNodes[c]
-            } else {
-                eventNode = ManifoldEventBus.register(eventNodeId, *eventNodeGroups)
-                eventNodes[c] = eventNode!!
-
-                awakeOnEvent(InternalEvent.TransitionToScene)
-            }
-        }
     }
 
     constructor(event: ManifoldEvent) : this() {
@@ -150,7 +137,25 @@ abstract class ManifoldScene<R>(enableEventNode: Boolean = true,
     }
 
     open fun init() {
+        val c = this.javaClass as Class<ManifoldScene<*>>
 
+        if (enableEventNode) {
+            if (eventNodes.containsKey(c)) {
+                eventNode = eventNodes[c]
+            } else {
+                eventNode = ManifoldEventBus.register(eventNodeId, *eventNodeGroups)
+                eventNodes[c] = eventNode!!
+
+                awakeOnEvent(InternalEvent.TransitionToScene)
+            }
+        }
+    }
+
+    open fun destroy() {
+        if (eventNode != null) {
+            ManifoldEventBus.unregister(eventNode!!)
+            eventNodes.remove(this.javaClass as Class<ManifoldScene<*>>)
+        }
     }
 
     abstract protected fun stage(): CompletableFuture<R>
