@@ -2,7 +2,10 @@ package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.action.*
-import io.github.notsyncing.manifold.action.interceptors.*
+import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
+import io.github.notsyncing.manifold.action.interceptors.Interceptor
+import io.github.notsyncing.manifold.action.interceptors.InterceptorManager
+import io.github.notsyncing.manifold.action.interceptors.SceneInterceptor
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
@@ -18,7 +21,6 @@ import io.vertx.core.impl.ConcurrentHashSet
 import java.io.InvalidClassException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -32,10 +34,7 @@ object Manifold {
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
 
-    val sceneInterceptors = ArrayList<Class<SceneInterceptor>>()
-    val sceneInterceptorMap = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<SceneInterceptorInfo>>()
-    val actionInterceptors = ArrayList<Class<ActionInterceptor>>()
-    val actionInterceptorMap = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<ActionInterceptorInfo>>()
+    val interceptors = InterceptorManager()
 
     val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
 
@@ -154,9 +153,9 @@ object Manifold {
             }
 
             if (SceneInterceptor::class.java.isAssignableFrom(c)) {
-                sceneInterceptors.add(c as Class<SceneInterceptor>)
+                interceptors.addSceneInterceptor(c as Class<SceneInterceptor>)
             } else if (ActionInterceptor::class.java.isAssignableFrom(c)) {
-                actionInterceptors.add(c as Class<ActionInterceptor>)
+                interceptors.addActionInterceptor(c as Class<ActionInterceptor>)
             } else {
                 throw InvalidClassException(c.canonicalName, "${c.canonicalName} is not an interceptor class")
             }
@@ -178,10 +177,7 @@ object Manifold {
         sceneTransitionConstructorCache.clear()
         sceneEventConstructorCache.clear()
 
-        sceneInterceptors.clear()
-        sceneInterceptorMap.clear()
-        actionInterceptors.clear()
-        actionInterceptorMap.clear()
+        interceptors.reset()
 
         enabledFeatures.clear()
         enabledFeatureGroups.clear()
