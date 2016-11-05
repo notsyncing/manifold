@@ -24,10 +24,6 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun <T> get(type: Class<T>, singleton: Boolean): T? {
-        if (singletons.containsKey(type)) {
-            return singletons[type] as T
-        }
-
         val config = configs[type]
 
         var t: Class<*> = type
@@ -36,12 +32,16 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             t = classMap[t]!!
         }
 
+        if (singletons.containsKey(t)) {
+            return singletons[t] as T
+        }
+
         var constructor: Constructor<*>? = constructorMap[t]
 
         if (constructor == null) {
-            if (type.constructors.size > 1) {
+            if (t.constructors.size > 1) {
                 constructor = t.constructors.firstOrNull { it.isAnnotationPresent(AutoProvide::class.java) }
-            } else if (type.constructors.size == 1) {
+            } else if (t.constructors.size == 1) {
                 constructor = t.constructors.first()
             } else {
                 if (!keepQuietOnResolveFailure) {
@@ -79,9 +79,9 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
             o = constructor.newInstance(*params.toArray()) as T
         }
 
-        if ((type.isAnnotationPresent(ProvideAsSingleton::class.java)) || (singleton)
+        if ((t.isAnnotationPresent(ProvideAsSingleton::class.java)) || (singleton)
                 || (config?.singleton == true)) {
-            singletons.put(type, o as Any)
+            singletons.put(t, o as Any)
         }
 
         return o
