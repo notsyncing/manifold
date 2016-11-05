@@ -8,6 +8,8 @@ import org.junit.Before
 import org.junit.Test
 
 class ManifoldFeatureTest {
+    private val features = Manifold.features
+    
     @Before
     fun setUp() {
         Manifold.reset()
@@ -28,19 +30,19 @@ class ManifoldFeatureTest {
 
     @Test
     fun testEnabledFeature() {
-        Manifold.enableFeatures(TestFeatures.Feature1)
+        features.enableFeatures(TestFeatures.Feature1)
         Manifold.init()
 
-        Assert.assertTrue(Manifold.isFeatureEnabled(TestFeatureScene1::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene1::class.java))
         Assert.assertTrue(TestFeatureScene1.initExecuted)
     }
 
     @Test
     fun testDisabledFeature() {
-        Manifold.disableFeatures(TestFeatures.Feature1)
+        features.disableFeatures(TestFeatures.Feature1)
         Manifold.init()
 
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene1::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene1::class.java))
         Assert.assertFalse(TestFeatureScene1.initExecuted)
     }
 
@@ -48,18 +50,18 @@ class ManifoldFeatureTest {
     fun testNotEnabledFeature() {
         Manifold.init()
 
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene1::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene1::class.java))
         Assert.assertFalse(TestFeatureScene1.initExecuted)
     }
 
     @Test
     fun testEnabledFeatureGroup() {
-        Manifold.enableFeatureGroups(TestFeatures.FeatureGroup1)
+        features.enableFeatureGroups(TestFeatures.FeatureGroup1)
         Manifold.init()
 
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene1::class.java))
-        Assert.assertTrue(Manifold.isFeatureEnabled(TestFeatureScene2::class.java))
-        Assert.assertTrue(Manifold.isFeatureEnabled(TestFeatureScene3::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene1::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene2::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene3::class.java))
 
         Assert.assertFalse(TestFeatureScene1.initExecuted)
         Assert.assertTrue(TestFeatureScene2.initExecuted)
@@ -68,12 +70,12 @@ class ManifoldFeatureTest {
 
     @Test
     fun testDisabledFeatureGroup() {
-        Manifold.disableFeatureGroups(TestFeatures.FeatureGroup1)
+        features.disableFeatureGroups(TestFeatures.FeatureGroup1)
         Manifold.init()
 
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene1::class.java))
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene2::class.java))
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene3::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene1::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene2::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene3::class.java))
 
         Assert.assertFalse(TestFeatureScene1.initExecuted)
         Assert.assertFalse(TestFeatureScene2.initExecuted)
@@ -84,8 +86,8 @@ class ManifoldFeatureTest {
     fun testNotEnabledFeatureGroup() {
         Manifold.init()
 
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene2::class.java))
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene3::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene2::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene3::class.java))
 
         Assert.assertFalse(TestFeatureScene2.initExecuted)
         Assert.assertFalse(TestFeatureScene3.initExecuted)
@@ -93,13 +95,13 @@ class ManifoldFeatureTest {
 
     @Test
     fun testDisabledSubFeatureGroup() {
-        Manifold.enableFeatureGroups(TestFeatures.FeatureUpperGroup1)
-        Manifold.disableFeatureGroups(TestFeatures.FeatureGroup3)
+        features.enableFeatureGroups(TestFeatures.FeatureUpperGroup1)
+        features.disableFeatureGroups(TestFeatures.FeatureGroup3)
         Manifold.init()
 
-        Assert.assertTrue(Manifold.isFeatureEnabled(TestFeatureScene4::class.java))
-        Assert.assertTrue(Manifold.isFeatureEnabled(TestFeatureScene5::class.java))
-        Assert.assertFalse(Manifold.isFeatureEnabled(TestFeatureScene6::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene4::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene5::class.java))
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene6::class.java))
 
         Assert.assertTrue(TestFeatureScene4.initExecuted)
         Assert.assertTrue(TestFeatureScene5.initExecuted)
