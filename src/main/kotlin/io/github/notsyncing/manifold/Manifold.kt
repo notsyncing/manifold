@@ -141,6 +141,10 @@ object Manifold {
     }
 
     fun <R> run(scene: ManifoldScene<R>, sessionIdentifier: String? = null): CompletableFuture<R> {
+        if (!features.isFeatureEnabled(scene.javaClass)) {
+            throw IllegalAccessException("Feature scene $scene is not enabled!")
+        }
+
         return run(sessionIdentifier, scene.context) { m ->
             scene.m = m
             scene.execute()
@@ -148,6 +152,10 @@ object Manifold {
     }
 
     fun <R> run(scene: Class<ManifoldScene<R>>, event: ManifoldEvent, sessionIdentifier: String? = null): CompletableFuture<R> {
+        if (!features.isFeatureEnabled(scene)) {
+            throw IllegalAccessException("Feature scene $scene is not enabled!")
+        }
+
         var constructor: Constructor<ManifoldScene<*>>?
         val params: Array<Any?>
 

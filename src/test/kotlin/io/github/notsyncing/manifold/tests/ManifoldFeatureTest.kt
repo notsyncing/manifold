@@ -119,4 +119,38 @@ class ManifoldFeatureTest {
         Assert.assertFalse(TestFeatureScene7.initExecuted)
         Assert.assertTrue(TestFeatureScene8.initExecuted)
     }
+
+    @Test
+    fun testRunEnabledScene() {
+        features.enableFeatures(TestFeatures.Feature1)
+        Manifold.init()
+
+        val r = Manifold.run(TestFeatureScene1()).get()
+        Assert.assertEquals("Feature1", r)
+    }
+
+    @Test
+    fun testRunNotEnabledScene() {
+        Manifold.init()
+
+        try {
+            Manifold.run(TestFeatureScene1()).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e is IllegalAccessException)
+        }
+    }
+
+    @Test
+    fun testRunDisabledScene() {
+        features.disableFeatures(TestFeatures.Feature1)
+        Manifold.init()
+
+        try {
+            Manifold.run(TestFeatureScene1()).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e is IllegalAccessException)
+        }
+    }
 }
