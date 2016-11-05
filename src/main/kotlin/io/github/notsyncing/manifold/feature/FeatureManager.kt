@@ -121,7 +121,7 @@ class FeatureManager {
 
     fun <T: ManifoldScene<*>> isFeatureEnabled(sceneClass: Class<T>): Boolean {
         if (featurePublished) {
-            return isFeatureEnabled(allFeatures[sceneClass as Class<ManifoldScene<*>>]!!)
+            return isFeatureEnabled(allFeatures[sceneClass as Class<ManifoldScene<*>>]!!) && availableFeatures.any { it.sceneClass == sceneClass }
         } else {
             return isFeatureEnabled(FeatureInfo.from(sceneClass as Class<ManifoldScene<*>>))
         }

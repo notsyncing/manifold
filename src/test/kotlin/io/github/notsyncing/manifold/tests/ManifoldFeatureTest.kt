@@ -107,4 +107,16 @@ class ManifoldFeatureTest {
         Assert.assertTrue(TestFeatureScene5.initExecuted)
         Assert.assertFalse(TestFeatureScene6.initExecuted)
     }
+
+    @Test
+    fun testFeatureSuccessor() {
+        features.enableFeatureGroups(TestFeatures.FeatureGroup4)
+        Manifold.init()
+
+        Assert.assertFalse(features.isFeatureEnabled(TestFeatureScene7::class.java))
+        Assert.assertTrue(features.isFeatureEnabled(TestFeatureScene8::class.java))
+
+        Assert.assertFalse(TestFeatureScene7.initExecuted)
+        Assert.assertTrue(TestFeatureScene8.initExecuted)
+    }
 }
