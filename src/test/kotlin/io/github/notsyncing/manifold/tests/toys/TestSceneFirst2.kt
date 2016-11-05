@@ -10,7 +10,7 @@ class TestSceneFirst2 : ManifoldScene<String> {
         const val EventNodeGroup = "test.scene.group.first"
     }
 
-    constructor() : super(eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
+    constructor() : super(enableEventNode = true, eventNodeId = EventNodeId, eventNodeGroups = arrayOf(EventNodeGroup))
 
     constructor(event: ManifoldEvent) : super(event)
 
