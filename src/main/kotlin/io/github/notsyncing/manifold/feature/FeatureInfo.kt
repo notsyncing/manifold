@@ -2,8 +2,8 @@ package io.github.notsyncing.manifold.feature
 
 import io.github.notsyncing.manifold.action.ManifoldScene
 
-class FeatureInfo private constructor(val sceneClass: Class<ManifoldScene<*>>, val name: String,
-                                      val groups: Array<String> = arrayOf(), val successorOf: String = "") {
+class FeatureInfo(val sceneClass: Class<ManifoldScene<*>>, val name: String,
+                  val groups: Array<String> = arrayOf(), val successorOf: String = "") {
     companion object {
         fun from(sceneClass: Class<ManifoldScene<*>>): FeatureInfo {
             val f = sceneClass.getAnnotation(Feature::class.java)

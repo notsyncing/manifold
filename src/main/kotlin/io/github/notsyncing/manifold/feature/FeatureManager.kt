@@ -35,18 +35,26 @@ class FeatureManager {
     }
 
     fun registerFeature(s: Class<ManifoldScene<*>>) {
-        if (!s.isAnnotationPresent(Feature::class.java)) {
-            return
-        }
+        if (enableFeatureManagement) {
+            if (!s.isAnnotationPresent(Feature::class.java)) {
+                return
+            }
 
-        val info = FeatureInfo.from(s)
-        allFeatures[s] = info
+            val info = FeatureInfo.from(s)
+            allFeatures[s] = info
+        } else {
+            allFeatures[s] = FeatureInfo(s, "")
+        }
     }
 
     fun initEnabledFeatures() {
-        allFeatures.filterValues { isFeatureEnabled(it) }
-                .filterValues { v -> !allFeatures.any { it.value.successorOf == v.name } }
-                .forEach { c, info -> availableFeatures.add(info) }
+        if (enableFeatureManagement) {
+            allFeatures.filterValues { isFeatureEnabled(it) }
+                    .filterValues { v -> !allFeatures.any { it.value.successorOf == v.name } }
+                    .forEach { c, info -> availableFeatures.add(info) }
+        } else {
+            allFeatures.forEach { availableFeatures.add(it.value) }
+        }
     }
 
     fun enableFeatures(vararg features: String) {

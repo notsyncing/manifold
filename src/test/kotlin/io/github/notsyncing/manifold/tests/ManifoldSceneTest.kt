@@ -28,6 +28,7 @@ class ManifoldSceneTest {
         TestSceneFailedException.reset()
         TestSceneTransaction.reset()
 
+        Manifold.enableFeatureManagement = false
         Manifold.reset()
 
         ManifoldEventBus.debug = true
