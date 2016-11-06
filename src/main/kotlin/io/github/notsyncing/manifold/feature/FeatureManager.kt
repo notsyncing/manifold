@@ -143,7 +143,9 @@ class FeatureManager {
                 e.printStackTrace()
             }
 
-            publishFeature(it.sceneClass)
+            if (!it.internal) {
+                publishFeature(it.sceneClass)
+            }
         }
 
         featurePublished = true
