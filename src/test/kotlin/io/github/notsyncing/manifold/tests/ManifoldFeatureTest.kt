@@ -169,7 +169,7 @@ class ManifoldFeatureTest {
         features.enableFeatures(TestFeatures.Feature1)
 
         FeatureAuthenticator.configure {
-            lets map TestModule.ModuleA type TestAuth.View to TestFeatures.Feature1
+            our feature TestFeatures.Feature1 needs TestModule.ModuleA type TestAuth.View
         }
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
@@ -187,8 +187,8 @@ class ManifoldFeatureTest {
         features.enableFeatures(TestFeatures.Feature1, TestFeatures.Feature2)
 
         FeatureAuthenticator.configure {
-            lets map TestModule.ModuleA type TestAuth.View to TestFeatures.Feature1
-            lets map TestModule.ModuleA type TestAuth.Edit to TestFeatures.Feature2
+            our feature TestFeatures.Feature1 needs TestModule.ModuleA type TestAuth.View
+            our feature TestFeatures.Feature2 needs TestModule.ModuleA type TestAuth.Edit
         }
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {

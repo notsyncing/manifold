@@ -13,36 +13,39 @@ class FeatureAuthenticator : SceneAuthenticator() {
     companion object {
         private val featureAuthMap = ConcurrentHashMap<String, Pair<Enum<*>, Enum<*>>>()
 
-        class FeatureAuthMapItem(val authModule: Enum<*>) {
+        class FeatureAuthMapItem(val features: Array<String>) {
+            lateinit var authModule: Enum<*>
             lateinit var authType: Enum<*>
-            lateinit var feature: String
 
-            infix fun type(authType: Enum<*>): FeatureAuthMapItem {
-                this.authType = authType
+            infix fun needs(module: Enum<*>): FeatureAuthMapItem {
+                this.authModule = module
                 return this
             }
 
-            infix fun to(feature: String): FeatureAuthMapItem {
-                this.feature = feature
-                featureAuthMap[feature] = Pair(authModule, authType)
-                return this
-            }
+            infix fun type(type: Enum<*>): FeatureAuthMapItem {
+                this.authType = type
 
-            infix fun and(feature: String): FeatureAuthMapItem {
-                featureAuthMap[feature] = Pair(authModule, authType)
+                for (f in features) {
+                    featureAuthMap[f] = Pair(authModule, authType)
+                }
+
                 return this
             }
         }
 
         class FeatureAuthBuilder {
             companion object {
-                val lets = FeatureAuthBuilder()
+                val our = FeatureAuthBuilder()
             }
 
-            val lets = Companion.lets
+            val our = Companion.our
 
-            infix fun map(authModule: Enum<*>): FeatureAuthMapItem {
-                return FeatureAuthMapItem(authModule)
+            infix fun feature(feature: String): FeatureAuthMapItem {
+                return FeatureAuthMapItem(arrayOf(feature))
+            }
+
+            infix fun features(features: Array<String>): FeatureAuthMapItem {
+                return FeatureAuthMapItem(features)
             }
         }
 
