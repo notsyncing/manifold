@@ -1,13 +1,14 @@
-package io.github.notsyncing.manifold.tests.toys
+package io.github.notsyncing.manifold.tests.toys.interceptor
 
 import io.github.notsyncing.manifold.action.interceptors.*
+import io.github.notsyncing.manifold.tests.toys.TestSceneSimple
 import java.util.concurrent.CompletableFuture
 
-@ForActions(TestActionSimple::class)
-@ForActionsAnnotatedWith(TestActionInterceptorAnno::class)
-class TestActionInterceptor : ActionInterceptor() {
+@ForScenes(TestSceneSimple::class)
+@ForScenesAnnotatedWith(TestSceneInterceptorAnno::class)
+class TestSceneInterceptor : SceneInterceptor() {
     companion object {
-        var context: ActionInterceptorContext? = null
+        var context: SceneInterceptorContext? = null
         var beforeCalled = false
         var afterCalled = false
 
@@ -24,9 +25,9 @@ class TestActionInterceptor : ActionInterceptor() {
         }
     }
 
-    override fun before(context: ActionInterceptorContext): CompletableFuture<Unit> {
-        TestActionInterceptor.context = context
-        TestActionInterceptor.beforeCalled = true
+    override fun before(context: SceneInterceptorContext): CompletableFuture<Unit> {
+        Companion.context = context
+        beforeCalled = true
 
         if (makeStop) {
             context.interceptorResult = InterceptorResult.Stop
@@ -35,9 +36,9 @@ class TestActionInterceptor : ActionInterceptor() {
         return super.before(context)
     }
 
-    override fun after(context: ActionInterceptorContext): CompletableFuture<Unit> {
-        TestActionInterceptor.context = context
-        TestActionInterceptor.afterCalled = true
+    override fun after(context: SceneInterceptorContext): CompletableFuture<Unit> {
+        Companion.context = context
+        afterCalled = true
 
         if (changeResult) {
             context.result = "Changed"

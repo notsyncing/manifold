@@ -21,6 +21,8 @@ class FeatureManager {
     private var featurePublished = false
 
     fun destroy() {
+        FeatureAuthenticator.reset()
+
         enabledFeatures.clear()
         enabledFeatureGroups.clear()
         disabledFeatures.clear()
@@ -120,10 +122,16 @@ class FeatureManager {
     }
 
     fun <T: ManifoldScene<*>> isFeatureEnabled(sceneClass: Class<T>): Boolean {
+        val c = sceneClass as Class<ManifoldScene<*>>
+
         if (featurePublished) {
-            return isFeatureEnabled(allFeatures[sceneClass as Class<ManifoldScene<*>>]!!) && availableFeatures.any { it.sceneClass == sceneClass }
+            if (!allFeatures.containsKey(c)) {
+                return true
+            }
+
+            return isFeatureEnabled(allFeatures[c]!!) && availableFeatures.any { it.sceneClass == sceneClass }
         } else {
-            return isFeatureEnabled(FeatureInfo.from(sceneClass as Class<ManifoldScene<*>>))
+            return isFeatureEnabled(FeatureInfo.from(c))
         }
     }
 

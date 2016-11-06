@@ -3,7 +3,11 @@ package io.github.notsyncing.manifold.tests
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.InterceptorException
 import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
-import io.github.notsyncing.manifold.tests.toys.*
+import io.github.notsyncing.manifold.tests.toys.TestActionSimple
+import io.github.notsyncing.manifold.tests.toys.TestActionSimple2
+import io.github.notsyncing.manifold.tests.toys.TestSceneSimple
+import io.github.notsyncing.manifold.tests.toys.TestSceneSimple2
+import io.github.notsyncing.manifold.tests.toys.interceptor.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -119,5 +123,17 @@ class ManifoldInterceptorTest {
 
         Assert.assertNotNull(TestActionInterceptor.context)
         Assert.assertEquals(TestActionInterceptorAnno::class, TestActionInterceptor.context?.annotation?.annotationClass)
+    }
+
+    @Test
+    fun testSceneInterceptorForEveryScene() {
+        Manifold.run(TestSceneSimple()).get()
+
+        Assert.assertNotNull(TestGlobalSceneInterceptor.context)
+        Assert.assertTrue(TestGlobalSceneInterceptor.beforeCalled)
+        Assert.assertTrue(TestGlobalSceneInterceptor.afterCalled)
+        Assert.assertNull(TestGlobalSceneInterceptor.context?.annotation)
+        Assert.assertEquals("Hello!", TestGlobalSceneInterceptor.context?.result)
+        Assert.assertEquals(InterceptorResult.Continue, TestGlobalSceneInterceptor.context?.interceptorResult)
     }
 }

@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.tests.toys.interceptor.TestSceneInterceptorAnno
 import java.util.concurrent.CompletableFuture
 
 @TestSceneInterceptorAnno

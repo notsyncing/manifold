@@ -1,11 +1,21 @@
 package io.github.notsyncing.manifold.tests
 
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.doReturn
+import com.nhaarman.mockito_kotlin.mock
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.interceptors.InterceptorException
+import io.github.notsyncing.manifold.authenticate.AuthRole
+import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
+import io.github.notsyncing.manifold.authenticate.Permission
+import io.github.notsyncing.manifold.authenticate.PermissionState
+import io.github.notsyncing.manifold.feature.FeatureAuthenticator
 import io.github.notsyncing.manifold.tests.toys.features.*
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CompletableFuture
 
 class ManifoldFeatureTest {
     private val features = Manifold.features
@@ -151,6 +161,47 @@ class ManifoldFeatureTest {
             Assert.assertTrue(false)
         } catch (e: Exception) {
             Assert.assertTrue(e is IllegalAccessException)
+        }
+    }
+
+    @Test
+    fun testAuthFeaturePass() {
+        features.enableFeatures(TestFeatures.Feature1)
+
+        FeatureAuthenticator.configure {
+            lets map TestModule.ModuleA type TestAuth.View to TestFeatures.Feature1
+        }
+
+        Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
+            on { getRole(any<String>()) } doReturn CompletableFuture.completedFuture(AuthRole(permissions = arrayOf(Permission(TestModule.ModuleA, TestAuth.View, PermissionState.Allowed))))
+        }
+
+        Manifold.init()
+
+        val r = Manifold.run(TestFeatureScene1(), "").get()
+        Assert.assertEquals("Feature1", r)
+    }
+
+    @Test
+    fun testAuthFeatureDeny() {
+        features.enableFeatures(TestFeatures.Feature1, TestFeatures.Feature2)
+
+        FeatureAuthenticator.configure {
+            lets map TestModule.ModuleA type TestAuth.View to TestFeatures.Feature1
+            lets map TestModule.ModuleA type TestAuth.Edit to TestFeatures.Feature2
+        }
+
+        Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
+            on { getRole(any<String>()) } doReturn CompletableFuture.completedFuture(AuthRole(permissions = arrayOf(Permission(TestModule.ModuleA, TestAuth.View, PermissionState.Allowed))))
+        }
+
+        Manifold.init()
+
+        try {
+            val r = Manifold.run(TestFeatureScene2(), "").get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e.cause is InterceptorException)
         }
     }
 }

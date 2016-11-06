@@ -40,6 +40,11 @@ class InterceptorManager {
             }
 
             sceneInterceptors.forEach {
+                if (it.isAnnotationPresent(ForEveryScene::class.java)) {
+                    addToList(SceneInterceptorInfo(it, null))
+                    return@forEach
+                }
+
                 val forScenes = it.getAnnotation(ForScenes::class.java)
 
                 if (forScenes != null) {
