@@ -9,7 +9,6 @@ import java.util.concurrent.CompletableFuture
 
 abstract class SceneAuthenticator : SceneInterceptor() {
     companion object {
-        var treatNoIdAsPass = false
         var authOrder = arrayOf(AuthOrder.Role, AuthOrder.UpperGroup)
         var denyUndefinedPermissions = true
 
@@ -17,7 +16,6 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         lateinit var authTypeEnumClass: Class<Enum<*>>
 
         fun reset() {
-            treatNoIdAsPass = false
             authOrder = arrayOf(AuthOrder.Role, AuthOrder.UpperGroup)
             denyUndefinedPermissions = true
         }
@@ -38,19 +36,16 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
     override fun before(context: SceneInterceptorContext) = async<Unit> {
         val id = context.sceneContext.sessionIdentifier
+        var role: AuthRole?
 
         if (id == null) {
-            if (!treatNoIdAsPass) {
-                return@async context.stop(NoPermissionException("No role id provided", context))
-            }
-
-            return@async
+            role = AuthRole(permissions = emptyArray())
+        } else {
+            role = await(Manifold.authInfoProvider!!.getRole(id))
         }
 
-        val role = await(Manifold.authInfoProvider!!.getRole(id))
-
         if (role == null) {
-            return@async context.stop(NoPermissionException("Role $id not found", context))
+            role = AuthRole(permissions = emptyArray())
         }
 
         currentRole = role
