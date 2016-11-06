@@ -123,6 +123,11 @@ object Manifold {
         DependencyProviderUtils.reset()
     }
 
+    inline fun <reified T: AuthenticateInformationProvider> authInfoProvider(): Manifold {
+        authInfoProvider = dependencyProvider!!.get(T::class.java)
+        return this
+    }
+
     fun <R> run(action: ManifoldAction<R>): CompletableFuture<R> {
         try {
             return action.execute()
