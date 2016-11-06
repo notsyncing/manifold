@@ -27,6 +27,11 @@ class FeatureAuthenticator : SceneAuthenticator() {
                 featureAuthMap[feature] = Pair(authModule, authType)
                 return this
             }
+
+            infix fun and(feature: String): FeatureAuthMapItem {
+                featureAuthMap[feature] = Pair(authModule, authType)
+                return this
+            }
         }
 
         class FeatureAuthBuilder {
