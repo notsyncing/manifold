@@ -47,7 +47,7 @@ class FeatureAuthenticator : SceneAuthenticator() {
                 return FeatureAuthMapItem(arrayOf(feature))
             }
 
-            infix fun features(features: Array<String>): FeatureAuthMapItem {
+            infix fun feature(features: Array<String>): FeatureAuthMapItem {
                 return FeatureAuthMapItem(features)
             }
         }
