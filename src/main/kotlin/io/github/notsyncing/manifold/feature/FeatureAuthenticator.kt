@@ -5,6 +5,7 @@ import io.github.notsyncing.manifold.action.interceptors.ForEveryScene
 import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
 import io.github.notsyncing.manifold.authenticate.AuthRole
 import io.github.notsyncing.manifold.authenticate.SceneAuthenticator
+import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,6 +37,8 @@ class FeatureAuthenticator : SceneAuthenticator() {
         class FeatureAuthBuilder {
             companion object {
                 val our = FeatureAuthBuilder()
+
+                val login = SpecialAuth.LoginOnly
             }
 
             val our = Companion.our
@@ -73,6 +76,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
 
         if ((module == null) || (type == null)) {
             return context.pass()
+        }
+
+        if (module == SpecialAuth.LoginOnly) {
+            return if (role.roleId > 0) context.pass() else context.deny()
         }
 
         return context.checkPermission(module, type)
