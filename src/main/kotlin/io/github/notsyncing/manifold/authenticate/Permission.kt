@@ -12,6 +12,12 @@ class Permission(val module: Enum<*>,
 
                 return p
             }
+
+            infix fun type(types: Array<Enum<*>>): PermissionBuilderItem {
+                types.forEach { type(it) }
+
+                return this
+            }
         }
 
         class PermissionBuilder {
