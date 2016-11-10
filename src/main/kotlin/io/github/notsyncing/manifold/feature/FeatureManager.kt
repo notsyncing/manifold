@@ -1,6 +1,5 @@
 package io.github.notsyncing.manifold.feature
 
-import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.vertx.core.impl.ConcurrentHashSet
 import java.util.*
@@ -98,7 +97,7 @@ class FeatureManager {
     }
 
     fun isFeatureEnabled(info: FeatureInfo): Boolean {
-        if (!Manifold.enableFeatureManagement) {
+        if (!enableFeatureManagement) {
             return true
         }
 
@@ -122,6 +121,10 @@ class FeatureManager {
     }
 
     fun <T: ManifoldScene<*>> isFeatureEnabled(sceneClass: Class<T>): Boolean {
+        if (!enableFeatureManagement) {
+            return true
+        }
+
         val c = sceneClass as Class<ManifoldScene<*>>
 
         if (featurePublished) {
