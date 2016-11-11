@@ -18,7 +18,8 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                                 private val eventNodeId: String = "",
                                 private val eventNodeGroups: Array<String> = emptyArray(),
                                 val context: SceneContext = SceneContext()) {
-    private var succCond: ((R) -> Boolean)? = null
+    private var succCond1: ((R) -> Boolean)? = null
+    private var succCond2: (() -> R)? = null
 
     protected var event: ManifoldEvent? = null
     protected var eventNode: ManifoldEventNode? = null
@@ -203,10 +204,8 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
             try {
                 interceptorContext.result = await(functor())
 
-                if (succCond != null) {
-                    if (!succCond!!(interceptorContext.result as R)) {
-                        throw SceneFailedException(interceptorContext.result)
-                    }
+                if (!checkSuccessConditions(interceptorContext.result as R)) {
+                    throw SceneFailedException(interceptorContext.result)
                 }
 
                 interceptors.forEach {
@@ -235,10 +234,8 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         try {
             r = await(functor())
 
-            if (succCond != null) {
-                if (!succCond!!(r)) {
-                    throw SceneFailedException(r)
-                }
+            if (!checkSuccessConditions(r)) {
+                throw SceneFailedException(r)
             }
 
             await(afterExecution())
@@ -282,6 +279,24 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     }
 
     protected fun successOn(cond: (R) -> Boolean) {
-        succCond = cond
+        succCond1 = cond
+    }
+
+    protected fun successOn(cond: () -> R) {
+        succCond2 = cond
+    }
+
+    protected fun successOn(expected: R) {
+        succCond2 = { expected }
+    }
+
+    private fun checkSuccessConditions(r: R): Boolean {
+        if (succCond1 != null) {
+            return succCond1!!(r)
+        } else if (succCond2 != null) {
+            return succCond2!!() == r
+        }
+
+        return true
     }
 }

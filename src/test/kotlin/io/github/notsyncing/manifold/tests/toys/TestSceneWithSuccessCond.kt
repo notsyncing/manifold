@@ -38,7 +38,7 @@ class TestSceneWithSuccessCond : ManifoldScene<String> {
     }
 
     override fun stage() = async<String> {
-        successOn { pass }
+        successOn { s -> s == if (pass) "Hello!" else "" }
 
         useTransaction()
 
