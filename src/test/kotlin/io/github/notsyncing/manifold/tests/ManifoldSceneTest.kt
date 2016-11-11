@@ -27,6 +27,7 @@ class ManifoldSceneTest {
         TestSceneWithBackground.reset()
         TestSceneFailedException.reset()
         TestSceneTransaction.reset()
+        TestSceneWithSuccessCond.reset()
 
         Manifold.enableFeatureManagement = false
         Manifold.reset()
@@ -255,5 +256,58 @@ class ManifoldSceneTest {
                 TestSceneTransaction.SCENE_END, TestSceneTransaction.TRANS_COMMIT,
                 TestSceneTransaction.TRANS_END)
         Assert.assertArrayEquals(expected, TestSceneTransaction.list.toTypedArray())
+    }
+
+    private fun createTransProviderForSuccessCond() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.TRANS_ROLLBACK)
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testSceneWithSuccessConditionPass() {
+        createTransProviderForSuccessCond()
+
+        val r = Manifold.run(TestSceneWithSuccessCond(true)).get()
+        Assert.assertEquals("Hello!", r)
+
+        val expected = arrayOf(TestSceneWithSuccessCond.SCENE_START, TestSceneWithSuccessCond.TRANS_START,
+                TestSceneWithSuccessCond.SCENE_END, TestSceneWithSuccessCond.TRANS_COMMIT,
+                TestSceneWithSuccessCond.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneWithSuccessCond.list.toTypedArray())
+    }
+
+    @Test
+    fun testSceneWithSuccessConditionDeny() {
+        createTransProviderForSuccessCond()
+
+        val r = Manifold.run(TestSceneWithSuccessCond(false)).get()
+        Assert.assertEquals("Hello!", r)
+
+        val expected = arrayOf(TestSceneWithSuccessCond.SCENE_START, TestSceneWithSuccessCond.TRANS_START,
+                TestSceneWithSuccessCond.SCENE_END, TestSceneWithSuccessCond.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneWithSuccessCond.list.toTypedArray())
     }
 }

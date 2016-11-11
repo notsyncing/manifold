@@ -18,6 +18,8 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                                 private val eventNodeId: String = "",
                                 private val eventNodeGroups: Array<String> = emptyArray(),
                                 val context: SceneContext = SceneContext()) {
+    private var succCond: ((R) -> Boolean)? = null
+
     protected var event: ManifoldEvent? = null
     protected var eventNode: ManifoldEventNode? = null
 
@@ -201,6 +203,12 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
             try {
                 interceptorContext.result = await(functor())
 
+                if (succCond != null) {
+                    if (!succCond!!(interceptorContext.result as R)) {
+                        throw SceneFailedException(interceptorContext.result)
+                    }
+                }
+
                 interceptors.forEach {
                     val (info, i) = it
 
@@ -226,6 +234,12 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
         try {
             r = await(functor())
+
+            if (succCond != null) {
+                if (!succCond!!(r)) {
+                    throw SceneFailedException(r)
+                }
+            }
 
             await(afterExecution())
         } catch (e: Exception) {
@@ -265,5 +279,9 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         if (context.transactionRefCount <= 0) {
             await(endTransaction(commit))
         }
+    }
+
+    protected fun successOn(cond: (R) -> Boolean) {
+        succCond = cond
     }
 }
