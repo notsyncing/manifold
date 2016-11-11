@@ -61,6 +61,18 @@ class FeatureAuthenticator : SceneAuthenticator() {
         }
     }
 
+    private fun checkSpecialAuths(context: SceneInterceptorContext, role: AuthRole, auths: Array<SpecialAuth>): CompletableFuture<Unit> {
+        for (a in auths) {
+            if (a == SpecialAuth.LoginOnly) {
+                if (role.roleId <= 0) {
+                    return context.deny()
+                }
+            }
+        }
+
+        return context.pass()
+    }
+
     override fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit> {
         if (!Manifold.enableFeatureManagement) {
             return context.pass()
@@ -75,7 +87,11 @@ class FeatureAuthenticator : SceneAuthenticator() {
         val (module, type) = featureAuthMap[feature.value] ?: Pair(null, null)
 
         if ((module == null) || (type == null)) {
-            return context.pass()
+            if (feature.defaultSpecialAuths.isNotEmpty()) {
+                return checkSpecialAuths(context, role, feature.defaultSpecialAuths)
+            } else {
+                return context.pass()
+            }
         }
 
         if (module == SpecialAuth.LoginOnly) {

@@ -204,4 +204,40 @@ class ManifoldFeatureTest {
             Assert.assertTrue(e.cause is InterceptorException)
         }
     }
+
+    @Test
+    fun testAuthDefaultSpecialAuthPass() {
+        features.enableFeatures(TestFeatures.Feature9)
+
+        Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
+            on { getRole("test") } doReturn CompletableFuture.completedFuture(AuthRole(roleId = 1, permissions = emptyArray()))
+        }
+
+        Manifold.init()
+
+        try {
+            val r = Manifold.run(TestFeatureScene9(), "test").get()
+            Assert.assertEquals("Feature9", r)
+        } catch (e: Exception) {
+            Assert.assertTrue(false)
+        }
+    }
+
+    @Test
+    fun testAuthDefaultSpecialAuthDeny() {
+        features.enableFeatures(TestFeatures.Feature9)
+
+        Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
+            on { getRole("test") } doReturn CompletableFuture.completedFuture(AuthRole(roleId = 0, permissions = emptyArray()))
+        }
+
+        Manifold.init()
+
+        try {
+            val r = Manifold.run(TestFeatureScene9(), "test").get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e.cause is InterceptorException)
+        }
+    }
 }
