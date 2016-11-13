@@ -1,3 +1,5 @@
 package io.github.notsyncing.manifold.action
 
-open class SceneFailedException(val data: Any?) : Exception()
+import com.alibaba.fastjson.JSON
+
+open class SceneFailedException(val data: Any?) : Exception("Scene failed with data: ${JSON.toJSONString(data)}")
