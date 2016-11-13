@@ -107,7 +107,9 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit,
                                   onException: ((Exception) -> Unit)?): CompletableFuture<Unit> {
         if (keepTransaction) {
-            context.transactionRefCount++
+            synchronized(context.transactionRefCount) {
+                context.transactionRefCount++
+            }
         }
 
         val f = CompletableFuture<Unit>()
@@ -128,10 +130,12 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
             }
 
             if (keepTransaction) {
-                context.transactionRefCount--
+                synchronized(context.transactionRefCount) {
+                    context.transactionRefCount--
 
-                if (context.transactionRefCount <= 0) {
-                    return@thenCompose endTransaction()
+                    if (context.transactionRefCount <= 0) {
+                        return@thenCompose endTransaction()
+                    }
                 }
             }
 
