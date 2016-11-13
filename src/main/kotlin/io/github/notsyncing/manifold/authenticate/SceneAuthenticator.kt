@@ -228,7 +228,9 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     override fun destroy(context: SceneInterceptorContext) = async<Unit> {
-        await(Manifold.authInfoProvider!!.destroy())
+        if (Manifold.authInfoProvider != null) {
+            await(Manifold.authInfoProvider!!.destroy())
+        }
 
         await(super.destroy(context))
     }

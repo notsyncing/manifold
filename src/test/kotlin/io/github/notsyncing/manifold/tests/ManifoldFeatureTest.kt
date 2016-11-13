@@ -174,6 +174,7 @@ class ManifoldFeatureTest {
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
             on { getRole(any<String>()) } doReturn CompletableFuture.completedFuture(AuthRole(permissions = arrayOf(Permission(TestModule.ModuleA, TestAuth.View, PermissionState.Allowed))))
+            on { destroy() } doReturn CompletableFuture.completedFuture(Unit)
         }
 
         Manifold.init()
@@ -193,6 +194,7 @@ class ManifoldFeatureTest {
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
             on { getRole(any<String>()) } doReturn CompletableFuture.completedFuture(AuthRole(permissions = arrayOf(Permission(TestModule.ModuleA, TestAuth.View, PermissionState.Allowed))))
+            on { destroy() } doReturn CompletableFuture.completedFuture(Unit)
         }
 
         Manifold.init()
@@ -211,6 +213,7 @@ class ManifoldFeatureTest {
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
             on { getRole("test") } doReturn CompletableFuture.completedFuture(AuthRole(roleId = 1, permissions = emptyArray()))
+            on { destroy() } doReturn CompletableFuture.completedFuture(Unit)
         }
 
         Manifold.init()
@@ -229,6 +232,7 @@ class ManifoldFeatureTest {
 
         Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
             on { getRole("test") } doReturn CompletableFuture.completedFuture(AuthRole(roleId = 0, permissions = emptyArray()))
+            on { destroy() } doReturn CompletableFuture.completedFuture(Unit)
         }
 
         Manifold.init()

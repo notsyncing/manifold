@@ -110,6 +110,7 @@ object Manifold {
     fun reset() {
         dependencyProvider = null
         sessionStorageProvider = null
+        authInfoProvider = null
 
         sceneTransitionConstructorCache.clear()
         sceneEventConstructorCache.clear()
