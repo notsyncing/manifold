@@ -22,6 +22,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     private lateinit var currentRole: AuthRole
+    private val authInfoProvider: AuthenticateInformationProvider? = Manifold.authInfoProvider
 
     protected fun SceneInterceptorContext.pass(): CompletableFuture<Unit> {
         return CompletableFuture.completedFuture(Unit)
@@ -41,7 +42,11 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         if (id == null) {
             role = AuthRole(permissions = emptyArray())
         } else {
-            role = await(Manifold.authInfoProvider!!.getRole(id))
+            if (authInfoProvider == null) {
+                role = AuthRole(permissions = emptyArray())
+            } else {
+                role = await(authInfoProvider.getRole(id))
+            }
         }
 
         if (role == null) {
@@ -54,7 +59,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     protected fun SceneInterceptorContext.aggregatePermissions(): AggregatedPermissions {
-        if (currentRole.groups.size <= 0) {
+        if (currentRole.groups.isEmpty()) {
             return AggregatedPermissions(currentRole.permissions.toList())
         }
 
@@ -228,8 +233,8 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     override fun destroy(context: SceneInterceptorContext) = async<Unit> {
-        if (Manifold.authInfoProvider != null) {
-            await(Manifold.authInfoProvider!!.destroy())
+        if (authInfoProvider != null) {
+            await(authInfoProvider.destroy())
         }
 
         await(super.destroy(context))

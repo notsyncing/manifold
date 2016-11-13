@@ -28,7 +28,20 @@ object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
     var transactionProvider: ManifoldTransactionProvider? = null
     var sessionStorageProvider: ManifoldSessionStorageProvider? = null
-    var authInfoProvider: AuthenticateInformationProvider? = null
+    var authInfoProvider: AuthenticateInformationProvider?
+        get() {
+            if (ownAuthInfoProvider != null) {
+                return ownAuthInfoProvider
+            }
+
+            return dependencyProvider?.get(authInfoProviderClass!!)
+        }
+        set(value) {
+            ownAuthInfoProvider = value
+        }
+
+    var authInfoProviderClass: Class<AuthenticateInformationProvider>? = null
+    private var ownAuthInfoProvider: AuthenticateInformationProvider? = null
 
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
@@ -110,7 +123,10 @@ object Manifold {
     fun reset() {
         dependencyProvider = null
         sessionStorageProvider = null
+
         authInfoProvider = null
+        authInfoProviderClass = null
+        ownAuthInfoProvider = null
 
         sceneTransitionConstructorCache.clear()
         sceneEventConstructorCache.clear()
@@ -125,7 +141,7 @@ object Manifold {
     }
 
     inline fun <reified T: AuthenticateInformationProvider> authInfoProvider(): Manifold {
-        authInfoProvider = dependencyProvider!!.get(T::class.java)
+        authInfoProviderClass = T::class.java as Class<AuthenticateInformationProvider>
         return this
     }
 

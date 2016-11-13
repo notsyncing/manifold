@@ -270,9 +270,9 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                 if (commit) {
                     await(context.transaction!!.commit())
                 }
-
-                await(context.transaction!!.end())
             }
+
+            await(context.transaction!!.end())
         }
     }
 

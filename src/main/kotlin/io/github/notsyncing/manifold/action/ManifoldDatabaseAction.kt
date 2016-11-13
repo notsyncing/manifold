@@ -42,6 +42,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
 
             if (context.autoCommit) {
                 await(context.transaction!!.end())
+                context.transaction = null
             }
 
             return@async r
@@ -49,6 +50,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
             e.printStackTrace()
 
             await(context.transaction!!.end())
+            context.transaction = null
 
             throw e
         }
