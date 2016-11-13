@@ -2,13 +2,14 @@ package io.github.notsyncing.manifold.action.interceptors
 
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.vertx.core.impl.ConcurrentHashSet
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class InterceptorManager {
-    private val sceneInterceptors = ArrayList<Class<SceneInterceptor>>()
+    private val sceneInterceptors = ConcurrentHashSet<Class<SceneInterceptor>>()
     private val sceneInterceptorMap = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<SceneInterceptorInfo>>()
-    private val actionInterceptors = ArrayList<Class<ActionInterceptor>>()
+    private val actionInterceptors = ConcurrentHashSet<Class<ActionInterceptor>>()
     private val actionInterceptorMap = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<ActionInterceptorInfo>>()
 
     fun reset() {
