@@ -226,4 +226,10 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     protected fun SceneInterceptorContext.checkPermission(module: Enum<*>, type: Enum<*>): CompletableFuture<Unit> {
         return if (hasPermission(module, type)) pass() else deny()
     }
+
+    override fun destroy(context: SceneInterceptorContext) = async<Unit> {
+        await(Manifold.authInfoProvider!!.destroy())
+
+        await(super.destroy(context))
+    }
 }

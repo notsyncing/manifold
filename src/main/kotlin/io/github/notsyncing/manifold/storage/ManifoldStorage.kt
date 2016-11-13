@@ -3,9 +3,10 @@ package io.github.notsyncing.manifold.storage
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.action.SceneContext
+import kotlinx.coroutines.async
 
 abstract class ManifoldStorage<T> {
-    private var ownDb: T? = null
+    private var ownTrans: ManifoldTransaction<T>? = null
 
     var sceneContext: SceneContext? = null
 
@@ -17,11 +18,17 @@ abstract class ManifoldStorage<T> {
             if (transaction != null) {
                 return transaction!!.body
             } else {
-                if (ownDb == null) {
-                    ownDb = Manifold.transactionProvider?.get()?.body!! as T
+                if (ownTrans == null) {
+                    ownTrans = Manifold.transactionProvider?.get() as ManifoldTransaction<T>?
                 }
 
-                return ownDb!!
+                return ownTrans!!.body
             }
         }
+
+    fun destroy() = async<Unit> {
+        if (ownTrans != null) {
+            await(ownTrans!!.end())
+        }
+    }
 }

@@ -2,15 +2,14 @@ package io.github.notsyncing.manifold.action
 
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.Manifold
-import io.github.notsyncing.manifold.action.interceptors.InterceptorException
-import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
+import io.github.notsyncing.manifold.action.interceptors.*
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.async
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -186,22 +185,23 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
         if (interceptorClasses.isNotEmpty()) {
             val interceptorContext = SceneInterceptorContext(this@ManifoldScene)
-            val interceptors = interceptorClasses.map { Pair(it, Manifold.dependencyProvider!!.get(it.interceptorClass)) }
-
-            interceptors.forEach {
-                val (info, i) = it
-
-                interceptorContext.annotation = info.forAnnotation
-
-                i!!.m = m
-                i.before(interceptorContext)
-
-                if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
-                    throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
-                }
-            }
+            val interceptors = ArrayList<Pair<SceneInterceptorInfo, SceneInterceptor>>()
 
             try {
+                interceptorClasses.forEach {
+                    val i = Manifold.dependencyProvider!!.get(it.interceptorClass)
+                    interceptorContext.annotation = it.forAnnotation
+
+                    i!!.m = m
+                    i.before(interceptorContext)
+
+                    if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
+                        throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
+                    }
+
+                    interceptors.add(Pair(it, i))
+                }
+
                 interceptorContext.result = await(functor())
 
                 if (!checkSuccessConditions(interceptorContext.result as R)) {
@@ -212,11 +212,19 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                     val (info, i) = it
 
                     interceptorContext.annotation = info.forAnnotation
-                    i!!.after(interceptorContext)
+                    i.after(interceptorContext)
+
+                    await(i.destroy(interceptorContext))
                 }
 
                 await(afterExecution())
             } catch (e: Exception) {
+                interceptors.forEach {
+                    val (info, i) = it
+
+                    await(i.destroy(interceptorContext))
+                }
+
                 await(afterExecution(false))
 
                 if (e is SceneFailedException) {
