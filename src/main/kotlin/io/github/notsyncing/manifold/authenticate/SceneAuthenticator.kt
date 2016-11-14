@@ -19,6 +19,61 @@ abstract class SceneAuthenticator : SceneInterceptor() {
             authOrder = arrayOf(AuthOrder.Role, AuthOrder.UpperGroup)
             denyUndefinedPermissions = true
         }
+
+        fun aggregatePermissions(role: AuthRole): AggregatedPermissions {
+            if (role.groups.isEmpty()) {
+                return AggregatedPermissions(role.permissions.toList())
+            }
+
+            val aggPerms = ArrayList<Permission>()
+
+            fun addPermissions(perms: Array<Permission>, to: ArrayList<Permission>, mergingRoots: Boolean = false) {
+                for (p in perms) {
+                    val pp = to.firstOrNull { (it.module == p.module) && (it.type == p.type) }
+
+                    if (pp == null) {
+                        to.add(p)
+                    } else if ((mergingRoots) && (pp.state == PermissionState.Forbidden) && (p.state == PermissionState.Allowed)) {
+                        to[to.indexOf(pp)] = p
+                    }
+                }
+            }
+
+            for (g in role.groups) {
+                val permsPerBranch = ArrayList<Permission>()
+
+                for (o in authOrder) {
+                    if (o == AuthOrder.Role) {
+                        addPermissions(role.permissions, permsPerBranch)
+                    } else if (o == AuthOrder.LowerGroup) {
+                        var item: AuthGroup? = g
+
+                        while (item != null) {
+                            addPermissions(item.permissions, permsPerBranch)
+                            item = item.parentGroup
+                        }
+                    } else if (o == AuthOrder.UpperGroup) {
+                        val l = ArrayList<AuthGroup>()
+                        var item: AuthGroup? = g
+
+                        while (item != null) {
+                            l.add(item)
+                            item = item.parentGroup
+                        }
+
+                        l.reverse()
+
+                        for (g2 in l) {
+                            addPermissions(g2.permissions, permsPerBranch)
+                        }
+                    }
+                }
+
+                addPermissions(permsPerBranch.toTypedArray(), aggPerms, true)
+            }
+
+            return AggregatedPermissions(aggPerms)
+        }
     }
 
     private lateinit var currentRole: AuthRole
@@ -63,58 +118,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     protected fun SceneInterceptorContext.aggregatePermissions(): AggregatedPermissions {
-        if (currentRole.groups.isEmpty()) {
-            return AggregatedPermissions(currentRole.permissions.toList())
-        }
-
-        val aggPerms = ArrayList<Permission>()
-
-        fun addPermissions(perms: Array<Permission>, to: ArrayList<Permission>, mergingRoots: Boolean = false) {
-            for (p in perms) {
-                val pp = to.firstOrNull { (it.module == p.module) && (it.type == p.type) }
-
-                if (pp == null) {
-                    to.add(p)
-                } else if ((mergingRoots) && (pp.state == PermissionState.Forbidden) && (p.state == PermissionState.Allowed)) {
-                    to[to.indexOf(pp)] = p
-                }
-            }
-        }
-
-        for (g in currentRole.groups) {
-            val permsPerBranch = ArrayList<Permission>()
-
-            for (o in authOrder) {
-                if (o == AuthOrder.Role) {
-                    addPermissions(currentRole.permissions, permsPerBranch)
-                } else if (o == AuthOrder.LowerGroup) {
-                    var item: AuthGroup? = g
-
-                    while (item != null) {
-                        addPermissions(item.permissions, permsPerBranch)
-                        item = item.parentGroup
-                    }
-                } else if (o == AuthOrder.UpperGroup) {
-                    val l = ArrayList<AuthGroup>()
-                    var item: AuthGroup? = g
-
-                    while (item != null) {
-                        l.add(item)
-                        item = item.parentGroup
-                    }
-
-                    l.reverse()
-
-                    for (g2 in l) {
-                        addPermissions(g2.permissions, permsPerBranch)
-                    }
-                }
-            }
-
-            addPermissions(permsPerBranch.toTypedArray(), aggPerms, true)
-        }
-
-        val a = AggregatedPermissions(aggPerms)
+        val a = Companion.aggregatePermissions(currentRole)
         sceneContext.permissions = a
 
         return a
