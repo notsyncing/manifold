@@ -71,12 +71,12 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
         fun addPermissions(perms: Array<Permission>, to: ArrayList<Permission>, mergingRoots: Boolean = false) {
             for (p in perms) {
-                val pp = aggPerms.firstOrNull { (it.module == p.module) && (it.type == p.type) }
+                val pp = to.firstOrNull { (it.module == p.module) && (it.type == p.type) }
 
                 if (pp == null) {
-                    aggPerms.add(p)
+                    to.add(p)
                 } else if ((mergingRoots) && (pp.state == PermissionState.Forbidden) && (p.state == PermissionState.Allowed)) {
-                    aggPerms[aggPerms.indexOf(pp)] = p
+                    to[to.indexOf(pp)] = p
                 }
             }
         }
