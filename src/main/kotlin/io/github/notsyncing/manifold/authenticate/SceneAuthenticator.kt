@@ -53,6 +53,10 @@ abstract class SceneAuthenticator : SceneInterceptor() {
             role = AuthRole(permissions = emptyArray())
         }
 
+        if (role.roleId == SpecialRole.SuperUser) {
+            return@async await(context.pass())
+        }
+
         currentRole = role
 
         return@async await(authenticate(context, currentRole))
