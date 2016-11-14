@@ -20,14 +20,7 @@ class Permission(val module: Enum<*>,
             }
         }
 
-        class PermissionBuilder {
-            companion object {
-                val lets = PermissionBuilder()
-            }
-
-            val lets = Companion.lets
-            val list = mutableListOf<Permission>()
-
+        class PermissionBuilderInner(private val list: MutableList<Permission>) {
             infix fun allow(module: Enum<*>): PermissionBuilderItem {
                 return PermissionBuilderItem(list, PermissionState.Allowed, module.ordinal)
             }
@@ -35,6 +28,11 @@ class Permission(val module: Enum<*>,
             infix fun deny(module: Enum<*>): PermissionBuilderItem {
                 return PermissionBuilderItem(list, PermissionState.Forbidden, module.ordinal)
             }
+        }
+
+        class PermissionBuilder {
+            val list = mutableListOf<Permission>()
+            val lets = PermissionBuilderInner(list)
         }
 
         fun build(b: PermissionBuilder.() -> Unit): List<Permission> {
