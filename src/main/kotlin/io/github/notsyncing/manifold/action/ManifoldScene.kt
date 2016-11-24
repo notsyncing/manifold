@@ -215,7 +215,6 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                 interceptors.forEach {
                     val (info, i) = it
 
-                    interceptorContext.annotation = info.forAnnotation
                     await(i.after(interceptorContext))
 
                     await(i.destroy(interceptorContext))
