@@ -75,6 +75,7 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestSceneInterceptor.context)
         Assert.assertTrue(TestSceneInterceptor.beforeCalled)
         Assert.assertTrue(TestSceneInterceptor.afterCalled)
+        Assert.assertTrue(TestSceneInterceptor.destroyCalled)
         Assert.assertNull(TestSceneInterceptor.context?.annotation)
         Assert.assertEquals("Hello!", TestSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestSceneInterceptor.context?.interceptorResult)
@@ -93,6 +94,7 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestSceneInterceptor.context)
         Assert.assertTrue(TestSceneInterceptor.beforeCalled)
         Assert.assertFalse(TestSceneInterceptor.afterCalled)
+        Assert.assertTrue(TestSceneInterceptor.destroyCalled)
         Assert.assertNull(TestSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Stop, TestSceneInterceptor.context?.interceptorResult)
     }
@@ -105,6 +107,7 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestSceneInterceptor.context)
         Assert.assertTrue(TestSceneInterceptor.beforeCalled)
         Assert.assertTrue(TestSceneInterceptor.afterCalled)
+        Assert.assertTrue(TestSceneInterceptor.destroyCalled)
         Assert.assertEquals("Changed", TestSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestSceneInterceptor.context?.interceptorResult)
     }
@@ -132,8 +135,19 @@ class ManifoldInterceptorTest {
         Assert.assertNotNull(TestGlobalSceneInterceptor.context)
         Assert.assertTrue(TestGlobalSceneInterceptor.beforeCalled)
         Assert.assertTrue(TestGlobalSceneInterceptor.afterCalled)
+        Assert.assertTrue(TestSceneInterceptor.destroyCalled)
         Assert.assertNull(TestGlobalSceneInterceptor.context?.annotation)
         Assert.assertEquals("Hello!", TestGlobalSceneInterceptor.context?.result)
         Assert.assertEquals(InterceptorResult.Continue, TestGlobalSceneInterceptor.context?.interceptorResult)
+    }
+
+    @Test
+    fun testSceneInterceptorWithException() {
+        try {
+            Manifold.run(TestSceneSimple(exception = true)).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(TestSceneInterceptor.destroyCalled)
+        }
     }
 }

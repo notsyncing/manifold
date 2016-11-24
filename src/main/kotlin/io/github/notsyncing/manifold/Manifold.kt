@@ -34,6 +34,10 @@ object Manifold {
                 return ownAuthInfoProvider
             }
 
+            if (authInfoProviderClass == null) {
+                return null
+            }
+
             return dependencyProvider?.get(authInfoProviderClass!!)
         }
         set(value) {

@@ -11,6 +11,7 @@ class TestSceneInterceptor : SceneInterceptor() {
         var context: SceneInterceptorContext? = null
         var beforeCalled = false
         var afterCalled = false
+        var destroyCalled = false
 
         var makeStop = false
         var changeResult = false
@@ -19,6 +20,7 @@ class TestSceneInterceptor : SceneInterceptor() {
             context = null
             beforeCalled = false
             afterCalled = false
+            destroyCalled = false
 
             makeStop = false
             changeResult = false
@@ -45,5 +47,11 @@ class TestSceneInterceptor : SceneInterceptor() {
         }
 
         return super.after(context)
+    }
+
+    override fun destroy(context: SceneInterceptorContext): CompletableFuture<Unit> {
+        destroyCalled = true
+
+        return super.destroy(context)
     }
 }

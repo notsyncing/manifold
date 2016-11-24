@@ -91,17 +91,17 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     abstract fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit>
 
     override fun before(context: SceneInterceptorContext) = async<Unit> {
+        if (authInfoProvider == null) {
+            return@async
+        }
+
         val id = context.sceneContext.sessionIdentifier
         var role: AuthRole?
 
         if (id == null) {
             role = AuthRole(permissions = emptyArray())
         } else {
-            if (authInfoProvider == null) {
-                role = AuthRole(permissions = emptyArray())
-            } else {
-                role = await(authInfoProvider.getRole(id))
-            }
+            role = await(authInfoProvider.getRole(id))
         }
 
         if (role == null) {

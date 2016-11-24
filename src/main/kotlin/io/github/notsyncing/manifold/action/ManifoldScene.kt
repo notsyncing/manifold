@@ -193,17 +193,17 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
             try {
                 interceptorClasses.forEach {
-                    val i = Manifold.dependencyProvider!!.get(it.interceptorClass)
+                    val i = Manifold.dependencyProvider!!.get(it.interceptorClass)!!
                     interceptorContext.annotation = it.forAnnotation
 
-                    i!!.m = m
+                    interceptors.add(Pair(it, i))
+
+                    i.m = m
                     await(i.before(interceptorContext))
 
                     if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
                         throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
                     }
-
-                    interceptors.add(Pair(it, i))
                 }
 
                 interceptorContext.result = await(functor())
