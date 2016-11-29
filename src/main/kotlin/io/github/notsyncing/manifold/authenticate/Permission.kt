@@ -3,7 +3,8 @@ package io.github.notsyncing.manifold.authenticate
 class Permission(val module: Enum<*>,
                  val type: Enum<*>,
                  val state: PermissionState = PermissionState.Undefined,
-                 var additionalData: Any? = null) {
+                 var additionalData: Any? = null,
+                 var inherited: Boolean = false) {
     companion object {
         class PermissionBuilderItem(private val list: MutableList<Permission>, val state: PermissionState, val module: Int) {
             infix fun type(type: Enum<*>): Permission {
@@ -43,9 +44,10 @@ class Permission(val module: Enum<*>,
         }
     }
 
-    constructor(module: Int, type: Int, state: PermissionState = PermissionState.Undefined, additionalData: Any? = null)
+    constructor(module: Int, type: Int, state: PermissionState = PermissionState.Undefined,
+                additionalData: Any? = null, inherited: Boolean = false)
             : this(SceneAuthenticator.authModuleEnumClass.enumConstants[module],
-                    SceneAuthenticator.authTypeEnumClass.enumConstants[type], state, additionalData) {
+                    SceneAuthenticator.authTypeEnumClass.enumConstants[type], state, additionalData, inherited) {
     }
 
     infix fun additional(data: Any) {
