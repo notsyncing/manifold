@@ -1,5 +1,7 @@
 package io.github.notsyncing.manifold.spec
 
+import io.github.notsyncing.manifold.spec.checkers.SpecChecker
+
 abstract class ManifoldSpecification {
     abstract fun spec(): SpecBuilder
 
@@ -11,8 +13,8 @@ abstract class ManifoldSpecification {
     }
 
     fun check() {
-        val s = spec()
+        val modules = spec().build()
 
-
+        SpecChecker(modules).run()
     }
 }
