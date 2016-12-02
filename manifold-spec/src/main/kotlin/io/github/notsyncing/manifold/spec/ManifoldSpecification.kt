@@ -85,8 +85,12 @@ abstract class ManifoldSpecification {
         for (m in modules) {
             for (sg in m.sceneGroups) {
                 for (s in sg.build()) {
-                    for (c in s.cases) {
-                        l.add(Pair(c.behavior, s.name))
+                    if (s.cases.isEmpty()) {
+                        l.add(Pair("", s.name))
+                    } else {
+                        for (c in s.cases) {
+                            l.add(Pair(c.behavior, s.name))
+                        }
                     }
                 }
             }
