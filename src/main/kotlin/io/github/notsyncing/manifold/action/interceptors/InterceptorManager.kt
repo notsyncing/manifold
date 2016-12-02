@@ -92,6 +92,11 @@ class InterceptorManager {
             }
 
             actionInterceptors.forEach {
+                if (it.isAnnotationPresent(ForEveryAction::class.java)) {
+                    addToList(ActionInterceptorInfo(it, null))
+                    return@forEach
+                }
+
                 val forActions = it.getAnnotation(ForActions::class.java)
 
                 if (forActions != null) {
