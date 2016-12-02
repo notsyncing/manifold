@@ -2,7 +2,7 @@ package io.github.notsyncing.manifold.spec.flow
 
 class FlowBuilder {
     private val start = FlowItem("Start")
-    private val ends = mutableListOf<FlowItem>()
+    private val ends = mutableListOf<FlowExitItem>()
     private var currItem: FlowItem = start
 
     operator fun invoke(flow: FlowBuilder.() -> Unit) {
@@ -18,8 +18,8 @@ class FlowBuilder {
         return item
     }
 
-    fun goto(action: String): FlowItem {
-        val item = FlowItem(action)
+    fun goto(action: String): FlowActionItem {
+        val item = FlowActionItem(action)
         item.previous = currItem
         currItem.next = item
         currItem = item
@@ -69,8 +69,8 @@ class FlowBuilder {
         return this
     }
 
-    fun end(result: Any?, exitName: String): FlowExitItem {
-        val item = FlowExitItem(exitName, result)
+    fun end(exitName: String): FlowExitItem {
+        val item = FlowExitItem(exitName)
         ends.add(item)
         return item
     }

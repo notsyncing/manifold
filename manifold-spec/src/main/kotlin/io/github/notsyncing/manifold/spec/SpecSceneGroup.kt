@@ -6,12 +6,12 @@ import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
 
 abstract class SpecSceneGroup {
-    protected var feature = FeatureInfo()
-    protected var permission = PermissionInfo()
-    protected var parameters = ParameterListInfo()
-    protected var returns = ReturnInfo()
-    protected var flow = FlowBuilder()
-    protected var cases = TestCaseBuilder()
+    var feature = FeatureInfo()
+    var permission = PermissionInfo()
+    var parameters = ParameterListInfo()
+    var returns = ReturnInfo()
+    var flow = FlowBuilder()
+    var cases = TestCaseBuilder()
 
     private fun reset() {
         feature = FeatureInfo()
@@ -29,7 +29,8 @@ abstract class SpecSceneGroup {
         for (m in sceneDefs) {
             m(this)
 
-            l.add(SceneSpec(feature, permission, parameters.parameters, returns, flow.build(), cases.build()))
+            l.add(SceneSpec(m.name, feature, permission, parameters.parameters, returns, flow.build(),
+                    cases.build()))
 
             reset()
         }

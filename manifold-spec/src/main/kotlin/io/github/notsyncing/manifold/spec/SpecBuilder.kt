@@ -6,7 +6,7 @@ class SpecBuilder {
     private val modules = mutableListOf<ModuleInfo>()
     private var currModule: ModuleInfo? = null
 
-    infix fun String.has(moduleBlock: SpecBuilder.() -> Unit): Unit {
+    operator fun String.invoke(moduleBlock: SpecBuilder.() -> Unit): Unit {
         val m = ModuleInfo(this)
         modules.add(m)
         currModule = m

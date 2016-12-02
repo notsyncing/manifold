@@ -1,8 +1,11 @@
 package io.github.notsyncing.manifold.spec.models
 
+import io.github.notsyncing.manifold.feature.DefaultAuth
+import io.github.notsyncing.manifold.feature.DefaultModule
+
 class PermissionInfo {
-    var module: Enum<*>? = null
-    var type: Enum<*>? = null
+    var module: Enum<*> = DefaultModule.Undefined
+    var type: Enum<*> = DefaultAuth.Undefined
 
     infix fun needs(module: Enum<*>): PermissionInfo {
         this.module = module

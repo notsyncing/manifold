@@ -1,25 +1,47 @@
 package io.github.notsyncing.manifold.spec.testcase
 
 class TestCaseInfo(val behavior: String) {
+    val sessionIdentifier = "manifold.session.identifier"
+
     class TestCaseExitPoint {
         var exitName: String = ""
+        var result: Any? = null
 
         infix fun at(exitName: String): TestCaseExitPoint {
             this.exitName = exitName
             return this
         }
+
+        infix fun with(result: Any?): TestCaseExitPoint {
+            this.result = result
+            return this
+        }
     }
 
-    val parameters = mutableMapOf<String, String?>()
-    val exit = TestCaseExitPoint()
-    val additionalConditions = mutableListOf<() -> Boolean>()
+    class TestAdditionalCondition(val name: String, val cond: () -> Boolean) {
 
-    infix fun String?.into(variable: String) {
+    }
+
+    val parameters = mutableMapOf<String, Any?>()
+    val exit = TestCaseExitPoint()
+    val additionalConditions = mutableListOf<TestAdditionalCondition>()
+
+    infix fun Any?.into(variable: String) {
         parameters[variable] = this
     }
 
-    fun and(cond: () -> Boolean): TestCaseInfo {
-        additionalConditions.add(cond)
+    fun and(name: String, cond: () -> Boolean): TestCaseInfo {
+        additionalConditions.add(TestAdditionalCondition(name, cond))
+        return this
+    }
+
+    fun given(conds: TestCaseInfo.() -> Unit): TestCaseInfo {
+        this.conds()
+        return this
+    }
+
+    fun should(checks: TestCaseInfo.() -> Unit): TestCaseInfo {
+        this.checks()
         return this
     }
 }
