@@ -7,7 +7,7 @@ import io.github.notsyncing.manifold.spec.annotations.ActionMetadata
 import java.util.concurrent.CompletableFuture
 
 @ForEveryAction
-class ActionInvokeListener : ActionInterceptor() {
+class ActionInvokeRecorder : ActionInterceptor() {
     companion object {
         val recorded = mutableListOf<Pair<String, Any?>>()
 

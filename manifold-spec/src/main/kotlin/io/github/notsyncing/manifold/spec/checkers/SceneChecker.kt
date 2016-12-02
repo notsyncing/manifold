@@ -5,7 +5,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.feature.FeatureAuthenticator
-import io.github.notsyncing.manifold.spec.ActionInvokeListener
+import io.github.notsyncing.manifold.spec.ActionInvokeRecorder
 import io.github.notsyncing.manifold.spec.annotations.SceneMetadata
 import io.github.notsyncing.manifold.spec.flow.FlowActionItem
 import io.github.notsyncing.manifold.spec.flow.FlowItem
@@ -174,10 +174,10 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
             return@async
         }
 
-        ActionInvokeListener.reset()
+        ActionInvokeRecorder.reset()
 
         val actualResult = await(Manifold.run(s, sessId))
-        val actualActions = ActionInvokeListener.recorded.map { (action, _) -> action }
+        val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
 
         assertEquals("Scene ${scene.name} returned unexpected result: expected $expectedResult, actual $actualResult",
                 expectedResult, actualResult)
