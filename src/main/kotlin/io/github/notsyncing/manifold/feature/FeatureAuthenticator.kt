@@ -59,6 +59,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
         fun reset() {
             featureAuthMap.clear()
         }
+
+        fun getAuth(feature: String): Pair<Enum<*>, Enum<*>> {
+            return featureAuthMap[feature] ?: Pair(DefaultModule.Undefined, DefaultAuth.Undefined)
+        }
     }
 
     private fun checkSpecialAuths(context: SceneInterceptorContext, role: AuthRole, auths: Array<SpecialAuth>): CompletableFuture<Unit> {
