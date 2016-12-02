@@ -41,6 +41,7 @@ compileKotlin {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
 
     maven {
@@ -49,6 +50,10 @@ repositories {
 
     maven {
         url "http://dl.bintray.com/kotlin/kotlinx.coroutines"
+    }
+
+    maven {
+        url "https://dl.bintray.com/notsyncing/maven/"
     }
 
     jcenter()
@@ -132,6 +137,7 @@ subprojects {
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
 
         maven {
@@ -140,6 +146,10 @@ subprojects {
 
         maven {
             url "http://dl.bintray.com/kotlin/kotlinx.coroutines"
+        }
+
+        maven {
+            url "https://dl.bintray.com/notsyncing/maven/"
         }
 
         jcenter()
