@@ -56,4 +56,42 @@ abstract class ManifoldSpecification {
 
         SpecChecker(modules).runScene(sceneName)
     }
+
+    fun getSceneNameList(): List<String> {
+        if (modules.isEmpty()) {
+            modules = spec().build()
+        }
+
+        val l = mutableListOf<String>()
+
+        for (m in modules) {
+            for (sg in m.sceneGroups) {
+                for (s in sg.build()) {
+                    l.add(s.name)
+                }
+            }
+        }
+
+        return l
+    }
+
+    fun getSceneCasesList(): List<Pair<String, String>> {
+        if (modules.isEmpty()) {
+            modules = spec().build()
+        }
+
+        val l = mutableListOf<Pair<String, String>>()
+
+        for (m in modules) {
+            for (sg in m.sceneGroups) {
+                for (s in sg.build()) {
+                    for (c in s.cases) {
+                        l.add(Pair(c.behavior, s.name))
+                    }
+                }
+            }
+        }
+
+        return l
+    }
 }
