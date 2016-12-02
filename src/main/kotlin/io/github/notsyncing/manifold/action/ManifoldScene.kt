@@ -178,7 +178,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
     }
 
-    abstract protected fun stage(): CompletableFuture<R>
+    abstract fun stage(): CompletableFuture<R>
 
     fun execute() = async<R> {
         context.sessionIdentifier = sessionIdentifier
