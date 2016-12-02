@@ -36,18 +36,18 @@ class SceneCheckerCaseTest {
 
     @Test
     fun testCheckSuccessFlow() {
-        spec.checkCase("写入产品数据应当返回成功")
+        spec.checkCase("新增产品数据场景", "写入产品数据应当返回成功")
     }
 
     @Test
     fun testCheckFailedFlow() {
-        spec.checkCase("未填写产品名称时应当返回失败")
+        spec.checkCase("新增产品数据场景", "未填写产品名称时应当返回失败")
     }
 
     @Test
     fun testCheckFlowWithWrongExitPoint() {
         try {
-            spec.checkCase("测试错误结束点")
+            spec.checkCase("新增产品数据场景", "测试错误结束点")
             assertTrue(false)
         } catch (e: ExecutionException) {
             assertTrue(e.cause?.message!!.contains("unexpected flow"))
@@ -57,7 +57,7 @@ class SceneCheckerCaseTest {
     @Test
     fun testCheckFlowWithWrongExitResult() {
         try {
-            spec.checkCase("测试错误返回值")
+            spec.checkCase("新增产品数据场景", "测试错误返回值")
             assertTrue(false)
         } catch (e: ExecutionException) {
             assertTrue(e.cause?.message!!.contains("unexpected result"))
@@ -67,7 +67,7 @@ class SceneCheckerCaseTest {
     @Test
     fun testCheckFlowWithFailedAdditionalCondition() {
         try {
-            spec.checkCase("测试其他条件失败")
+            spec.checkCase("新增产品数据场景", "测试其他条件失败")
             assertTrue(false)
         } catch (e: ExecutionException) {
             assertTrue(e.cause?.message!!.contains("unmet condition"))

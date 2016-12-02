@@ -41,12 +41,12 @@ abstract class ManifoldSpecification {
         SpecChecker(modules).runCases()
     }
 
-    fun checkCase(sceneCase: String) {
+    fun checkCase(sceneName: String, sceneCase: String) {
         if (modules.isEmpty()) {
             modules = spec().build()
         }
 
-        SpecChecker(modules).runCase(sceneCase)
+        SpecChecker(modules).runCase(sceneName, sceneCase)
     }
 
     fun checkScene(sceneName: String) {

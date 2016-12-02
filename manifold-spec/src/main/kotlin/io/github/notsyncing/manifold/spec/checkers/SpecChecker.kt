@@ -98,7 +98,7 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
         }
     }
 
-    fun runCase(sceneCase: String) {
+    fun runCase(sceneName: String, sceneCase: String) {
         if (checkers.isEmpty()) {
             scanCheckers()
         }
@@ -110,13 +110,15 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
                 println("In scene group: ${sg.name}")
 
                 for (s in sg.build()) {
-                    for (c in s.cases) {
-                        if (c.behavior == sceneCase) {
-                            println("In scene: ${s.name}")
-                            println("In case: ${c.behavior}")
+                    if (s.name == sceneName) {
+                        for (c in s.cases) {
+                            if (c.behavior == sceneCase) {
+                                println("In scene: ${s.name}")
+                                println("In case: ${c.behavior}")
 
-                            checkScene(s, CheckType.Cases, c)
-                            return
+                                checkScene(s, CheckType.Cases, c)
+                                return
+                            }
                         }
                     }
                 }

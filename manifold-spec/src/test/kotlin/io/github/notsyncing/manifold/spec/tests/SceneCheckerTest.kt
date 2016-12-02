@@ -70,7 +70,7 @@ class SceneCheckerTest {
 
         @Test
         fun test() {
-            spec.checkCase(caseName)
+            spec.checkCase(sceneName, caseName)
         }
     }
 }
