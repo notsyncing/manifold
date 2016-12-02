@@ -11,7 +11,7 @@ import org.junit.BeforeClass
 import org.junit.ComparisonFailure
 import org.junit.Test
 
-class SceneCheckerTest {
+class SceneCheckerMetadataTest {
     companion object {
         @BeforeClass
         @JvmStatic
@@ -31,16 +31,15 @@ class SceneCheckerTest {
         }
     }
 
+    val spec = TestSpec()
+
     @Test
     fun testMetadata() {
-        val spec = TestSpec()
         spec.checkMetadata("新增产品数据场景")
     }
 
     @Test
     fun testMetadataWithWrongFeatureName() {
-        val spec = TestSpec()
-
         try {
             spec.checkMetadata("测试场景1")
             assertTrue(false)
@@ -51,8 +50,6 @@ class SceneCheckerTest {
 
     @Test
     fun testMetadataWithWrongPermission() {
-        val spec = TestSpec()
-
         try {
             spec.checkMetadata("测试场景2")
             assertTrue(false)
@@ -63,8 +60,6 @@ class SceneCheckerTest {
 
     @Test
     fun testMetadataWithWrongParameterName() {
-        val spec = TestSpec()
-
         try {
             spec.checkMetadata("测试场景3")
             assertTrue(false)
@@ -75,8 +70,6 @@ class SceneCheckerTest {
 
     @Test
     fun testMetadataWithWrongReturnType() {
-        val spec = TestSpec()
-
         try {
             spec.checkMetadata("测试场景4")
             assertTrue(false)

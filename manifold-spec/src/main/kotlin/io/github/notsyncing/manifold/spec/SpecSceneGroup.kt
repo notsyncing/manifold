@@ -6,6 +6,7 @@ import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
 
 abstract class SpecSceneGroup {
+    val name = this.javaClass.simpleName
     var feature = FeatureInfo()
     var permission = PermissionInfo()
     var parameters = ParameterListInfo()

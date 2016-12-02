@@ -19,7 +19,8 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
     }
 
     private fun checkCase(checker: Checker, case: TestCaseInfo) {
-        checker.checkCase(case)
+        println("Check case ${case.behavior} with checker $checker")
+        checker.checkCase(case).get()
     }
 
     private fun checkScene(scene: SceneSpec, type: CheckType, case: TestCaseInfo? = null) {
@@ -68,9 +69,15 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
         }
 
         for (m in modules) {
+            println("In module: ${m.name}")
+
             for (sg in m.sceneGroups) {
+                println("In scene group: ${sg.name}")
+
                 for (s in sg.build()) {
                     if (s.name == sceneName) {
+                        println("In scene: ${s.name}")
+
                         checkScene(s, CheckType.Metadata)
                         return
                     }
@@ -97,10 +104,17 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
         }
 
         for (m in modules) {
+            println("In module: ${m.name}")
+
             for (sg in m.sceneGroups) {
+                println("In scene group: ${sg.name}")
+
                 for (s in sg.build()) {
                     for (c in s.cases) {
                         if (c.behavior == sceneCase) {
+                            println("In scene: ${s.name}")
+                            println("In case: ${c.behavior}")
+
                             checkScene(s, CheckType.Cases, c)
                             return
                         }
@@ -118,9 +132,15 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
         }
 
         for (m in modules) {
+            println("In module: ${m.name}")
+
             for (sg in m.sceneGroups) {
+                println("In scene group: ${sg.name}")
+
                 for (s in sg.build()) {
                     if (s.name == sceneName) {
+                        println("In scene: ${s.name}")
+
                         checkScene(s, CheckType.Metadata)
                         checkScene(s, CheckType.Cases)
                         return

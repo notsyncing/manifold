@@ -10,7 +10,7 @@ abstract class ManifoldSpecification {
 
     abstract fun spec(): SpecBuilder
 
-    protected fun specification(spec: SpecBuilder.() -> Unit): SpecBuilder {
+    fun specification(spec: SpecBuilder.() -> Unit): SpecBuilder {
         val b = SpecBuilder()
         b.spec()
 

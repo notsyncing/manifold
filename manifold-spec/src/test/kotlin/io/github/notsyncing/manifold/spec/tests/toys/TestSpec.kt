@@ -18,7 +18,7 @@ enum class OperationResult {
 }
 
 class TestSpec : 功能定义() {
-    override fun spec() = specification {
+    override fun spec() = 功能定义 {
         "基础数据模块" {
             +产品数据()
         }
@@ -49,7 +49,7 @@ class 产品数据 : 场景组() {
             执行("获取当前公司ID")
             当("返回值 <= 0") then 结束("获取当前公司ID失败")
             执行("新增产品数据")
-            当("失败") then {
+            当("返回失败") then {
                 前往(结束("新增产品失败"))
             } or {
                 前往(结束("成功"))
@@ -61,7 +61,7 @@ class 产品数据 : 场景组() {
                 给定 {
                     "测试产品" into "name"
                     "这是用于测试的产品" into "details"
-                    "" into sessionIdentifier
+                    null into sessionIdentifier
                 }
 
                 应当 {
@@ -80,7 +80,7 @@ class 产品数据 : 场景组() {
 
             "未填写产品名称时应当返回失败" {
                 给定 {
-                    null into "name"
+                    "" into "name"
                     null into "details"
                     null into sessionIdentifier
                 }
@@ -91,6 +91,46 @@ class 产品数据 : 场景组() {
                     且满足("其他检查") {
                         // 其他检查
                         true
+                    }
+                }
+            }
+
+            "测试错误结束点" {
+                给定 {
+                    "测试1" into "name"
+                    "这是测试1" into "details"
+                    null into sessionIdentifier
+                }
+
+                应当 {
+                    结束 于 "未填写产品名称" 并返回 OperationResult.Success
+                }
+            }
+
+            "测试错误返回值" {
+                给定 {
+                    "测试1" into "name"
+                    "这是测试1" into "details"
+                    null into sessionIdentifier
+                }
+
+                应当 {
+                    结束 于 "成功" 并返回 OperationResult.Failed
+                }
+            }
+
+            "测试其他条件失败" {
+                给定 {
+                    "测试1" into "name"
+                    "这是测试1" into "details"
+                    null into sessionIdentifier
+                }
+
+                应当 {
+                    结束 于 "成功" 并返回 OperationResult.Success
+
+                    且满足("失败") {
+                        false
                     }
                 }
             }

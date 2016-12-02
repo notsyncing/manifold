@@ -122,7 +122,7 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
         checkReturns()
     }
 
-    private fun makeSceneFromCase(case: TestCaseInfo): Pair<ManifoldScene<*>?, String> {
+    private fun makeSceneFromCase(case: TestCaseInfo): Pair<ManifoldScene<*>?, String?> {
         val c = getCurrentSceneMatchedConstructor()
 
         if (c == null) {
@@ -138,7 +138,9 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
 
         val s = c.call(*params.toTypedArray())
 
-        return Pair(s, case.parameters[case.sessionIdentifier] as String)
+        println("Parameters: ${JSON.toJSONString(params)}")
+
+        return Pair(s, case.parameters[case.sessionIdentifier] as String?)
     }
 
     private fun resolveActionRoutes(case: TestCaseInfo): Pair<List<String>, Any?> {
@@ -160,7 +162,7 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
             currFlowItem = currFlowItem.previous
         }
 
-        return Pair(l, case.exit.result)
+        return Pair(l.reversed(), case.exit.result)
     }
 
     override fun checkCase(case: TestCaseInfo) = async<Unit> {
@@ -179,15 +181,33 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
 
         assertEquals("Scene ${scene.name} returned unexpected result: expected $expectedResult, actual $actualResult",
                 expectedResult, actualResult)
+
+        println("Result: $actualResult")
+
         assertArrayEquals("Scene ${scene.name} run through unexpected flow: expected ${JSON.toJSONString(expectedActions)}, actual ${JSON.toJSONString(actualActions)}",
                 expectedActions.toTypedArray(), actualActions.toTypedArray())
+
+        println("Flow:")
+
+        if (actualActions.isNotEmpty()) {
+            actualActions.forEach(::println)
+        } else {
+            println("<Empty>")
+        }
+
+        println()
 
         if (case.additionalConditions.isEmpty()) {
             return@async
         }
 
+        println("Additional checks:")
+
         for (cond in case.additionalConditions) {
+            println(cond.name)
             assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", cond.cond())
         }
+
+        println()
     }
 }
