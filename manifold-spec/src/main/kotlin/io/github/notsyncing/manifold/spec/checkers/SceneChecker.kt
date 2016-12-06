@@ -4,11 +4,11 @@ import com.alibaba.fastjson.JSON
 import io.github.notsyncing.lightfur.DatabaseManager
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.feature.FeatureAuthenticator
 import io.github.notsyncing.manifold.spec.ActionInvokeRecorder
 import io.github.notsyncing.manifold.spec.ManifoldSpecification
-import io.github.notsyncing.manifold.spec.annotations.SceneMetadata
 import io.github.notsyncing.manifold.spec.flow.FlowActionItem
 import io.github.notsyncing.manifold.spec.flow.FlowItem
 import io.github.notsyncing.manifold.spec.models.SceneSpec

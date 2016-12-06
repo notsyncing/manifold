@@ -1,11 +1,11 @@
 package io.github.notsyncing.manifold.spec.tests.toys
 
+import io.github.notsyncing.manifold.action.ActionMetadata
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import io.github.notsyncing.manifold.feature.Feature
-import io.github.notsyncing.manifold.spec.annotations.ActionMetadata
-import io.github.notsyncing.manifold.spec.annotations.SceneMetadata
 import kotlinx.coroutines.async
 import java.util.concurrent.CompletableFuture
 

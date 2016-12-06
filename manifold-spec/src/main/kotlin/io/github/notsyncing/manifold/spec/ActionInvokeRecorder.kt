@@ -1,9 +1,9 @@
 package io.github.notsyncing.manifold.spec
 
+import io.github.notsyncing.manifold.action.ActionMetadata
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import io.github.notsyncing.manifold.action.interceptors.ForEveryAction
-import io.github.notsyncing.manifold.spec.annotations.ActionMetadata
 import java.util.concurrent.CompletableFuture
 
 @ForEveryAction

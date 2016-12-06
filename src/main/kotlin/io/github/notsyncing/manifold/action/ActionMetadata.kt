@@ -1,4 +1,4 @@
-package io.github.notsyncing.manifold.spec.annotations
+package io.github.notsyncing.manifold.action
 
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
