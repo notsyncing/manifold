@@ -9,6 +9,7 @@ class SceneSpec(val name: String,
                 val parameters: List<ParameterInfo>,
                 val returns: ReturnInfo,
                 val flow: FlowInfo,
-                val cases: List<TestCaseInfo>) {
+                val cases: List<TestCaseInfo>,
+                val useDatabase: Boolean) {
 
 }

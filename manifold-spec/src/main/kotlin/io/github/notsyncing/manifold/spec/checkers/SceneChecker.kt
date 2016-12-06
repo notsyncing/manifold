@@ -1,11 +1,13 @@
 package io.github.notsyncing.manifold.spec.checkers
 
 import com.alibaba.fastjson.JSON
+import io.github.notsyncing.lightfur.DatabaseManager
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.feature.FeatureAuthenticator
 import io.github.notsyncing.manifold.spec.ActionInvokeRecorder
+import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.annotations.SceneMetadata
 import io.github.notsyncing.manifold.spec.flow.FlowActionItem
 import io.github.notsyncing.manifold.spec.flow.FlowItem
@@ -16,12 +18,13 @@ import org.junit.Assert.*
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.jvmErasure
 
-class SceneChecker(scene: SceneSpec) : Checker(scene) {
+class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec, scene) {
     companion object {
         val sceneClasses = mutableListOf<Class<ManifoldScene<*>>>()
     }
 
     private var currSceneClass: Class<ManifoldScene<*>>? = null
+    private var currDatabaseName: String = ""
 
     init {
         if (sceneClasses.isEmpty()) {
@@ -165,6 +168,25 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
         return Pair(l.reversed(), case.exit.result)
     }
 
+    private fun initDatabase() = async<Unit> {
+        if (!scene.useDatabase) {
+            return@async
+        }
+
+        currDatabaseName = "manifold_spec_test_db_" + Math.random().toString().substring(3)
+
+        await(DatabaseManager.getInstance().createDatabase(currDatabaseName, true))
+        await(DatabaseManager.getInstance().upgradeDatabase(currDatabaseName))
+    }
+
+    private fun destroyDatabase() = async<Unit> {
+        if (!scene.useDatabase) {
+            return@async
+        }
+
+        await(DatabaseManager.getInstance().dropDatabase(currDatabaseName, true))
+    }
+
     override fun checkCase(case: TestCaseInfo) = async<Unit> {
         val (expectedActions, expectedResult) = resolveActionRoutes(case)
         val (s, sessId) = makeSceneFromCase(case)
@@ -176,38 +198,51 @@ class SceneChecker(scene: SceneSpec) : Checker(scene) {
 
         ActionInvokeRecorder.reset()
 
-        val actualResult = await(Manifold.run(s, sessId))
-        val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
+        try {
+            await(initDatabase())
 
-        assertEquals("Scene ${scene.name} returned unexpected result: expected $expectedResult, actual $actualResult",
-                expectedResult, actualResult)
+            case.otherInit?.invoke()
 
-        println("Result: $actualResult")
+            val actualResult = await(Manifold.run(s, sessId))
+            val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
 
-        assertArrayEquals("Scene ${scene.name} run through unexpected flow: expected ${JSON.toJSONString(expectedActions)}, actual ${JSON.toJSONString(actualActions)}",
-                expectedActions.toTypedArray(), actualActions.toTypedArray())
+            assertEquals("Scene ${scene.name} returned unexpected result: expected $expectedResult, actual $actualResult",
+                    expectedResult, actualResult)
 
-        println("Flow:")
+            println("Result: $actualResult")
 
-        if (actualActions.isNotEmpty()) {
-            actualActions.forEach(::println)
-        } else {
-            println("<Empty>")
+            assertArrayEquals("Scene ${scene.name} run through unexpected flow: expected ${JSON.toJSONString(expectedActions)}, actual ${JSON.toJSONString(actualActions)}",
+                    expectedActions.toTypedArray(), actualActions.toTypedArray())
+
+            println("Flow:")
+
+            if (actualActions.isNotEmpty()) {
+                actualActions.forEach(::println)
+            } else {
+                println("<Empty>")
+            }
+
+            println()
+
+            if (case.additionalConditions.isNotEmpty()) {
+                println("Additional checks:")
+
+                for (cond in case.additionalConditions) {
+                    println(cond.name)
+                    assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", cond.cond())
+                }
+
+                println()
+            }
+        } catch (e: Throwable) {
+            println("Failed in scene ${scene.name}: ${e.message}")
+            e.printStackTrace()
+
+            await(destroyDatabase())
+
+            fail(e.message)
         }
 
-        println()
-
-        if (case.additionalConditions.isEmpty()) {
-            return@async
-        }
-
-        println("Additional checks:")
-
-        for (cond in case.additionalConditions) {
-            println(cond.name)
-            assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", cond.cond())
-        }
-
-        println()
+        await(destroyDatabase())
     }
 }

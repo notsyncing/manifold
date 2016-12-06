@@ -1,6 +1,8 @@
 package io.github.notsyncing.manifold.spec.tests.toys
 
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
+import io.github.notsyncing.manifold.spec.ManifoldSpecification
+import io.github.notsyncing.manifold.spec.database.Ref
 import io.github.notsyncing.manifold.spec.i18n.*
 
 enum class Module {
@@ -17,7 +19,7 @@ enum class OperationResult {
     Failed
 }
 
-class TestSpec : 功能定义() {
+class TestSpec : ManifoldSpecification(useDatabase = true) {
     override fun spec() = 功能定义 {
         "基础数据模块" {
             +产品数据()
@@ -66,11 +68,6 @@ class 产品数据 : 场景组() {
 
                 应当 {
                     结束 于 "成功" 并返回 OperationResult.Success
-
-                    且满足("数据库中应有数据") {
-                        // 检查数据库里的数据
-                        true
-                    }
 
                     且满足("其他检查") {
                         true
@@ -179,5 +176,40 @@ class 产品数据 : 场景组() {
         功能 是否内部使用 否
 
         返回(字符串)
+    }
+
+    @场景定义
+    @使用数据库
+    fun 测试场景5() {
+        功能 名称 "TestScene5"
+        功能 组 "TestGroup"
+        功能 说明 "测试用的场景5"
+        功能 备注 "随便"
+        功能 是否内部使用 否
+
+        返回(字符串)
+
+        流程 {
+            前往(结束("成功"))
+        }
+
+        测试用例 {
+            "数据库测试用例" {
+                给定 {
+                    其他 {
+                        val insertedId = Ref(0)
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 2) RETURNING id" 将 "id" 存入 insertedId
+                    }
+                }
+
+                应当 {
+                    结束 于 "成功" 并返回 "Success"
+
+                    且满足("数据库中应有数据") {
+                        数据库 存在 "SELECT 1 FROM test_table WHERE value = 2"
+                    }
+                }
+            }
+        }
     }
 }

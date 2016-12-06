@@ -5,6 +5,7 @@ import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.SpecBuilder
 import io.github.notsyncing.manifold.spec.SpecSceneGroup
 import io.github.notsyncing.manifold.spec.annotations.SceneDef
+import io.github.notsyncing.manifold.spec.database.*
 import io.github.notsyncing.manifold.spec.flow.*
 import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
@@ -18,6 +19,7 @@ fun ManifoldSpecification.功能定义(spec: SpecBuilder.() -> Unit): SpecBuilde
 }
 
 typealias 场景定义 = SceneDef
+typealias 使用数据库 = UseDatabase
 
 val SpecSceneGroup.功能: FeatureInfo
     get() = this.feature
@@ -104,6 +106,10 @@ fun TestCaseInfo.给定(conds: TestCaseInfo.() -> Unit): TestCaseInfo {
     return this.given(conds)
 }
 
+fun TestCaseInfo.其他(proc: () -> Unit): TestCaseInfo {
+    return this.others(proc)
+}
+
 fun TestCaseInfo.应当(checks: TestCaseInfo.() -> Unit): TestCaseInfo {
     return this.should(checks)
 }
@@ -121,4 +127,22 @@ infix fun TestCaseInfo.TestCaseExitPoint.并返回(result: Any?): TestCaseInfo.T
 
 fun TestCaseInfo.且满足(name: String, cond: () -> Boolean): TestCaseInfo {
     return this.and(name, cond)
+}
+
+val 数据库 = database
+
+infix fun DatabaseAccessor.执行(sql: String): DatabaseResult {
+    return this.execute(sql)
+}
+
+infix fun DatabaseAccessor.存在(sql: String): Boolean {
+    return this.exists(sql)
+}
+
+infix fun DatabaseResult.将(columnName: String): DatabaseResult.DatabaseResultStore {
+    return this.store(columnName)
+}
+
+infix fun DatabaseResult.DatabaseResultStore.存入(variable: Ref<*>) {
+    this.into(variable)
 }

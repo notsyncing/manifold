@@ -73,4 +73,9 @@ class SceneCheckerCaseTest {
             assertTrue(e.cause?.message!!.contains("unmet condition"))
         }
     }
+
+    @Test
+    fun testCheckCaseWithDatabase() {
+        spec.checkCase("测试场景5", "数据库测试用例")
+    }
 }

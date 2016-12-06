@@ -1,13 +1,15 @@
 package io.github.notsyncing.manifold.spec.checkers
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
+import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.SpecSceneGroup
 import io.github.notsyncing.manifold.spec.models.ModuleInfo
 import io.github.notsyncing.manifold.spec.models.SceneSpec
 import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
 import org.junit.Assert.fail
 
-class SpecChecker(private val modules: List<ModuleInfo>) {
+class SpecChecker(private val spec: ManifoldSpecification,
+                  private val modules: List<ModuleInfo>) {
     companion object {
         val checkers = mutableListOf<Class<Checker>>()
         val scanner = FastClasspathScanner("-scala -kotlin")
@@ -25,7 +27,7 @@ class SpecChecker(private val modules: List<ModuleInfo>) {
 
     private fun checkScene(scene: SceneSpec, type: CheckType, case: TestCaseInfo? = null) {
         for (checkerClass in checkers.toList()) {
-            val checker = checkerClass.constructors[0].newInstance(scene) as Checker
+            val checker = checkerClass.constructors[0].newInstance(spec, scene) as Checker
 
             if (case == null) {
                 if (type == CheckType.Metadata) {

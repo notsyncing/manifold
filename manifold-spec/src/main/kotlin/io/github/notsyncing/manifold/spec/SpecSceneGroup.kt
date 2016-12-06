@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.spec
 
 import io.github.notsyncing.manifold.spec.annotations.SceneDef
+import io.github.notsyncing.manifold.spec.database.UseDatabase
 import io.github.notsyncing.manifold.spec.flow.FlowBuilder
 import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
@@ -28,10 +29,12 @@ abstract class SpecSceneGroup {
         val l = mutableListOf<SceneSpec>()
 
         for (m in sceneDefs) {
+            val useDatabase = m.isAnnotationPresent(UseDatabase::class.java)
+
             m(this)
 
             l.add(SceneSpec(m.name, feature, permission, parameters.parameters, returns, flow.build(),
-                    cases.build()))
+                    cases.build(), useDatabase))
 
             reset()
         }

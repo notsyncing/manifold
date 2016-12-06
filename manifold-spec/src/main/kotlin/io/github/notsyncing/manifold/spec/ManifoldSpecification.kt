@@ -1,11 +1,30 @@
 package io.github.notsyncing.manifold.spec
 
+import io.github.notsyncing.lightfur.DatabaseManager
+import io.github.notsyncing.lightfur.common.LightfurConfig
+import io.github.notsyncing.lightfur.common.LightfurConfigBuilder
 import io.github.notsyncing.manifold.spec.checkers.SpecChecker
 import io.github.notsyncing.manifold.spec.models.ModuleInfo
 
-abstract class ManifoldSpecification {
+abstract class ManifoldSpecification(val useDatabase: Boolean = false) {
     companion object {
         var modules: List<ModuleInfo> = emptyList()
+    }
+
+    init {
+        if (useDatabase) {
+            initDatabase()
+        }
+    }
+
+    private fun initDatabase() {
+        DatabaseManager.getInstance().init(databaseConfig())
+    }
+
+    open fun databaseConfig(): LightfurConfig {
+        return LightfurConfigBuilder()
+                .databaseVersioning(true)
+                .build()
     }
 
     abstract fun spec(): SpecBuilder
@@ -17,44 +36,32 @@ abstract class ManifoldSpecification {
         return b
     }
 
-    fun checkMetadata() {
+    private fun getSpecChecker(): SpecChecker {
         if (modules.isEmpty()) {
             modules = spec().build()
         }
 
-        SpecChecker(modules).runMetadata()
+        return SpecChecker(this, modules)
+    }
+
+    fun checkMetadata() {
+        getSpecChecker().runMetadata()
     }
 
     fun checkMetadata(sceneName: String) {
-        if (modules.isEmpty()) {
-            modules = spec().build()
-        }
-
-        SpecChecker(modules).runMetadata(sceneName)
+        getSpecChecker().runMetadata(sceneName)
     }
 
     fun checkCases() {
-        if (modules.isEmpty()) {
-            modules = spec().build()
-        }
-
-        SpecChecker(modules).runCases()
+        getSpecChecker().runCases()
     }
 
     fun checkCase(sceneName: String, sceneCase: String) {
-        if (modules.isEmpty()) {
-            modules = spec().build()
-        }
-
-        SpecChecker(modules).runCase(sceneName, sceneCase)
+        getSpecChecker().runCase(sceneName, sceneCase)
     }
 
     fun checkScene(sceneName: String) {
-        if (modules.isEmpty()) {
-            modules = spec().build()
-        }
-
-        SpecChecker(modules).runScene(sceneName)
+        getSpecChecker().runScene(sceneName)
     }
 
     fun getSceneNameList(): List<String> {

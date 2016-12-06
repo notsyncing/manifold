@@ -23,6 +23,7 @@ class TestCaseInfo(val behavior: String) {
     }
 
     val parameters = mutableMapOf<String, Any?>()
+    var otherInit: (() -> Unit)? = null
     val exit = TestCaseExitPoint()
     val additionalConditions = mutableListOf<TestAdditionalCondition>()
 
@@ -37,6 +38,11 @@ class TestCaseInfo(val behavior: String) {
 
     fun given(conds: TestCaseInfo.() -> Unit): TestCaseInfo {
         this.conds()
+        return this
+    }
+
+    fun others(proc: () -> Unit): TestCaseInfo {
+        otherInit = proc
         return this
     }
 
