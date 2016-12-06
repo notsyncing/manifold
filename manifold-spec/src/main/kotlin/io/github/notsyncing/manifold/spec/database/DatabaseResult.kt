@@ -6,6 +6,10 @@ class DatabaseResult(private val result: ResultSet) {
     class DatabaseResultStore(private val result: ResultSet,
                               private val columnName: String) {
         infix fun into(variable: Ref<*>) {
+            if (result.rows.isEmpty()) {
+                throw RuntimeException("No data returned!")
+            }
+
             (variable as Ref<Any?>).value = result.rows[0].getValue(columnName)
         }
     }
