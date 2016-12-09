@@ -146,7 +146,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         return Pair(s, case.parameters[case.sessionIdentifier] as String?)
     }
 
-    private fun resolveActionRoutes(case: TestCaseInfo): Pair<List<String>, Any?> {
+    private fun resolveActionRoutes(case: TestCaseInfo): Pair<List<String>, TestCaseInfo.TestCaseExitPoint?> {
         val exitPoint = scene.flow.ends.firstOrNull { it.text == case.exit.exitName }
 
         if (exitPoint == null) {
@@ -165,7 +165,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
             currFlowItem = currFlowItem.previous
         }
 
-        return Pair(l.reversed(), case.exit.result)
+        return Pair(l.reversed(), case.exit)
     }
 
     private fun initDatabase() = async<Unit> {
@@ -188,7 +188,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
     }
 
     override fun checkCase(case: TestCaseInfo) = async<Unit> {
-        val (expectedActions, expectedResult) = resolveActionRoutes(case)
+        val (expectedActions, expectedExitPoint) = resolveActionRoutes(case)
         val (s, sessId) = makeSceneFromCase(case)
 
         if (s == null) {
@@ -206,8 +206,14 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
             val actualResult = await(Manifold.run(s, sessId))
             val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
 
-            assertEquals("Scene ${scene.name} returned unexpected result: expected $expectedResult, actual $actualResult",
-                    expectedResult, actualResult)
+            if (expectedExitPoint!!.hasResult) {
+                assertEquals("Scene ${scene.name} returned unexpected result: expected ${expectedExitPoint.result}, actual $actualResult",
+                        expectedExitPoint.result, actualResult)
+            }
+
+            if (expectedExitPoint.resultInto != null) {
+                expectedExitPoint.resultInto!!.value = actualResult
+            }
 
             println("Result: $actualResult")
 

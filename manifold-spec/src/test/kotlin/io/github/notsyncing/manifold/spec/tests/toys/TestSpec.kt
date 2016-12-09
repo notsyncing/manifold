@@ -2,8 +2,8 @@ package io.github.notsyncing.manifold.spec.tests.toys
 
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import io.github.notsyncing.manifold.spec.ManifoldSpecification
-import io.github.notsyncing.manifold.spec.database.Ref
 import io.github.notsyncing.manifold.spec.i18n.*
+import io.github.notsyncing.manifold.spec.models.Ref
 
 enum class Module {
     ProductData
@@ -207,6 +207,53 @@ class 产品数据 : 场景组() {
 
                     且满足("数据库中应有数据") {
                         数据库 存在 "SELECT 1 FROM test_table WHERE value = 2"
+                    }
+                }
+            }
+        }
+    }
+
+    @场景定义
+    fun 测试场景6() {
+        功能 名称 "TestScene6"
+        功能 组 "TestGroup"
+        功能 说明 "测试用的场景6"
+        功能 备注 "随便"
+        功能 是否内部使用 否
+
+        返回(字符串)
+
+        流程 {
+            前往(结束("成功"))
+        }
+
+        测试用例 {
+            "测试存放返回结果" {
+                val result = Ref<Any?>("")
+
+                给定 {
+                }
+
+                应当 {
+                    结束 于 "成功" 并返回 "Success" 并将结果存放于 result
+
+                    且满足("存放结果正确") {
+                        result.value == "Success"
+                    }
+                }
+            }
+
+            "测试仅存放返回结果" {
+                val result = Ref<Any?>("")
+
+                给定 {
+                }
+
+                应当 {
+                    结束 于 "成功" 并将结果存放于 result
+
+                    且满足("存放结果正确") {
+                        result.value == "Success"
                     }
                 }
             }

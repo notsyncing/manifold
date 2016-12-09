@@ -78,4 +78,14 @@ class SceneCheckerCaseTest {
     fun testCheckCaseWithDatabase() {
         spec.checkCase("测试场景5", "数据库测试用例")
     }
+
+    @Test
+    fun testCheckCaseWithResultInto() {
+        spec.checkCase("测试场景6", "测试存放返回结果")
+    }
+
+    @Test
+    fun testCheckCaseWithResultIntoOnly() {
+        spec.checkCase("测试场景6", "测试仅存放返回结果")
+    }
 }

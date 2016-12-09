@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.spec.database
 
+import io.github.notsyncing.manifold.spec.models.Ref
 import io.vertx.ext.sql.ResultSet
 
 class DatabaseResult(private val result: ResultSet) {

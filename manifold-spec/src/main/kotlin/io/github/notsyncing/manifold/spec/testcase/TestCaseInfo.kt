@@ -1,11 +1,15 @@
 package io.github.notsyncing.manifold.spec.testcase
 
+import io.github.notsyncing.manifold.spec.models.Ref
+
 class TestCaseInfo(val behavior: String) {
     val sessionIdentifier = "manifold.session.identifier"
 
     class TestCaseExitPoint {
         var exitName: String = ""
         var result: Any? = null
+        var hasResult = false
+        var resultInto: Ref<Any?>? = null
 
         infix fun at(exitName: String): TestCaseExitPoint {
             this.exitName = exitName
@@ -13,7 +17,13 @@ class TestCaseInfo(val behavior: String) {
         }
 
         infix fun with(result: Any?): TestCaseExitPoint {
+            hasResult = true
             this.result = result
+            return this
+        }
+
+        infix fun resultInto(variable: Ref<*>): TestCaseExitPoint {
+            resultInto = variable as Ref<Any?>
             return this
         }
     }

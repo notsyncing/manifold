@@ -5,7 +5,10 @@ import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.SpecBuilder
 import io.github.notsyncing.manifold.spec.SpecSceneGroup
 import io.github.notsyncing.manifold.spec.annotations.SceneDef
-import io.github.notsyncing.manifold.spec.database.*
+import io.github.notsyncing.manifold.spec.database.DatabaseAccessor
+import io.github.notsyncing.manifold.spec.database.DatabaseResult
+import io.github.notsyncing.manifold.spec.database.UseDatabase
+import io.github.notsyncing.manifold.spec.database.database
 import io.github.notsyncing.manifold.spec.flow.*
 import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
@@ -123,6 +126,10 @@ infix fun TestCaseInfo.TestCaseExitPoint.于(exitName: String): TestCaseInfo.Tes
 
 infix fun TestCaseInfo.TestCaseExitPoint.并返回(result: Any?): TestCaseInfo.TestCaseExitPoint {
     return this.with(result)
+}
+
+infix fun TestCaseInfo.TestCaseExitPoint.并将结果存放于(variable: Ref<*>): TestCaseInfo.TestCaseExitPoint {
+    return this.resultInto(variable)
 }
 
 fun TestCaseInfo.且满足(name: String, cond: () -> Boolean): TestCaseInfo {
