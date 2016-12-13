@@ -126,6 +126,11 @@ object Manifold {
 
     fun reset() {
         dependencyProvider = null
+
+        if (sessionStorageProvider != null) {
+            sessionStorageProvider!!.clear()
+        }
+
         sessionStorageProvider = null
 
         authInfoProvider = null

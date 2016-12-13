@@ -257,6 +257,21 @@ class 产品数据 : 场景组() {
                     }
                 }
             }
+
+            "测试存放会话存储" {
+                给定 {
+                    "a" into sessionIdentifier
+                    "test" into session("SESSION_KEY")
+                }
+
+                应当 {
+                    结束 于 "成功"
+
+                    且满足("会话存储中数据正确") {
+                        session.get<String>("a", "SESSION_KEY") == "test"
+                    }
+                }
+            }
         }
     }
 }

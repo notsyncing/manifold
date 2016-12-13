@@ -88,4 +88,9 @@ class SceneCheckerCaseTest {
     fun testCheckCaseWithResultIntoOnly() {
         spec.checkCase("测试场景6", "测试仅存放返回结果")
     }
+
+    @Test
+    fun testCheckCaseWithSessionData() {
+        spec.checkCase("测试场景6", "测试存放会话存储")
+    }
 }
