@@ -6,7 +6,7 @@ import io.github.notsyncing.manifold.feature.Feature
 import java.util.concurrent.CompletableFuture
 
 @SceneMetadata("测试场景1")
-@Feature("TestScene1", groups = arrayOf("TestGroup"), internal = false)
+@Feature("TestScene11", groups = arrayOf("TestGroup"), internal = false)
 class TestScene1() : ManifoldScene<OperationResult>(enableEventNode = false) {
     override fun stage(): CompletableFuture<OperationResult> {
         return CompletableFuture.completedFuture(OperationResult.Success)

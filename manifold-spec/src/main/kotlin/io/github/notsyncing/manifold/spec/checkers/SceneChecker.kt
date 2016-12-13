@@ -107,6 +107,10 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
     }
 
     private fun checkReturns() {
+        if (scene.returns.returnType == null) {
+            return
+        }
+
         val returnType = currSceneClass!!.kotlin.members
                 .firstOrNull { it.name == ManifoldScene<*>::stage.name }?.returnType?.arguments?.get(0)?.type?.jvmErasure?.java
         assertEquals("Scene ${scene.name} has wrong return type: expected ${scene.returns.returnType}, actual: $returnType",
