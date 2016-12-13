@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.spec.testcase
 
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.spec.models.Ref
 
 class TestCaseInfo(val behavior: String) {
@@ -37,7 +38,7 @@ class TestCaseInfo(val behavior: String) {
     var otherInit: (() -> Unit)? = null
     val exit = TestCaseExitPoint()
     val additionalConditions = mutableListOf<TestAdditionalCondition>()
-    val session = Manifold.sessionStorageProvider!!
+    val session = Manifold.sessionStorageProvider ?: ManifoldSessionStorage()
 
     fun session(key: String): (Any) -> Unit {
         return {
