@@ -15,6 +15,7 @@ import io.github.notsyncing.manifold.spec.models.SceneSpec
 import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
 import kotlinx.coroutines.async
 import org.junit.Assert.*
+import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.jvmErasure
 
@@ -205,7 +206,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         try {
             await(initDatabase())
 
-            case.otherInit?.invoke()
+            await(CompletableFuture.runAsync { case.otherInit?.invoke() })
 
             val actualResult = await(Manifold.run(s, sessId))
             val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }

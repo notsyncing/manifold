@@ -210,6 +210,28 @@ class 产品数据 : 场景组() {
                     }
                 }
             }
+
+            "数据库多条SQL测试用例" {
+                给定 {
+                    其他 {
+                        val insertedId = Ref(0)
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 2) RETURNING id" 将 "id" 存入 insertedId
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 3) RETURNING id" 将 "id" 存入 insertedId
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 4) RETURNING id" 将 "id" 存入 insertedId
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 5) RETURNING id" 将 "id" 存入 insertedId
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 6) RETURNING id" 将 "id" 存入 insertedId
+                        数据库 执行 "INSERT INTO test_table (name, value) VALUES ('a', 7) RETURNING id" 将 "id" 存入 insertedId
+                    }
+                }
+
+                应当 {
+                    结束 于 "成功" 并返回 "Success"
+
+                    且满足("数据库中应有数据") {
+                        数据库 存在 "SELECT 1 FROM test_table WHERE value = 2"
+                    }
+                }
+            }
         }
     }
 

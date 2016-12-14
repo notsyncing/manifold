@@ -9,22 +9,12 @@ val database = DatabaseAccessor()
 
 class DatabaseAccessor {
     infix fun execute(sql: String): DatabaseResult {
-        val f = CompletableFuture<DatabaseResult>()
+        val db = DataSession(EntityDataMapper())
+        val r = DatabaseResult(db.executeWithReturning(sql).get())
 
-        thread {
-            val db = DataSession(EntityDataMapper())
+        db.end().get()
 
-            db.executeWithReturning(sql).thenAccept {
-                db.end()
-                f.complete(DatabaseResult(it))
-            }.exceptionally {
-                db.end()
-                f.completeExceptionally(it)
-                null
-            }
-        }
-
-        return f.get()
+        return r
     }
 
     infix fun exists(sql: String): Boolean {
