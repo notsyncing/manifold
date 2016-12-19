@@ -240,7 +240,9 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
 
                 for (cond in case.additionalConditions) {
                     println(cond.name)
-                    assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", cond.cond())
+
+                    val result = await(CompletableFuture.supplyAsync { cond.cond() })
+                    assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", result)
                 }
 
                 println()
