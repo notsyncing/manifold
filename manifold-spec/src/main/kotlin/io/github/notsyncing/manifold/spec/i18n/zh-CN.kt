@@ -146,6 +146,10 @@ infix fun DatabaseAccessor.存在(sql: String): Boolean {
     return this.exists(sql)
 }
 
+infix fun DatabaseAccessor.不存在(sql: String): Boolean {
+    return this.notExists(sql)
+}
+
 infix fun DatabaseResult.将(columnName: String): DatabaseResult.DatabaseResultStore {
     return this.store(columnName)
 }

@@ -31,4 +31,8 @@ class DatabaseAccessor {
             throw e
         }
     }
+
+    infix fun notExists(sql: String): Boolean {
+        return !exists(sql)
+    }
 }
