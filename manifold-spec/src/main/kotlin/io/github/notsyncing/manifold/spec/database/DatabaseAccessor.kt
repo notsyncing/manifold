@@ -2,37 +2,33 @@ package io.github.notsyncing.manifold.spec.database
 
 import io.github.notsyncing.lightfur.DataSession
 import io.github.notsyncing.lightfur.entity.EntityDataMapper
-import java.util.concurrent.CompletableFuture
-import kotlin.concurrent.thread
 
 val database = DatabaseAccessor()
 
 class DatabaseAccessor {
     infix fun execute(sql: String): DatabaseResult {
         val db = DataSession(EntityDataMapper())
-        val r = DatabaseResult(db.executeWithReturning(sql).get())
 
-        db.end().get()
-
-        return r
+        try {
+            val r = DatabaseResult(db.executeWithReturning(sql).get())
+            db.end().get()
+            return r
+        } catch (e: Exception) {
+            db.end().get()
+            throw e
+        }
     }
 
     infix fun exists(sql: String): Boolean {
-        val f = CompletableFuture<Boolean>()
+        val db = DataSession(EntityDataMapper())
 
-        thread {
-            val db = DataSession(EntityDataMapper())
-
-            db.query(sql).thenAccept {
-                db.end()
-                f.complete(it.numRows > 0)
-            }.exceptionally {
-                db.end()
-                f.completeExceptionally(it)
-                null
-            }
+        try {
+            val r = db.query(sql).get()
+            db.end().get()
+            return r.numRows > 0
+        } catch (e: Exception) {
+            db.end().get()
+            throw e
         }
-
-        return f.get()
     }
 }
