@@ -117,7 +117,7 @@ class ManifoldInterceptorTest {
         Manifold.run(TestSceneSimple2()).get()
 
         Assert.assertNotNull(TestSceneInterceptor.context)
-        Assert.assertEquals(TestSceneInterceptorAnno::class, TestSceneInterceptor.context?.annotation?.annotationClass)
+        Assert.assertEquals(TestSceneInterceptorAnno::class, TestSceneInterceptor.forAnno?.annotationClass)
     }
 
     @Test

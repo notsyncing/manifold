@@ -9,6 +9,7 @@ import java.util.concurrent.CompletableFuture
 class TestSceneInterceptor : SceneInterceptor() {
     companion object {
         var context: SceneInterceptorContext? = null
+        var forAnno: Annotation? = null
         var beforeCalled = false
         var afterCalled = false
         var destroyCalled = false
@@ -30,6 +31,10 @@ class TestSceneInterceptor : SceneInterceptor() {
     override fun before(context: SceneInterceptorContext): CompletableFuture<Unit> {
         Companion.context = context
         beforeCalled = true
+
+        if (context.annotation != null) {
+            forAnno = context.annotation
+        }
 
         if (makeStop) {
             context.interceptorResult = InterceptorResult.Stop
