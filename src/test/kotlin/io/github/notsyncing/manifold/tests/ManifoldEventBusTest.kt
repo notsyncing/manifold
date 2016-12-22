@@ -9,6 +9,7 @@ import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
 import io.github.notsyncing.manifold.tests.toys.TestEvent
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -70,10 +71,10 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessage() {
-        async<Unit> {
+        async {
             nodeA.send("test.msg.action.B1", msgA)
 
-            val e = await(receivedB1)
+            val e = receivedB1.await()
 
             Assert.assertEquals("1", e.data)
             Assert.assertEquals("test.msg.action.A", e.source)
@@ -86,8 +87,8 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessageAndReply() {
-        async<Unit> {
-            val r = await(nodeA.sendAndWaitForReply("test.msg.action.B1", msgA))
+        async {
+            val r = nodeA.sendAndWaitForReply("test.msg.action.B1", msgA).await()
             Assert.assertNotNull(r)
 
             Assert.assertEquals("3", r?.data)
@@ -101,30 +102,30 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessageToAnyInGroup() {
-        async<Unit> {
+        async {
             nodeA.sendToAnyInGroup("group2", msgA)
-            var e1 = await(receivedB1)
+            var e1 = receivedB1.await()
             Assert.assertEquals("1", e1.data)
             Assert.assertFalse(receivedB2.isDone)
             Assert.assertFalse(receivedB3.isDone)
             receivedB1 = CompletableFuture<ManifoldEvent>()
 
             nodeA.sendToAnyInGroup("group2", msgA)
-            val e2 = await(receivedB2)
+            val e2 = receivedB2.await()
             Assert.assertEquals("1", e2.data)
             Assert.assertFalse(receivedB1.isDone)
             Assert.assertFalse(receivedB3.isDone)
             receivedB2 = CompletableFuture<ManifoldEvent>()
 
             nodeA.sendToAnyInGroup("group2", msgA)
-            val e3 = await(receivedB3)
+            val e3 = receivedB3.await()
             Assert.assertEquals("1", e3.data)
             Assert.assertFalse(receivedB1.isDone)
             Assert.assertFalse(receivedB2.isDone)
             receivedB3 = CompletableFuture<ManifoldEvent>()
 
             nodeA.sendToAnyInGroup("group2", msgA)
-            e1 = await(receivedB1)
+            e1 = receivedB1.await()
             Assert.assertEquals("1", e1.data)
             Assert.assertFalse(receivedB2.isDone)
             Assert.assertFalse(receivedB3.isDone)

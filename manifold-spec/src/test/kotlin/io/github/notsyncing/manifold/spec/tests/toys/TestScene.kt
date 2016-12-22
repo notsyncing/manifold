@@ -39,13 +39,13 @@ class TestScene(private val name: String,
             return@async OperationResult.Failed
         }
 
-        val companyId = await(m(GetCurrentCompanyIdAction(sessionIdentifier ?: "")))
+        val companyId = m(GetCurrentCompanyIdAction(sessionIdentifier ?: "")).await()
 
         if (companyId <= 0) {
             return@async OperationResult.Failed
         }
 
-        val r = await(m(AddCompanyAction(name, details)))
+        val r = m(AddCompanyAction(name, details)).await()
 
         if (r == OperationResult.Failed) {
             return@async r

@@ -5,6 +5,8 @@ import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import java.util.*
 import java.util.concurrent.*
 
+typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
+
 class ManifoldEventNode(var id: String,
                         var groups: Array<String> = emptyArray(),
                         var load: Int = 0,
@@ -13,8 +15,6 @@ class ManifoldEventNode(var id: String,
     companion object {
         private val replyCallbackTimeout = Executors.newScheduledThreadPool(1)
     }
-
-    typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
 
     var local: Boolean = host == null
         get() = host == null

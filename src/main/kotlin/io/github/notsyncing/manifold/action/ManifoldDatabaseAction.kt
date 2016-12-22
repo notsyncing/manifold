@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.action
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.storage.ManifoldStorage
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.concurrent.CompletableFuture
 
 abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : ManifoldAction<R>() {
@@ -35,13 +36,13 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
 
         storageList.forEach { it.sceneContext = context }
 
-        await(context.transaction!!.begin(!context.autoCommit))
+        context.transaction!!.begin(!context.autoCommit).await()
 
         try {
-            val r = await(super.execute(f))
+            val r = super.execute(f).await()
 
             if (context.autoCommit) {
-                await(context.transaction!!.end())
+                context.transaction!!.end().await()
                 context.transaction = null
             }
 
@@ -49,7 +50,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
         } catch (e: Exception) {
             e.printStackTrace()
 
-            await(context.transaction!!.end())
+            context.transaction!!.end().await()
             context.transaction = null
 
             throw e

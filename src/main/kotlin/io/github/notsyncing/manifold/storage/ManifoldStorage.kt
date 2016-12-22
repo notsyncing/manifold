@@ -4,6 +4,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldTransaction
 import io.github.notsyncing.manifold.action.SceneContext
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 
 abstract class ManifoldStorage<T> {
     private var ownTrans: ManifoldTransaction<T>? = null
@@ -26,9 +27,9 @@ abstract class ManifoldStorage<T> {
             }
         }
 
-    fun destroy() = async<Unit> {
+    fun destroy() = async {
         if (ownTrans != null) {
-            await(ownTrans!!.end())
+            ownTrans!!.end().await()
         }
     }
 }

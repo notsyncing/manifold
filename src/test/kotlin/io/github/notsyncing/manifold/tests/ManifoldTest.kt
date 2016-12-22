@@ -10,6 +10,7 @@ import io.github.notsyncing.manifold.tests.toys.TestManager
 import io.github.notsyncing.manifold.tests.toys.TestSceneTransaction
 import io.github.notsyncing.manifold.tests.toys.TestStorage
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
@@ -109,8 +110,8 @@ class ManifoldTest {
     @Test
     fun testRunActionWithInvoke() {
         Manifold.run { m ->
-            async<Unit> {
-                val s = await(m(TestAction()))
+            async {
+                val s = m(TestAction()).await()
 
                 Assert.assertEquals("Hello", s)
             }

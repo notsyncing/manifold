@@ -100,7 +100,7 @@ object ManifoldEventBus {
 
                 val node = nodes[id]!!
 
-                sendBeacon(node).exceptionally<Boolean> {
+                sendBeacon(node).exceptionally {
                     it.printStackTrace()
                     return@exceptionally null
                 }

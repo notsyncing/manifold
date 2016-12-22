@@ -14,6 +14,7 @@ import io.github.notsyncing.manifold.spec.flow.FlowItem
 import io.github.notsyncing.manifold.spec.models.SceneSpec
 import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import org.junit.Assert.*
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
@@ -173,26 +174,26 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         return Pair(l.reversed(), case.exit)
     }
 
-    private fun initDatabase() = async<Unit> {
+    private fun initDatabase() = async {
         if (!scene.useDatabase) {
             return@async
         }
 
         currDatabaseName = "manifold_spec_test_db_" + Math.random().toString().substring(3)
 
-        await(DatabaseManager.getInstance().createDatabase(currDatabaseName, true))
-        await(DatabaseManager.getInstance().upgradeDatabase(currDatabaseName))
+        DatabaseManager.getInstance().createDatabase(currDatabaseName, true).await()
+        DatabaseManager.getInstance().upgradeDatabase(currDatabaseName).await()
     }
 
-    private fun destroyDatabase() = async<Unit> {
+    private fun destroyDatabase() = async {
         if (!scene.useDatabase) {
             return@async
         }
 
-        await(DatabaseManager.getInstance().dropDatabase(currDatabaseName, true))
+        DatabaseManager.getInstance().dropDatabase(currDatabaseName, true).await()
     }
 
-    override fun checkCase(case: TestCaseInfo) = async<Unit> {
+    override fun checkCase(case: TestCaseInfo) = async {
         val (expectedActions, expectedExitPoint) = resolveActionRoutes(case)
         val (s, sessId) = makeSceneFromCase(case)
 
@@ -204,11 +205,11 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         ActionInvokeRecorder.reset()
 
         try {
-            await(initDatabase())
+            initDatabase().await()
 
-            await(CompletableFuture.runAsync { case.otherInit?.invoke() })
+            CompletableFuture.runAsync { case.otherInit?.invoke() }.await()
 
-            val actualResult = await(Manifold.run(s, sessId))
+            val actualResult = Manifold.run(s, sessId).await()
             val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
 
             if (expectedExitPoint!!.hasResult) {
@@ -241,7 +242,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
                 for (cond in case.additionalConditions) {
                     println(cond.name)
 
-                    val result = await(CompletableFuture.supplyAsync { cond.cond() })
+                    val result = CompletableFuture.supplyAsync { cond.cond() }.await()
                     assertTrue("Scene ${scene.name} has unmet condition: ${cond.name} returned false", result)
                 }
 
@@ -251,11 +252,11 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
             println("Failed in scene ${scene.name}: ${e.message}")
             e.printStackTrace()
 
-            await(destroyDatabase())
+            destroyDatabase().await()
 
             fail(e.message)
         }
 
-        await(destroyDatabase())
+        destroyDatabase().await()
     }
 }

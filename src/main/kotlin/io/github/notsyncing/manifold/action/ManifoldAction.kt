@@ -8,6 +8,7 @@ import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.storage.ManifoldStorage
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -63,25 +64,25 @@ abstract class ManifoldAction<R> {
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i!!.before(context))
+                i!!.before(context).await()
 
                 if (context.interceptorResult == InterceptorResult.Stop) {
                     throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of action ${this@ManifoldAction.javaClass}", context.exception)
                 }
             }
 
-            context.result = await(functor())
+            context.result = functor().await()
 
             interceptors.forEach {
                 val (info, i) = it
 
                 context.annotation = info.forAnnotation
-                await(i!!.after(context))
+                i!!.after(context).await()
             }
 
             return@async context.result as R
         }
 
-        return@async await(functor())
+        return@async functor().await()
     }
 }

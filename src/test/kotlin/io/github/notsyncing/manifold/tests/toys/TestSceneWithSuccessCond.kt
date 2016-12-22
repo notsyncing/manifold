@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.tests.toys
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 
 class TestSceneWithSuccessCond : ManifoldScene<String> {
@@ -37,14 +38,14 @@ class TestSceneWithSuccessCond : ManifoldScene<String> {
         this.pass = pass
     }
 
-    override fun stage() = async<String> {
+    override fun stage() = async {
         successOn { s -> s == if (pass) "Hello!" else "" }
 
         useTransaction()
 
         TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.SCENE_START)
 
-        await(m(TestAction()))
+        m(TestAction()).await()
 
         TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.SCENE_END)
 

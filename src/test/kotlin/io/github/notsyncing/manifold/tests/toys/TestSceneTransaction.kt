@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 
 class TestSceneTransaction(val useTrans: Boolean = true) : ManifoldScene<String>(enableEventNode = false) {
@@ -25,14 +26,14 @@ class TestSceneTransaction(val useTrans: Boolean = true) : ManifoldScene<String>
         }
     }
 
-    override fun stage() = async<String> {
+    override fun stage() = async {
         if (useTrans) {
             useTransaction()
         }
 
         add(SCENE_START)
 
-        await(m(TestAction()))
+        m(TestAction()).await()
 
         add(SCENE_END)
 

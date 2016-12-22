@@ -4,6 +4,7 @@ import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneFailedException
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 
 class TestSceneFailedException : ManifoldScene<String> {
@@ -36,7 +37,7 @@ class TestSceneFailedException : ManifoldScene<String> {
 
         add(SCENE_START)
 
-        await(m(TestDbActionSimple()))
+        m(TestDbActionSimple()).await()
 
         throw SceneFailedException("Failed!")
     }

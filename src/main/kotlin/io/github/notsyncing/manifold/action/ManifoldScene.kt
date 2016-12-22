@@ -9,6 +9,7 @@ import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -96,12 +97,12 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         context.autoCommit = false
     }
 
-    protected fun splitTransaction() = async<Unit> {
+    protected fun splitTransaction() = async {
         if ((context.transaction == null) || (context.autoCommit)) {
             return@async
         }
 
-        await(context.transaction!!.commit(false))
+        context.transaction!!.commit(false).await()
     }
 
     protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit,
@@ -199,14 +200,14 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                     interceptors.add(Pair(it, i))
 
                     i.m = m
-                    await(i.before(interceptorContext))
+                    i.before(interceptorContext).await()
 
                     if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
                         throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
                     }
                 }
 
-                interceptorContext.result = await(functor())
+                interceptorContext.result = functor().await()
 
                 if (!checkSuccessConditions(interceptorContext.result as R)) {
                     throw SceneFailedException(interceptorContext.result)
@@ -215,20 +216,20 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                 interceptors.forEach {
                     val (info, i) = it
 
-                    await(i.after(interceptorContext))
+                    i.after(interceptorContext).await()
 
-                    await(i.destroy(interceptorContext))
+                    i.destroy(interceptorContext).await()
                 }
 
-                await(afterExecution())
+                afterExecution().await()
             } catch (e: Exception) {
                 interceptors.forEach {
                     val (info, i) = it
 
-                    await(i.destroy(interceptorContext))
+                    i.destroy(interceptorContext).await()
                 }
 
-                await(afterExecution(false))
+                afterExecution(false).await()
 
                 if (e is SceneFailedException) {
                     interceptorContext.result = e.data
@@ -243,15 +244,15 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         var r: R
 
         try {
-            r = await(functor())
+            r = functor().await()
 
             if (!checkSuccessConditions(r)) {
                 throw SceneFailedException(r)
             }
 
-            await(afterExecution())
+            afterExecution().await()
         } catch (e: Exception) {
-            await(afterExecution(false))
+            afterExecution(false).await()
 
             if (e is SceneFailedException) {
                 r = e.data as R
@@ -267,25 +268,25 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         if (context.transaction != null) {
             if (!context.autoCommit) {
                 if (commit) {
-                    await(context.transaction!!.commit())
+                    context.transaction!!.commit().await()
                 }
             }
 
-            await(context.transaction!!.end())
+            context.transaction!!.end().await()
         }
     }
 
     protected fun rollbackTransaction() = async<Unit> {
         if (context.transaction != null) {
             if (!context.autoCommit) {
-                await(context.transaction!!.rollback(false))
+                context.transaction!!.rollback(false).await()
             }
         }
     }
 
     private fun afterExecution(commit: Boolean = true) = async<Unit> {
         if (context.transactionRefCount <= 0) {
-            await(endTransaction(commit))
+            endTransaction(commit).await()
         }
     }
 

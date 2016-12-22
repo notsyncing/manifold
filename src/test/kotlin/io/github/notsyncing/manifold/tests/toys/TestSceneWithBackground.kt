@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.*
 
 class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false) {
@@ -38,12 +39,12 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
         this.throwException = throwException
     }
 
-    override fun stage() = async<String> {
+    override fun stage() = async {
         useTransaction()
 
         add(SCENE_START)
 
-        await(m(TestDbActionSimple()))
+        m(TestDbActionSimple()).await()
 
         runInBackground(keepTrans, {
             Thread.sleep(500)
