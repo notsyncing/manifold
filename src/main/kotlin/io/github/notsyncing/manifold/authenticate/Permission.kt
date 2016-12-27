@@ -50,6 +50,8 @@ class Permission(val module: Enum<*>,
                     SceneAuthenticator.authTypeEnumClass.enumConstants[type], state, additionalData, inherited) {
     }
 
+    constructor() : this(0, 0)
+
     infix fun additional(data: Any) {
         this.additionalData = data
     }
