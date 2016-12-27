@@ -23,7 +23,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
         fun aggregatePermissions(role: AuthRole): AggregatedPermissions {
             if (role.groups.isEmpty()) {
-                return AggregatedPermissions(role.permissions.toList())
+                return AggregatedPermissions(role.permissions.toMutableList())
             }
 
             val aggPerms = ArrayList<Permission>()
