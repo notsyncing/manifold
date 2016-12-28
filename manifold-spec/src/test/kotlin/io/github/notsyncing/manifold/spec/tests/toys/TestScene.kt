@@ -7,6 +7,7 @@ import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import io.github.notsyncing.manifold.feature.Feature
 import kotlinx.coroutines.async
+import kotlinx.coroutines.await
 import java.util.concurrent.CompletableFuture
 
 @ActionMetadata("获取当前公司ID")
