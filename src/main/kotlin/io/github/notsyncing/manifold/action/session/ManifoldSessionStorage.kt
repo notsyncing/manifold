@@ -6,7 +6,11 @@ import java.util.concurrent.TimeUnit
 
 class ManifoldSessionStorage : ManifoldSessionStorageProvider {
     private val storage = ConcurrentHashMap<String, ConcurrentHashMap<String, Any>>()
-    private val timer = Executors.newScheduledThreadPool(1)
+    private val timer = Executors.newScheduledThreadPool(1) {
+        val t = Executors.defaultThreadFactory().newThread(it)
+        t.isDaemon = true
+        t
+    }
 
     init {
         timer.scheduleAtFixedRate({
