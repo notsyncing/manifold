@@ -108,7 +108,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             val stream = ReadInputStream(socket)
             val ds = DataInputStream(stream)
 
-            while (!stream.ended) {
+            while ((!stream.ended) && (!threadPool.isShutdown)) {
                 ManifoldEvent.parse(ds).thenAccept {
                     stream.close()
 
@@ -121,6 +121,8 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
     }
 
     fun close(): CompletableFuture<Void> {
+        threadPool.shutdown()
+
         tcpConnectionCache.values.forEach { it.close() }
         tcpConnectionCache.clear()
 
