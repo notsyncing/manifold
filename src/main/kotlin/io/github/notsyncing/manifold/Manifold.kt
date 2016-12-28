@@ -119,6 +119,8 @@ object Manifold {
     fun destroy(): CompletableFuture<Void> {
         reset()
 
+        sceneBgWorkerPool.shutdown()
+
         return ManifoldEventBus.stop().thenCompose {
             EventBusNetWorker.close()
         }
