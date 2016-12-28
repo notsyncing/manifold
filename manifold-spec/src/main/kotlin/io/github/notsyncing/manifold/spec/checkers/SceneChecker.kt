@@ -11,6 +11,7 @@ import io.github.notsyncing.manifold.spec.ActionInvokeRecorder
 import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.flow.FlowActionItem
 import io.github.notsyncing.manifold.spec.flow.FlowItem
+import io.github.notsyncing.manifold.spec.models.ParameterInfo
 import io.github.notsyncing.manifold.spec.models.SceneSpec
 import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
 import kotlinx.coroutines.async
@@ -18,6 +19,7 @@ import kotlinx.coroutines.await
 import org.junit.Assert.*
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.jvmErasure
 
 class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec, scene) {
@@ -67,6 +69,40 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
                 scene.permission.type, auth)
     }
 
+    private fun compareParameter(expected: ParameterInfo, actual: KParameter): Boolean {
+        if (expected.nullable) {
+            if ((actual.type.jvmErasure.java == java.lang.Long::class.java) && (expected.type == Long::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Integer::class.java) && (expected.type == Int::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Boolean::class.java) && (expected.type == Boolean::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Double::class.java) && (expected.type == Double::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Float::class.java) && (expected.type == Float::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Character::class.java) && (expected.type == Char::class.java)) {
+                return true
+            }
+
+            if ((actual.type.jvmErasure.java == java.lang.Byte::class.java) && (expected.type == Byte::class.java)) {
+                return true
+            }
+        }
+
+        return actual.type.jvmErasure.java == expected.type
+    }
+
     private fun getCurrentSceneMatchedConstructor(): KFunction<ManifoldScene<*>>? {
         for (c in currSceneClass!!.kotlin.constructors) {
             if (c.parameters.size != scene.parameters.size) {
@@ -81,7 +117,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
                     break
                 }
 
-                if (c.parameters[i].type.jvmErasure.java != scene.parameters[i].type) {
+                if (!compareParameter(scene.parameters[i], c.parameters[i])) {
                     found = false
                     break
                 }

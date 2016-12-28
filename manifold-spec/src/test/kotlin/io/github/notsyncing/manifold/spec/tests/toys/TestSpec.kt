@@ -164,6 +164,21 @@ class 产品数据 : 场景组() {
 
         参数 {
             "uid" to "ID" 类型 整数
+            "nullableParam" to "测试可空" 类型 整数 可以 为空
+        }
+    }
+
+    @场景定义
+    fun 测试场景3A() {
+        功能 名称 "TestScene3A"
+        功能 组 "TestGroup"
+        功能 说明 "测试用的场景3A"
+        功能 备注 "随便"
+        功能 是否内部使用 否
+
+        参数 {
+            "id" to "ID" 类型 整数
+            "nullableParam" to "测试可空" 类型 整数 可以 为空
         }
     }
 

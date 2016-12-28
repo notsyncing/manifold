@@ -69,6 +69,12 @@ class SceneCheckerMetadataTest {
     }
 
     @Test
+    fun testMetadataWithNullablePrimitiveParameter() {
+        spec.checkMetadata("测试场景3A")
+    }
+
+
+    @Test
     fun testMetadataWithWrongReturnType() {
         try {
             spec.checkMetadata("测试场景4")
