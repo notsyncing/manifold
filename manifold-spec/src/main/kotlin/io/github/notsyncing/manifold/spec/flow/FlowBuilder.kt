@@ -18,6 +18,15 @@ class FlowBuilder {
         return item
     }
 
+    fun on(cond: FlowCheckCondItem.() -> Boolean): FlowCheckCondItem {
+        val item = FlowCheckCondItem(cond)
+        item.previous = currItem
+        currItem.next = item
+        currItem = item
+
+        return item
+    }
+
     fun goto(action: String): FlowActionItem {
         val item = FlowActionItem(action)
         item.previous = currItem

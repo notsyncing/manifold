@@ -4,12 +4,14 @@ import com.alibaba.fastjson.JSON
 import io.github.notsyncing.lightfur.DatabaseManager
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.action.Probe
 import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.feature.FeatureAuthenticator
 import io.github.notsyncing.manifold.spec.ActionInvokeRecorder
 import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.flow.FlowActionItem
+import io.github.notsyncing.manifold.spec.flow.FlowCheckCondItem
 import io.github.notsyncing.manifold.spec.flow.FlowItem
 import io.github.notsyncing.manifold.spec.models.ParameterInfo
 import io.github.notsyncing.manifold.spec.models.SceneSpec
@@ -18,8 +20,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.await
 import org.junit.Assert.*
 import java.util.concurrent.CompletableFuture
-import kotlin.reflect.KFunction
-import kotlin.reflect.KParameter
+import kotlin.reflect.*
+import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.jvmErasure
 
 class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec, scene) {
@@ -188,8 +190,21 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         return Pair(s, case.parameters[case.sessionIdentifier] as String?)
     }
 
-    private fun resolveActionRoutes(case: TestCaseInfo): Pair<List<String>, TestCaseInfo.TestCaseExitPoint?> {
+    private fun resolveActionRoutes(case: TestCaseInfo, currentScene: ManifoldScene<*>): Pair<List<String>, TestCaseInfo.TestCaseExitPoint?> {
         val exitPoint = scene.flow.ends.firstOrNull { it.text == case.exit.exitName }
+        val probes = mutableMapOf<String, Any?>()
+
+        currentScene.javaClass.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == Probe::class } }
+                .forEach {
+                    it.isAccessible = true
+                    probes.put(it.findAnnotation<Probe>()?.value ?: it.name, it.get(currentScene))
+                }
+
+        currentScene.javaClass.kotlin.declaredMemberProperties.filter { it.annotations.all { it.annotationClass != Probe::class } }
+                .forEach {
+                    it.isAccessible = true
+                    probes.put(it.name, it.get(currentScene))
+                }
 
         if (exitPoint == null) {
             fail("No exit point matches ${case.exit.exitName} in scene ${scene.name}")
@@ -200,6 +215,17 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         var currFlowItem: FlowItem? = exitPoint.previous
 
         while (currFlowItem != null) {
+            if (currFlowItem.previous is FlowCheckCondItem) {
+                val checkItem = currFlowItem.previous as FlowCheckCondItem
+                val pass = checkItem.check(probes)
+                currFlowItem = if (pass) checkItem.nextTrue else checkItem.nextFalse
+
+                if (currFlowItem == null) {
+                    fail("Check item ${checkItem.text} is $pass, but it has no matching branch! Scene: ${scene.name}")
+                    return Pair(emptyList(), null)
+                }
+            }
+
             if (currFlowItem is FlowActionItem) {
                 l.add(currFlowItem.text)
             }
@@ -230,7 +256,6 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
     }
 
     override fun checkCase(case: TestCaseInfo) = async {
-        val (expectedActions, expectedExitPoint) = resolveActionRoutes(case)
         val (s, sessId) = makeSceneFromCase(case)
 
         if (s == null) {
@@ -246,7 +271,9 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
             CompletableFuture.runAsync { case.otherInit?.invoke() }.await()
 
             val actualResult = Manifold.run(s, sessId).await()
-            val actualActions = ActionInvokeRecorder.recorded.map { (action, _) -> action }
+            val actualActions = ActionInvokeRecorder.recorded.map { it.name }
+
+            val (expectedActions, expectedExitPoint) = resolveActionRoutes(case, s)
 
             if (expectedExitPoint!!.hasResult) {
                 assertEquals("Scene ${scene.name} returned unexpected result: expected ${expectedExitPoint.result}, actual $actualResult",
@@ -265,7 +292,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
             println("Flow:")
 
             if (actualActions.isNotEmpty()) {
-                actualActions.forEach(::println)
+                actualActions.forEach { println(it) }
             } else {
                 println("<Empty>")
             }

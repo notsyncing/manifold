@@ -4,12 +4,13 @@ import io.github.notsyncing.manifold.action.ActionMetadata
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import io.github.notsyncing.manifold.action.interceptors.ForEveryAction
+import io.github.notsyncing.manifold.spec.models.ActionRecord
 import java.util.concurrent.CompletableFuture
 
 @ForEveryAction
 class ActionInvokeRecorder : ActionInterceptor() {
     companion object {
-        val recorded = mutableListOf<Pair<String, Any?>>()
+        val recorded = mutableListOf<ActionRecord>()
 
         fun reset() {
             recorded.clear()
@@ -29,7 +30,7 @@ class ActionInvokeRecorder : ActionInterceptor() {
     }
 
     override fun after(context: ActionInterceptorContext): CompletableFuture<Unit> {
-        recorded.add(Pair(metadata?.value ?: context.action.javaClass.simpleName, context.result))
+        recorded.add(ActionRecord(metadata?.value ?: context.action.javaClass.simpleName, context.result))
 
         return super.after(context)
     }

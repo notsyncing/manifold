@@ -93,6 +93,10 @@ infix fun FlowBuilder.当(cond: String): FlowCondItem {
     return this.on(cond)
 }
 
+infix fun FlowBuilder.当(cond: FlowCheckCondItem.() -> Boolean): FlowCheckCondItem {
+    return this.on(cond)
+}
+
 infix fun FlowBuilder.执行(action: String): FlowActionItem {
     return this.goto(action)
 }
@@ -103,6 +107,10 @@ infix fun FlowBuilder.前往(item: FlowItem): FlowItem {
 
 infix fun FlowBuilder.结束(exitName: String): FlowExitItem {
     return this.end(exitName)
+}
+
+fun FlowCheckCondItem.参数(name: String): Any? {
+    return this.parameter(name)
 }
 
 fun TestCaseInfo.给定(conds: TestCaseInfo.() -> Unit): TestCaseInfo {

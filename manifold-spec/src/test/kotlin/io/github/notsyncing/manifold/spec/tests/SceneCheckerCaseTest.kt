@@ -98,4 +98,10 @@ class SceneCheckerCaseTest {
     fun testCheckCaseWithSessionData() {
         spec.checkCase("测试场景6", "测试存放会话存储")
     }
+
+    @Test
+    fun testCheckFlowWithBranch() {
+        spec.checkCase("测试场景7", "测试返回A")
+        spec.checkCase("测试场景7", "测试返回B")
+    }
 }
