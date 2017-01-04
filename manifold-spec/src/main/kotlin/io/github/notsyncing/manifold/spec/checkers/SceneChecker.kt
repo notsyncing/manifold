@@ -197,7 +197,14 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         currentScene.javaClass.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == Probe::class } }
                 .forEach {
                     it.isAccessible = true
-                    probes.put(it.findAnnotation<Probe>()?.value ?: it.name, it.get(currentScene))
+
+                    var name = it.findAnnotation<Probe>()?.value
+
+                    if ((name == null) || (name == "")) {
+                        name = it.name
+                    }
+
+                    probes.put(name, it.get(currentScene))
                 }
 
         currentScene.javaClass.kotlin.declaredMemberProperties.filter { it.annotations.all { it.annotationClass != Probe::class } }

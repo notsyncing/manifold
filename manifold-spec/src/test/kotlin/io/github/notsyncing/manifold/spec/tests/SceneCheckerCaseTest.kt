@@ -104,4 +104,9 @@ class SceneCheckerCaseTest {
         spec.checkCase("测试场景7", "测试返回A")
         spec.checkCase("测试场景7", "测试返回B")
     }
+
+    @Test
+    fun testCheckFlowWithProbe() {
+        spec.checkCase("测试场景8", "测试探针值")
+    }
 }
