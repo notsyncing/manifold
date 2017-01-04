@@ -80,7 +80,7 @@ class SceneCheckerCaseTest {
     }
 
     @Test
-    fun testCheckCaseWithDatabaseMutipleSQL() {
+    fun testCheckCaseWithDatabaseMultipleSQL() {
         spec.checkCase("测试场景5", "数据库多条SQL测试用例")
     }
 
