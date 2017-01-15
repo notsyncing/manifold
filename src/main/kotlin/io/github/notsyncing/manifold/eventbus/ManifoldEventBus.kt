@@ -3,6 +3,11 @@ package io.github.notsyncing.manifold.eventbus
 import io.github.notsyncing.manifold.eventbus.event.*
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeGroupNotFoundException
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
+import io.github.notsyncing.manifold.eventbus.workers.EventBusNetWorker
+import io.github.notsyncing.manifold.eventbus.workers.LocalTransport
+import io.github.notsyncing.manifold.eventbus.workers.NetTransport
+import io.github.notsyncing.manifold.eventbus.workers.TransportDescriptor
+import io.github.notsyncing.manifold.utils.FutureUtils
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -72,7 +77,7 @@ object ManifoldEventBus {
         val node = nodes.remove(id)
 
         if (node?.groups != null) {
-            node?.groups?.forEach {
+            node.groups.forEach {
                 if (groupNodes.containsKey(it)) {
                     groupNodes[it]!!.remove(node)
 
@@ -85,7 +90,7 @@ object ManifoldEventBus {
     }
 
     fun register(id: String, vararg groups: String): ManifoldEventNode {
-        val info = ManifoldEventNode(id, groups as Array<String>, 0, null, listenPort)
+        val info = ManifoldEventNode(id, groups as Array<String>, 0, LocalTransport())
         addNode(info)
 
         debug("Registered local node $id, groups ${groups.joinToString { it }}")
@@ -207,9 +212,17 @@ object ManifoldEventBus {
         groupNodes.values.forEach { it.receive(event) }
     }
 
-    fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null) = worker.send(event, targetNode)
+    fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
+        when (targetNode?.transport) {
+            null -> return worker.send(event, null)
+            is NetTransport -> return worker.send(event, targetNode)
+            is LocalTransport -> return FutureUtils.failed(RuntimeException("Local transport cannot be sent to remote node $targetNode, event $event"))
 
-    private fun receivedRemoteEvent(event: ManifoldEvent, senderAddress: String) {
+            else -> return FutureUtils.failed(RuntimeException("Unsupported transport (${targetNode.transport}) in target node $targetNode"))
+        }
+    }
+
+    private fun receivedRemoteEvent(transDesc: TransportDescriptor, event: ManifoldEvent, senderAddress: String) {
         if (nodes[event.source]?.local == true) {
             return
         }
@@ -221,21 +234,27 @@ object ManifoldEventBus {
             val beaconData = beaconEvent.getData(BeaconData::class.java)
 
             if (beaconEvent.event == BeaconEvent.Beacon) {
+                val trans = when (transDesc) {
+                    is NetTransport -> NetTransport(senderAddress, listenPort)
+                    is LocalTransport -> LocalTransport()
+
+                    else -> throw RuntimeException("Unsupported transport $transDesc in beacon $event")
+                }
+
                 val node: ManifoldEventNode
 
                 if (nodes.containsKey(beaconData.id)) {
                     node = nodes[beaconData.id]!!
 
-                    if (node.host == null) {
+                    if (node.transport is LocalTransport) {
                         return
                     }
 
                     node.groups = beaconData.groups
                     node.load = beaconData.load
-                    node.host = senderAddress
-                    node.port = listenPort
+                    node.transport = trans
                 } else {
-                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, senderAddress, listenPort)
+                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, trans)
                     addNode(node)
                 }
             } else if (beaconEvent.event == BeaconEvent.Exit) {

@@ -2,6 +2,8 @@ package io.github.notsyncing.manifold.eventbus
 
 import io.github.notsyncing.manifold.eventbus.event.EventSendType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.eventbus.workers.LocalTransport
+import io.github.notsyncing.manifold.eventbus.workers.TransportDescriptor
 import java.util.*
 import java.util.concurrent.*
 
@@ -10,14 +12,13 @@ typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
 class ManifoldEventNode(var id: String,
                         var groups: Array<String> = emptyArray(),
                         var load: Int = 0,
-                        var host: String?,
-                        var port: Int) {
+                        var transport: TransportDescriptor) {
     companion object {
         private val replyCallbackTimeout = Executors.newScheduledThreadPool(1)
     }
 
-    var local: Boolean = host == null
-        get() = host == null
+    val local
+        get() = transport is LocalTransport
 
     val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler>>()
     val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent>>()

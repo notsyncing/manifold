@@ -1,8 +1,9 @@
 package io.github.notsyncing.manifold.tests
 
-import io.github.notsyncing.manifold.eventbus.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.eventbus.workers.EventBusNetWorker
+import io.github.notsyncing.manifold.eventbus.workers.NetTransport
 import io.github.notsyncing.manifold.utils.ReadInputStream
 import io.github.notsyncing.manifold.utils.StreamUtils
 import io.github.notsyncing.manifold.utils.WriteOutputStream
@@ -36,8 +37,8 @@ class EventBusNetWorkerTest {
         vertx = Vertx.vertx()
         recvEvent = CompletableFuture()
 
-        fakeEventNode = ManifoldEventNode("test", host = "127.0.0.1", port = otherPort)
-        worker = EventBusNetWorker(thisPort, thisPort) { ev, host -> recvEvent.complete(ev) }
+        fakeEventNode = ManifoldEventNode("test", transport = NetTransport(host = "127.0.0.1", port = otherPort))
+        worker = EventBusNetWorker(thisPort, thisPort) { td, ev, host -> recvEvent.complete(ev) }
     }
 
     @After

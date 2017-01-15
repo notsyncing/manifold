@@ -1,7 +1,9 @@
-package io.github.notsyncing.manifold.eventbus
+package io.github.notsyncing.manifold.eventbus.workers
 
+import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.EventSendType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.utils.FutureUtils
 import io.github.notsyncing.manifold.utils.ReadInputStream
 import io.github.notsyncing.manifold.utils.WriteOutputStream
 import io.vertx.core.Vertx
@@ -20,9 +22,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
-                        val eventRecvHandler: ((ManifoldEvent, String) -> Unit)? = null) {
+                        val eventRecvHandler: ((TransportDescriptor, ManifoldEvent, String) -> Unit)? = null) {
     companion object {
         var UDP_DATA_LENGTH_LIMIT = 256
+
+        private val transDesc = NetTransport(null, 0)
 
         private var vertx: Vertx? = Vertx.vertx()
 
@@ -100,7 +104,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             return
         }
 
-        eventRecvHandler?.invoke(event, packet.sender().host())
+        eventRecvHandler?.invoke(transDesc, event, packet.sender().host())
     }
 
     private fun onTcpInboundConnected(socket: NetSocket) {
@@ -113,7 +117,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
                     stream.close()
 
                     if (it != null) {
-                        eventRecvHandler?.invoke(it, socket.remoteAddress().host())
+                        eventRecvHandler?.invoke(transDesc, it, socket.remoteAddress().host())
                     }
                 }
             }
@@ -226,14 +230,22 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             address = "255.255.255.255"
             isMulticast = true
         } else {
-            if ((targetNode == null) || (targetNode.host == null)) {
-                val c = CompletableFuture<Boolean>()
-                c.completeExceptionally(RuntimeException("Event $event is unicast-like, but its target node is null or doesn't contain an address!"))
-                return c
+            if (targetNode == null) {
+                return FutureUtils.failed(RuntimeException("Target node of event $event is null!"))
             }
 
-            address = targetNode.host!!
-            port = targetNode.port
+            if (targetNode.transport !is NetTransport) {
+                return FutureUtils.failed(RuntimeException("Target node $targetNode of event $event cannot accept ${NetTransport::class.java.simpleName}!"))
+            }
+
+            val trans = targetNode.transport as NetTransport
+
+            if (trans.host == null) {
+                return FutureUtils.failed(RuntimeException("Event $event is unicast-like, but its target node is null or doesn't contain an address!"))
+            }
+
+            address = trans.host
+            port = trans.port
         }
 
         val len = event.dataLength
