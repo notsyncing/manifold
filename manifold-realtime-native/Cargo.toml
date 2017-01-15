@@ -1,0 +1,15 @@
+[package]
+name = "manifold_rt"
+version = "0.3.4"
+authors = ["notsyncing <song.fc@gmail.com>"]
+repository = "https://github.com/notsyncing/manifold"
+
+[dependencies]
+posix = "0.0.2"
+libc = "0.2.19"
+byteorder = "1.0.0"
+
+[lib]
+name = "manifold_rt"
+path = "src/lib.rs"
+crate-type = ["dylib"]
