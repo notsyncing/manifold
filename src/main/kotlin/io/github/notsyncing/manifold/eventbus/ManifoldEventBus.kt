@@ -3,10 +3,9 @@ package io.github.notsyncing.manifold.eventbus
 import io.github.notsyncing.manifold.eventbus.event.*
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeGroupNotFoundException
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
-import io.github.notsyncing.manifold.eventbus.workers.EventBusNetWorker
-import io.github.notsyncing.manifold.eventbus.workers.LocalTransport
-import io.github.notsyncing.manifold.eventbus.workers.NetTransport
-import io.github.notsyncing.manifold.eventbus.workers.TransportDescriptor
+import io.github.notsyncing.manifold.eventbus.transports.LocalTransport
+import io.github.notsyncing.manifold.eventbus.transports.TransportDescriptor
+import io.github.notsyncing.manifold.eventbus.workers.EventBusWorker
 import io.github.notsyncing.manifold.utils.FutureUtils
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -17,8 +16,7 @@ object ManifoldEventBus {
     var beaconInterval = 10000L
     var debug = false
 
-    private lateinit var worker: EventBusNetWorker
-
+    private val workers = ConcurrentHashMap<Class<TransportDescriptor>, EventBusWorker>()
     private val nodes = ConcurrentHashMap<String, ManifoldEventNode>()
     private val groupNodes = ConcurrentHashMap<String, ManifoldEventNodeGroup>()
 
@@ -30,11 +28,13 @@ object ManifoldEventBus {
         }
     }
 
+    fun <T: TransportDescriptor> registerWorker(worker: EventBusWorker, forTransport: Class<T>) {
+        workers[forTransport as Class<TransportDescriptor>] = worker
+    }
+
     fun init(listenPort: Int = 8500, beaconInterval: Long = 10000L) {
         this.listenPort = listenPort
         this.beaconInterval = beaconInterval
-
-        worker = EventBusNetWorker(listenPort, listenPort, this::receivedRemoteEvent)
 
         debug("Manifold event bus initialized")
     }
@@ -46,7 +46,7 @@ object ManifoldEventBus {
         beaconTimers.values.forEach { it.cancel() }
         beaconTimers.clear()
 
-        return worker.close()
+        return CompletableFuture.allOf(*workers.map { it.value.close() }.toTypedArray())
     }
 
     fun sendBeacon(node: ManifoldEventNode): CompletableFuture<Boolean> {
@@ -213,16 +213,24 @@ object ManifoldEventBus {
     }
 
     fun sendToRemote(event: ManifoldEvent, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
-        when (targetNode?.transport) {
-            null -> return worker.send(event, null)
-            is NetTransport -> return worker.send(event, targetNode)
-            is LocalTransport -> return FutureUtils.failed(RuntimeException("Local transport cannot be sent to remote node $targetNode, event $event"))
-
-            else -> return FutureUtils.failed(RuntimeException("Unsupported transport (${targetNode.transport}) in target node $targetNode"))
+        if (targetNode == null) {
+            return CompletableFuture.allOf(*workers.map { it.value.send(event, null) }.toTypedArray()).thenApply { true }
         }
+
+        if (targetNode.transport is LocalTransport) {
+            return FutureUtils.failed(RuntimeException("Local transport cannot be sent to remote node $targetNode, event $event"))
+        }
+
+        val worker = workers[targetNode.transport.javaClass]
+
+        if (worker == null) {
+            return FutureUtils.failed(RuntimeException("Unsupported transport (${targetNode.transport}) in target node $targetNode"))
+        }
+
+        return worker.send(event, targetNode)
     }
 
-    private fun receivedRemoteEvent(transDesc: TransportDescriptor, event: ManifoldEvent, senderAddress: String) {
+    fun receivedRemoteEvent(transDesc: TransportDescriptor, event: ManifoldEvent) {
         if (nodes[event.source]?.local == true) {
             return
         }
@@ -234,13 +242,6 @@ object ManifoldEventBus {
             val beaconData = beaconEvent.getData(BeaconData::class.java)
 
             if (beaconEvent.event == BeaconEvent.Beacon) {
-                val trans = when (transDesc) {
-                    is NetTransport -> NetTransport(senderAddress, listenPort)
-                    is LocalTransport -> LocalTransport()
-
-                    else -> throw RuntimeException("Unsupported transport $transDesc in beacon $event")
-                }
-
                 val node: ManifoldEventNode
 
                 if (nodes.containsKey(beaconData.id)) {
@@ -252,9 +253,9 @@ object ManifoldEventBus {
 
                     node.groups = beaconData.groups
                     node.load = beaconData.load
-                    node.transport = trans
+                    node.transport = transDesc
                 } else {
-                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, trans)
+                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, transDesc)
                     addNode(node)
                 }
             } else if (beaconEvent.event == BeaconEvent.Exit) {

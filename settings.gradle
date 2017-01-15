@@ -1,3 +1,4 @@
 rootProject.name = 'manifold'
 include 'manifold-spec'
+include 'manifold-eventbus'
 

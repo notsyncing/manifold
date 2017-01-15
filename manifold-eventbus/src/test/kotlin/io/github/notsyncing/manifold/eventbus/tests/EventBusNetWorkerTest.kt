@@ -1,12 +1,12 @@
-package io.github.notsyncing.manifold.tests
+package io.github.notsyncing.manifold.eventbus.tests
 
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.eventbus.utils.ReadInputStream
+import io.github.notsyncing.manifold.eventbus.utils.WriteOutputStream
 import io.github.notsyncing.manifold.eventbus.workers.EventBusNetWorker
 import io.github.notsyncing.manifold.eventbus.workers.NetTransport
-import io.github.notsyncing.manifold.utils.ReadInputStream
 import io.github.notsyncing.manifold.utils.StreamUtils
-import io.github.notsyncing.manifold.utils.WriteOutputStream
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.ext.unit.TestContext
@@ -38,14 +38,12 @@ class EventBusNetWorkerTest {
         recvEvent = CompletableFuture()
 
         fakeEventNode = ManifoldEventNode("test", transport = NetTransport(host = "127.0.0.1", port = otherPort))
-        worker = EventBusNetWorker(thisPort, thisPort) { td, ev, host -> recvEvent.complete(ev) }
+        worker = EventBusNetWorker(thisPort, thisPort) { td, ev -> recvEvent.complete(ev) }
     }
 
     @After
     fun tearDown() {
         worker.close().thenCompose {
-            EventBusNetWorker.close()
-        }.thenCompose {
             val c = CompletableFuture<Void>()
             vertx.close { c.complete(null) }
 

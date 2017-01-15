@@ -1,7 +1,6 @@
 package io.github.notsyncing.manifold.feature
 
 import io.github.notsyncing.manifold.action.ManifoldScene
-import io.vertx.core.impl.ConcurrentHashSet
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,10 +8,10 @@ class FeatureManager {
     var enableFeatureManagement = true
     var featurePublisher: FeaturePublisher? = null
 
-    private val enabledFeatures = ConcurrentHashSet<String>()
-    private val enabledFeatureGroups = ConcurrentHashSet<String>()
-    private val disabledFeatures = ConcurrentHashSet<String>()
-    private val disabledFeatureGroups = ConcurrentHashSet<String>()
+    private val enabledFeatures = ConcurrentHashMap.newKeySet<String>()
+    private val enabledFeatureGroups = ConcurrentHashMap.newKeySet<String>()
+    private val disabledFeatures = ConcurrentHashMap.newKeySet<String>()
+    private val disabledFeatureGroups = ConcurrentHashMap.newKeySet<String>()
 
     private val allFeatures = ConcurrentHashMap<Class<ManifoldScene<*>>, FeatureInfo>()
     private val availableFeatures = ArrayList<FeatureInfo>()

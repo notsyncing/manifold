@@ -3,9 +3,10 @@ package io.github.notsyncing.manifold.eventbus.workers
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.EventSendType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.eventbus.transports.TransportDescriptor
+import io.github.notsyncing.manifold.eventbus.utils.ReadInputStream
+import io.github.notsyncing.manifold.eventbus.utils.WriteOutputStream
 import io.github.notsyncing.manifold.utils.FutureUtils
-import io.github.notsyncing.manifold.utils.ReadInputStream
-import io.github.notsyncing.manifold.utils.WriteOutputStream
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.datagram.DatagramPacket
@@ -22,34 +23,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 
 class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
-                        val eventRecvHandler: ((TransportDescriptor, ManifoldEvent, String) -> Unit)? = null) {
+                        val eventRecvHandler: ((TransportDescriptor, ManifoldEvent) -> Unit)? = null) : EventBusWorker() {
     companion object {
         var UDP_DATA_LENGTH_LIMIT = 256
-
-        private val transDesc = NetTransport(null, 0)
-
-        private var vertx: Vertx? = Vertx.vertx()
-
-        fun close(): CompletableFuture<Void> {
-            if (vertx == null) {
-                return CompletableFuture.completedFuture(null)
-            }
-
-            val c = CompletableFuture<Void>()
-
-            vertx!!.close {
-                if (it.failed()) {
-                    c.completeExceptionally(it.cause())
-                } else {
-                    vertx = null
-                    c.complete(it.result())
-                }
-            }
-
-            return c
-        }
     }
 
+    private var vertx: Vertx? = Vertx.vertx()
     private val udpSendSocket: DatagramSocket
     private val udpRecvSocket: DatagramSocket
     private val tcpServer: NetServer
@@ -104,7 +83,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             return
         }
 
-        eventRecvHandler?.invoke(transDesc, event, packet.sender().host())
+        eventRecvHandler?.invoke(NetTransport(packet.sender().host(), udpListenPort), event)
     }
 
     private fun onTcpInboundConnected(socket: NetSocket) {
@@ -117,14 +96,14 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
                     stream.close()
 
                     if (it != null) {
-                        eventRecvHandler?.invoke(transDesc, it, socket.remoteAddress().host())
+                        eventRecvHandler?.invoke(NetTransport(socket.remoteAddress().host(), tcpListenPort), it)
                     }
                 }
             }
         }
     }
 
-    fun close(): CompletableFuture<Void> {
+    override fun close(): CompletableFuture<Void> {
         threadPool.shutdown()
 
         tcpConnectionCache.values.forEach { it.close() }
@@ -160,7 +139,18 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
             }
         }
 
-        return CompletableFuture.allOf(cs, rs, ts)
+        val c = CompletableFuture<Void>()
+
+        vertx?.close {
+            if (it.failed()) {
+                c.completeExceptionally(it.cause())
+            } else {
+                vertx = null
+                c.complete(it.result())
+            }
+        }
+
+        return CompletableFuture.allOf(cs, rs, ts, c)
     }
 
     private fun sendUdp(data: Buffer, port: Int, host: String): CompletableFuture<Boolean> {
@@ -221,7 +211,7 @@ class EventBusNetWorker(val tcpListenPort: Int, val udpListenPort: Int,
         }
     }
 
-    fun send(event: ManifoldEvent, targetNode: ManifoldEventNode? = null): CompletableFuture<Boolean> {
+    override fun send(event: ManifoldEvent, targetNode: ManifoldEventNode?): CompletableFuture<Boolean> {
         val address: String
         var port: Int = 0
         var isMulticast = false

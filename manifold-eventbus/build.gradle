@@ -1,0 +1,44 @@
+apply plugin: "com.jfrog.bintray"
+
+dependencies {
+    compile 'io.vertx:vertx-core:3.3.3'
+    compile rootProject
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.1.0-RC.1'
+    testCompile "com.nhaarman:mockito-kotlin:0.6.0"
+    testCompile 'io.vertx:vertx-unit:3.3.3'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId rootProject.ext.grp
+            artifactId 'manifold-eventbus'
+            version rootProject.ext.ver
+            from components.java
+
+            artifact sourceJar
+            artifact javadocJar
+        }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    pkg {
+        repo = 'maven'
+        name = 'manifold-eventbus'
+        licenses = [ 'GPL-3.0' ]
+        vcsUrl = 'https://github.com/notsyncing/manifold.git'
+
+        version {
+            name = rootProject.ext.ver
+            vcsTag = rootProject.ext.ver
+        }
+    }
+
+    publications = [ 'maven' ]
+}

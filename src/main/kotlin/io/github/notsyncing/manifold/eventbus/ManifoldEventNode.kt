@@ -2,12 +2,10 @@ package io.github.notsyncing.manifold.eventbus
 
 import io.github.notsyncing.manifold.eventbus.event.EventSendType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import io.github.notsyncing.manifold.eventbus.workers.LocalTransport
-import io.github.notsyncing.manifold.eventbus.workers.TransportDescriptor
+import io.github.notsyncing.manifold.eventbus.transports.LocalTransport
+import io.github.notsyncing.manifold.eventbus.transports.TransportDescriptor
 import java.util.*
 import java.util.concurrent.*
-
-typealias ManifoldEventHandler = (ManifoldEvent) -> Unit
 
 class ManifoldEventNode(var id: String,
                         var groups: Array<String> = emptyArray(),
@@ -20,7 +18,7 @@ class ManifoldEventNode(var id: String,
     val local
         get() = transport is LocalTransport
 
-    val handlers = ConcurrentHashMap<Any, ArrayList<ManifoldEventHandler>>()
+    val handlers = ConcurrentHashMap<Any, ArrayList<(ManifoldEvent) -> Unit>>()
     val replyCallbacks = ConcurrentHashMap<Long, CompletableFuture<ManifoldEvent>>()
     val replyCallbackTimeoutSchedulers = ConcurrentHashMap<Long, ScheduledFuture<*>>()
 
@@ -61,7 +59,7 @@ class ManifoldEventNode(var id: String,
 
     fun unregister() = ManifoldEventBus.unregister(this)
 
-    fun on(event: String, handler: ManifoldEventHandler) {
+    fun on(event: String, handler: (ManifoldEvent) -> Unit) {
         if (!handlers.containsKey(event)) {
             handlers.put(event, ArrayList())
         }

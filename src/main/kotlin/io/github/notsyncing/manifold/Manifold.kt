@@ -13,7 +13,6 @@ import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import io.github.notsyncing.manifold.eventbus.workers.EventBusNetWorker
 import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
@@ -121,9 +120,7 @@ object Manifold {
 
         sceneBgWorkerPool.shutdown()
 
-        return ManifoldEventBus.stop().thenCompose {
-            EventBusNetWorker.close()
-        }
+        return ManifoldEventBus.stop()
     }
 
     fun reset() {

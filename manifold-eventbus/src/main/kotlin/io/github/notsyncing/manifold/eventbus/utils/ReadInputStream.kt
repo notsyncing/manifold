@@ -1,4 +1,4 @@
-package io.github.notsyncing.manifold.utils
+package io.github.notsyncing.manifold.eventbus.utils
 
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.streams.ReadStream
