@@ -20,11 +20,15 @@ class ManifoldEventNodeGroup(val name: String) {
         }
 
         if ((event.sendType == EventSendType.GroupUnicast) || (event.sendType == EventSendType.MultiGroupUnicast)) {
-            val i = currIndex
+            var i = currIndex
             currIndex++
 
             if (currIndex >= nodes.size) {
                 currIndex = 0
+            }
+
+            if (i >= nodes.size) {
+                i = nodes.size - 1
             }
 
             nodes[i].receive(event)
