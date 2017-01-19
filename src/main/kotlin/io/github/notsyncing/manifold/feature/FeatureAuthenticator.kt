@@ -68,7 +68,7 @@ class FeatureAuthenticator : SceneAuthenticator() {
     private fun checkSpecialAuths(context: SceneInterceptorContext, role: AuthRole, auths: Array<SpecialAuth>): CompletableFuture<Unit> {
         for (a in auths) {
             if (a == SpecialAuth.LoginOnly) {
-                if (role.roleId <= 0) {
+                if (role.roleId.isEmpty()) {
                     return context.deny()
                 }
             }
@@ -99,7 +99,7 @@ class FeatureAuthenticator : SceneAuthenticator() {
         }
 
         if (module == SpecialAuth.LoginOnly) {
-            return if (role.roleId > 0) context.pass() else context.deny()
+            return if (role.roleId.isNotEmpty()) context.pass() else context.deny()
         }
 
         return context.checkPermission(module, type)

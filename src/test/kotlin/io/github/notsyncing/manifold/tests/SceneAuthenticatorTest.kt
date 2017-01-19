@@ -23,7 +23,7 @@ class SceneAuthenticatorTest {
                     val p = arrayOf(Permission(TestAuthModule.ModuleA, TestAuthType.Read, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleA, TestAuthType.Write, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleB, TestAuthType.Read, PermissionState.Forbidden))
-                    val r = AuthRole(permissions = p)
+                    val r = AuthRole(0, permissions = p)
                     return CompletableFuture.completedFuture(r)
                 } else if (id == "one_group") {
                     val pg = arrayOf(Permission(TestAuthModule.ModuleA, TestAuthType.Write, PermissionState.Allowed),
@@ -34,7 +34,7 @@ class SceneAuthenticatorTest {
                     val p = arrayOf(Permission(TestAuthModule.ModuleA, TestAuthType.Read, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleA, TestAuthType.Write, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleB, TestAuthType.Read, PermissionState.Forbidden))
-                    val r = AuthRole(groups = arrayOf(g), permissions = p)
+                    val r = AuthRole(0, groups = arrayOf(g), permissions = p)
                     return CompletableFuture.completedFuture(r)
                 } else if (id == "two_higher_groups") {
                     val pg2 = arrayOf(Permission(TestAuthModule.ModuleC, TestAuthType.Write, PermissionState.Allowed))
@@ -48,7 +48,7 @@ class SceneAuthenticatorTest {
                     val p = arrayOf(Permission(TestAuthModule.ModuleA, TestAuthType.Read, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleA, TestAuthType.Write, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleB, TestAuthType.Read, PermissionState.Forbidden))
-                    val r = AuthRole(groups = arrayOf(g), permissions = p)
+                    val r = AuthRole(0, groups = arrayOf(g), permissions = p)
                     return CompletableFuture.completedFuture(r)
                 } else if (id == "two_branch_groups") {
                     val pg2 = arrayOf(Permission(TestAuthModule.ModuleC, TestAuthType.Write, PermissionState.Allowed),
@@ -63,7 +63,7 @@ class SceneAuthenticatorTest {
                     val p = arrayOf(Permission(TestAuthModule.ModuleA, TestAuthType.Read, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleA, TestAuthType.Write, PermissionState.Allowed),
                             Permission(TestAuthModule.ModuleB, TestAuthType.Read, PermissionState.Forbidden))
-                    val r = AuthRole(groups = arrayOf(g, g2), permissions = p)
+                    val r = AuthRole(0, groups = arrayOf(g, g2), permissions = p)
                     return CompletableFuture.completedFuture(r)
                 } else {
                     return CompletableFuture.completedFuture(AuthRole(0, emptyArray(), emptyArray()))

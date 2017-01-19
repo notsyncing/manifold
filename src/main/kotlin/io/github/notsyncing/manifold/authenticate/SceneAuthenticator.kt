@@ -100,16 +100,16 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         var role: AuthRole?
 
         if (id == null) {
-            role = AuthRole(permissions = emptyArray())
+            role = AuthRole(roleId = 0, permissions = emptyArray())
         } else {
             role = authInfoProvider.getRole(id).await()
         }
 
         if (role == null) {
-            role = AuthRole(permissions = emptyArray())
+            role = AuthRole(roleId = 0, permissions = emptyArray())
         }
 
-        if (role.roleId == SpecialRole.SuperUser) {
+        if (role == SpecialRole.SuperUser) {
             return@async context.pass().await()
         }
 
