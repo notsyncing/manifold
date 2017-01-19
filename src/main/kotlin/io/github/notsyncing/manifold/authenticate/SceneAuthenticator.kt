@@ -16,6 +16,14 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         lateinit var authModuleEnumClass: Class<Enum<*>>
         lateinit var authTypeEnumClass: Class<Enum<*>>
 
+        inline fun <reified T: Enum<*>> authModule() {
+            authModuleEnumClass = T::class.java as Class<Enum<*>>
+        }
+
+        inline fun <reified T: Enum<*>> authType() {
+            authTypeEnumClass = T::class.java as Class<Enum<*>>
+        }
+
         fun reset() {
             authOrder = arrayOf(AuthOrder.Role, AuthOrder.UpperGroup)
             denyUndefinedPermissions = true
