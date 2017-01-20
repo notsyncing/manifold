@@ -16,8 +16,8 @@ import io.github.notsyncing.manifold.spec.flow.FlowItem
 import io.github.notsyncing.manifold.spec.models.ParameterInfo
 import io.github.notsyncing.manifold.spec.models.SceneSpec
 import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import org.junit.Assert.*
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.*
@@ -243,9 +243,9 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         return Pair(l.reversed(), case.exit)
     }
 
-    private fun initDatabase() = async {
+    private fun initDatabase() = future {
         if (!scene.useDatabase) {
-            return@async
+            return@future
         }
 
         currDatabaseName = "manifold_spec_test_db_" + Math.random().toString().substring(3)
@@ -254,20 +254,20 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         DatabaseManager.getInstance().upgradeDatabase(currDatabaseName).await()
     }
 
-    private fun destroyDatabase() = async {
+    private fun destroyDatabase() = future {
         if (!scene.useDatabase) {
-            return@async
+            return@future
         }
 
         DatabaseManager.getInstance().dropDatabase(currDatabaseName, true).await()
     }
 
-    override fun checkCase(case: TestCaseInfo) = async {
+    override fun checkCase(case: TestCaseInfo) = future {
         val (s, sessId) = makeSceneFromCase(case)
 
         if (s == null) {
             fail("Failed to create instance of scene ${scene.name}")
-            return@async
+            return@future
         }
 
         ActionInvokeRecorder.reset()

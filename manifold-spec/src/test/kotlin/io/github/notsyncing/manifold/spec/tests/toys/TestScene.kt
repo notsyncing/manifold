@@ -6,8 +6,8 @@ import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import io.github.notsyncing.manifold.feature.Feature
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.concurrent.CompletableFuture
 
 @ActionMetadata("获取当前公司ID")
@@ -35,21 +35,21 @@ class TestScene(private val name: String,
         ManifoldScene<OperationResult>(enableEventNode = false) {
     constructor() : this("", null)
 
-    override fun stage() = async<OperationResult> {
+    override fun stage() = future<OperationResult> {
         if (name.isEmpty()) {
-            return@async OperationResult.Failed
+            return@future OperationResult.Failed
         }
 
         val companyId = m(GetCurrentCompanyIdAction(sessionIdentifier ?: "")).await()
 
         if (companyId <= 0) {
-            return@async OperationResult.Failed
+            return@future OperationResult.Failed
         }
 
         val r = m(AddCompanyAction(name, details)).await()
 
         if (r == OperationResult.Failed) {
-            return@async r
+            return@future r
         } else {
             OperationResult.Success
         }

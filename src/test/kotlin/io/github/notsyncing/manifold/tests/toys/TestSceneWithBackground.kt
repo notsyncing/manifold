@@ -1,8 +1,8 @@
 package io.github.notsyncing.manifold.tests.toys
 
 import io.github.notsyncing.manifold.action.ManifoldScene
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.*
 
 class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false) {
@@ -39,7 +39,7 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
         this.throwException = throwException
     }
 
-    override fun stage() = async {
+    override fun stage() = future {
         useTransaction()
 
         add(SCENE_START)
@@ -61,6 +61,6 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
 
         add(SCENE_END)
 
-        return@async "Hello!"
+        return@future "Hello!"
     }
 }

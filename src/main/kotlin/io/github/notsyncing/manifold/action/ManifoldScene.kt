@@ -8,8 +8,8 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -97,9 +97,9 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         context.autoCommit = false
     }
 
-    protected fun splitTransaction() = async {
+    protected fun splitTransaction() = future {
         if ((context.transaction == null) || (context.autoCommit)) {
-            return@async
+            return@future
         }
 
         context.transaction!!.commit(false).await()
@@ -181,7 +181,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
     abstract fun stage(): CompletableFuture<R>
 
-    fun execute() = async<R> {
+    fun execute() = future<R> {
         context.sessionIdentifier = sessionIdentifier
 
         val c = this@ManifoldScene.javaClass as Class<ManifoldScene<*>>
@@ -238,7 +238,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                 }
             }
 
-            return@async interceptorContext.result as R
+            return@future interceptorContext.result as R
         }
 
         var r: R
@@ -261,10 +261,10 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
             }
         }
 
-        return@async r
+        return@future r
     }
 
-    private fun endTransaction(commit: Boolean = true) = async<Unit> {
+    private fun endTransaction(commit: Boolean = true) = future {
         if (context.transaction != null) {
             if (!context.autoCommit) {
                 if (commit) {
@@ -276,7 +276,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
     }
 
-    protected fun rollbackTransaction() = async<Unit> {
+    protected fun rollbackTransaction() = future {
         if (context.transaction != null) {
             if (!context.autoCommit) {
                 context.transaction!!.rollback(false).await()
@@ -284,7 +284,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
     }
 
-    private fun afterExecution(commit: Boolean = true) = async<Unit> {
+    private fun afterExecution(commit: Boolean = true) = future {
         if (context.transactionRefCount <= 0) {
             endTransaction(commit).await()
         }

@@ -8,8 +8,8 @@ import io.github.notsyncing.manifold.eventbus.event.EventType
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.eventbus.exceptions.NodeNotFoundException
 import io.github.notsyncing.manifold.tests.toys.TestEvent
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -71,7 +71,7 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessage() {
-        async {
+        future {
             nodeA.send("test.msg.action.B1", msgA)
 
             val e = receivedB1.await()
@@ -87,7 +87,7 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessageAndReply() {
-        async {
+        future {
             val r = nodeA.sendAndWaitForReply("test.msg.action.B1", msgA).await()
             Assert.assertNotNull(r)
 
@@ -102,7 +102,7 @@ class ManifoldEventBusTest {
 
     @Test
     fun testSendSimpleLocalMessageToAnyInGroup() {
-        async {
+        future {
             nodeA.sendToAnyInGroup("group2", msgA)
             var e1 = receivedB1.await()
             Assert.assertEquals("1", e1.data)

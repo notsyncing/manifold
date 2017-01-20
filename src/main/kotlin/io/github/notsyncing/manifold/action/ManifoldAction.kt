@@ -7,8 +7,8 @@ import io.github.notsyncing.manifold.action.interceptors.InterceptorResult
 import io.github.notsyncing.manifold.action.session.TimedVar
 import io.github.notsyncing.manifold.storage.ManifoldStorage
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -51,7 +51,7 @@ abstract class ManifoldAction<R> {
 
     open protected fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
 
-    fun execute() = async<R> {
+    fun execute() = future<R> {
         val c = this@ManifoldAction.javaClass as Class<ManifoldAction<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForAction(c)
         val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
@@ -80,9 +80,9 @@ abstract class ManifoldAction<R> {
                 i!!.after(context).await()
             }
 
-            return@async context.result as R
+            return@future context.result as R
         }
 
-        return@async functor().await()
+        return@future functor().await()
     }
 }

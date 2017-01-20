@@ -2,8 +2,8 @@ package io.github.notsyncing.manifold.action
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.storage.ManifoldStorage
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.concurrent.CompletableFuture
 
 abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : ManifoldAction<R>() {
@@ -23,7 +23,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
         }
     }
 
-    override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = async<R> {
+    override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = future<R> {
         if (Manifold.transactionProvider == null) {
             throw RuntimeException("Action ${this@ManifoldDatabaseAction.javaClass} wants to use transaction, but no transaction provider found!")
         }
@@ -46,7 +46,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
                 context.transaction = null
             }
 
-            return@async r
+            return@future r
         } catch (e: Exception) {
             e.printStackTrace()
 

@@ -6,15 +6,15 @@ import io.github.notsyncing.manifold.feature.Feature
 import io.github.notsyncing.manifold.spec.tests.toys.actions.TestActionA
 import io.github.notsyncing.manifold.spec.tests.toys.actions.TestActionB
 import io.github.notsyncing.manifold.spec.tests.toys.actions.TestActionC
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 
 @SceneMetadata("测试场景7")
 @Feature("TestScene7", groups = arrayOf("TestGroup"), internal = false)
 class TestScene7(private val cond: Boolean) : ManifoldScene<String>(enableEventNode = false) {
     constructor() : this(false)
 
-    override fun stage() = async {
+    override fun stage() = future {
         val r: String
 
         if (cond) {

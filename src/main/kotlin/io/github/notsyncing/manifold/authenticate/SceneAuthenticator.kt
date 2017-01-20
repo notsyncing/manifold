@@ -3,8 +3,8 @@ package io.github.notsyncing.manifold.authenticate
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.SceneInterceptor
 import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -99,9 +99,9 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
     abstract fun authenticate(context: SceneInterceptorContext, role: AuthRole): CompletableFuture<Unit>
 
-    override fun before(context: SceneInterceptorContext) = async {
+    override fun before(context: SceneInterceptorContext) = future {
         if (authInfoProvider == null) {
-            return@async
+            return@future
         }
 
         val id = context.sceneContext.sessionIdentifier
@@ -118,12 +118,12 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         }
 
         if (role == SpecialRole.SuperUser) {
-            return@async context.pass().await()
+            return@future context.pass().await()
         }
 
         currentRole = role
 
-        return@async authenticate(context, currentRole).await()
+        return@future authenticate(context, currentRole).await()
     }
 
     protected fun SceneInterceptorContext.aggregatePermissions(): AggregatedPermissions {
@@ -249,7 +249,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         return if (hasPermission(module, type)) pass() else deny()
     }
 
-    override fun destroy(context: SceneInterceptorContext) = async<Unit> {
+    override fun destroy(context: SceneInterceptorContext) = future<Unit> {
         if (authInfoProvider != null) {
             authInfoProvider.destroy().await()
         }

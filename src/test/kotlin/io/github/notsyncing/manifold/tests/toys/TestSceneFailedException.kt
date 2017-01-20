@@ -3,8 +3,8 @@ package io.github.notsyncing.manifold.tests.toys
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneFailedException
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
-import kotlinx.coroutines.async
-import kotlinx.coroutines.await
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import java.util.*
 
 class TestSceneFailedException : ManifoldScene<String> {
@@ -32,7 +32,7 @@ class TestSceneFailedException : ManifoldScene<String> {
 
     constructor(event: ManifoldEvent) : super(event)
 
-    override fun stage() = async<String> {
+    override fun stage() = future<String> {
         useTransaction()
 
         add(SCENE_START)
