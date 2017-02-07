@@ -10,6 +10,7 @@ object TestFeatures {
     const val Feature7 = "manifold.test.feature7"
     const val Feature8 = "manifold.test.feature8"
     const val Feature9 = "manifold.test.feature9"
+    const val Feature10 = "manifold.test.feature10"
 
     const val FeatureGroup1 = "manifold.test.feature_group1"
     const val FeatureGroup2 = "manifold.test.feature_group2"

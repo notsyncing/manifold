@@ -10,6 +10,7 @@ import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvide
 import io.github.notsyncing.manifold.authenticate.Permission
 import io.github.notsyncing.manifold.authenticate.PermissionState
 import io.github.notsyncing.manifold.feature.FeatureAuthenticator
+import io.github.notsyncing.manifold.feature.FeatureAuthenticator.Companion.FeatureAuthBuilder.Companion.noAuth
 import io.github.notsyncing.manifold.tests.toys.features.*
 import org.junit.After
 import org.junit.Assert
@@ -31,6 +32,9 @@ class ManifoldFeatureTest {
         TestFeatureScene4.reset()
         TestFeatureScene5.reset()
         TestFeatureScene6.reset()
+        TestFeatureScene7.reset()
+        TestFeatureScene8.reset()
+        TestFeatureScene9.reset()
     }
 
     @After
@@ -243,5 +247,24 @@ class ManifoldFeatureTest {
         } catch (e: Exception) {
             Assert.assertTrue(e.cause is InterceptorException)
         }
+    }
+
+    @Test
+    fun testAuthNoAuthPass() {
+        features.enableFeatures(TestFeatures.Feature10)
+
+        FeatureAuthenticator.configure {
+            our feature TestFeatures.Feature10 needs noAuth
+        }
+
+        Manifold.authInfoProvider = mock<AuthenticateInformationProvider> {
+            on { getRole(any<String>()) } doReturn CompletableFuture.completedFuture(null as AuthRole?)
+            on { destroy() } doReturn CompletableFuture.completedFuture(Unit)
+        }
+
+        Manifold.init()
+
+        val r = Manifold.run(TestFeatureScene10(), "").get()
+        Assert.assertEquals("Feature10", r)
     }
 }

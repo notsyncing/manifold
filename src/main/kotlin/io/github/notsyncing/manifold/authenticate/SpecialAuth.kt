@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.authenticate
 
 enum class SpecialAuth {
-    LoginOnly
+    LoginOnly,
+    NoAuth
 }

@@ -39,6 +39,8 @@ class FeatureAuthenticator : SceneAuthenticator() {
                 val our = FeatureAuthBuilder()
 
                 val login = SpecialAuth.LoginOnly
+
+                val noAuth = SpecialAuth.NoAuth
             }
 
             val our = Companion.our
@@ -89,6 +91,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
         }
 
         val (module, type) = featureAuthMap[feature.value] ?: Pair(null, null)
+
+        if (module == SpecialAuth.NoAuth) {
+            return context.pass()
+        }
 
         if ((module == null) || (type == null)) {
             if (feature.defaultSpecialAuths.isNotEmpty()) {
