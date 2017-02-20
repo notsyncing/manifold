@@ -221,7 +221,7 @@ object ManifoldEventBus {
             return FutureUtils.failed(RuntimeException("Local transport cannot be sent to remote node $targetNode, event $event"))
         }
 
-        val worker = workers[targetNode.transport.javaClass]
+        val worker = workers[targetNode.transport::class.java]
 
         if (worker == null) {
             return FutureUtils.failed(RuntimeException("Unsupported transport (${targetNode.transport}) in target node $targetNode"))

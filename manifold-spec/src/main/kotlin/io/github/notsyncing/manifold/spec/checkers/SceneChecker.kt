@@ -20,7 +20,11 @@ import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import org.junit.Assert.*
 import java.util.concurrent.CompletableFuture
-import kotlin.reflect.*
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.jvmErasure
 
@@ -194,7 +198,7 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
         val exitPoint = scene.flow.ends.firstOrNull { it.text == case.exit.exitName }
         val probes = mutableMapOf<String, Any?>()
 
-        currentScene.javaClass.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == Probe::class } }
+        currentScene::class.java.kotlin.memberProperties.filter { it.annotations.any { it.annotationClass == Probe::class } }
                 .forEach {
                     it.isAccessible = true
 
@@ -204,13 +208,13 @@ class SceneChecker(spec: ManifoldSpecification, scene: SceneSpec) : Checker(spec
                         name = it.name
                     }
 
-                    probes.put(name, it.get(currentScene))
+                    probes.put(name, it.getter.call(currentScene))
                 }
 
-        currentScene.javaClass.kotlin.declaredMemberProperties.filter { it.annotations.all { it.annotationClass != Probe::class } }
+        currentScene::class.java.kotlin.declaredMemberProperties.filter { it.annotations.all { it.annotationClass != Probe::class } }
                 .forEach {
                     it.isAccessible = true
-                    probes.put(it.name, it.get(currentScene))
+                    probes.put(it.name, it.getter.call(currentScene))
                 }
 
         if (exitPoint == null) {

@@ -25,7 +25,7 @@ abstract class ManifoldDatabaseAction<T, R>(private var transClass: Class<T>) : 
 
     override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = future<R> {
         if (Manifold.transactionProvider == null) {
-            throw RuntimeException("Action ${this@ManifoldDatabaseAction.javaClass} wants to use transaction, but no transaction provider found!")
+            throw RuntimeException("Action ${this@ManifoldDatabaseAction::class.java} wants to use transaction, but no transaction provider found!")
         }
 
         if (context.transaction == null) {

@@ -171,7 +171,7 @@ object Manifold {
     }
 
     fun <R> run(scene: ManifoldScene<R>, sessionIdentifier: String? = null): CompletableFuture<R> {
-        if (!features.isFeatureEnabled(scene.javaClass)) {
+        if (!features.isFeatureEnabled(scene::class.java)) {
             throw IllegalAccessException("Feature scene $scene is not enabled!")
         }
 

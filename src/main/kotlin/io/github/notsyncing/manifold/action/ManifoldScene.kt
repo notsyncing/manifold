@@ -41,7 +41,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
 
         if (enableEventNode) {
-            eventNode = eventNodes[this.javaClass as Class<ManifoldScene<*>>]
+            eventNode = eventNodes[this::class.java as Class<ManifoldScene<*>>]
         }
     }
 
@@ -55,17 +55,17 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
     protected fun awakeOnEvent(event: String) {
         if (eventNode == null) {
-            throw IllegalAccessException("Scene ${this.javaClass} wants to be awaken on event $event, but it has no event node!")
+            throw IllegalAccessException("Scene ${this::class.java} wants to be awaken on event $event, but it has no event node!")
         }
 
         eventNode?.on(event) {
-            Manifold.run(this.javaClass, it, it.sessionId)
+            Manifold.run(this::class.java as Class<ManifoldScene<R>>, it, it.sessionId)
         }
     }
 
     protected fun transitionTo(targetEventGroup: String, event: String, data: Any, waitForResult: Boolean = false): CompletableFuture<ManifoldEvent?> {
         if (eventNode == null) {
-            throw IllegalAccessException("Scene ${this.javaClass} wants to transition to $targetEventGroup with event $event, but it has no event node!")
+            throw IllegalAccessException("Scene ${this::class.java} wants to transition to $targetEventGroup with event $event, but it has no event node!")
         }
 
         val e = ManifoldEvent(event, data)
@@ -158,7 +158,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit) = runInBackground(keepTransaction, func, null)
 
     open fun init() {
-        val c = this.javaClass as Class<ManifoldScene<*>>
+        val c = this::class.java as Class<ManifoldScene<*>>
 
         if (enableEventNode) {
             if (eventNodes.containsKey(c)) {
@@ -175,7 +175,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     open fun destroy() {
         if (eventNode != null) {
             ManifoldEventBus.unregister(eventNode!!)
-            eventNodes.remove(this.javaClass as Class<ManifoldScene<*>>)
+            eventNodes.remove(this::class.java as Class<ManifoldScene<*>>)
         }
     }
 
@@ -184,7 +184,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     fun execute() = future<R> {
         context.sessionIdentifier = sessionIdentifier
 
-        val c = this@ManifoldScene.javaClass as Class<ManifoldScene<*>>
+        val c = this@ManifoldScene::class.java as Class<ManifoldScene<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForScene(c)
         val functor = { stage() }
 
@@ -203,7 +203,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                     i.before(interceptorContext).await()
 
                     if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
-                        throw InterceptorException("Interceptor ${i.javaClass} stopped the execution of scene ${this@ManifoldScene.javaClass}", interceptorContext.exception)
+                        throw InterceptorException("Interceptor ${i::class.java} stopped the execution of scene ${this@ManifoldScene::class.java}", interceptorContext.exception)
                     }
                 }
 

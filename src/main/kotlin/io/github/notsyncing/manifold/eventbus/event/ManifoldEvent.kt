@@ -116,7 +116,7 @@ class ManifoldEvent() {
     }
 
     override fun toString(): String {
-        return "${this.javaClass.simpleName} { $source $sendType $type to $target" +
+        return "${this::class.java.simpleName} { $source $sendType $type to $target" +
                 (if (replyToCounter > 0) " reply $replyToCounter" else "") + " event $event " +
                 (if (dataStream != null) "data stream $dataStream (length $dataLength) " else "data $data ") +
                 (if (sessionId?.isEmpty() == false) "session $sessionId" else "") + " }"

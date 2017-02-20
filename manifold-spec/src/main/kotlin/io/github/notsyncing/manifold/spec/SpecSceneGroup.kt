@@ -7,7 +7,7 @@ import io.github.notsyncing.manifold.spec.models.*
 import io.github.notsyncing.manifold.spec.testcase.TestCaseBuilder
 
 abstract class SpecSceneGroup {
-    val name = this.javaClass.simpleName
+    val name = this::class.java.simpleName
     var feature = FeatureInfo()
     var permission = PermissionInfo()
     var parameters = ParameterListInfo()
@@ -25,7 +25,7 @@ abstract class SpecSceneGroup {
     }
 
     fun build(): List<SceneSpec> {
-        val sceneDefs = this.javaClass.methods.filter { it.isAnnotationPresent(SceneDef::class.java) }
+        val sceneDefs = this::class.java.methods.filter { it.isAnnotationPresent(SceneDef::class.java) }
         val l = mutableListOf<SceneSpec>()
 
         for (m in sceneDefs) {

@@ -20,17 +20,17 @@ class ActionInvokeRecorder : ActionInterceptor() {
     private var metadata: ActionMetadata? = null
 
     override fun before(context: ActionInterceptorContext): CompletableFuture<Unit> {
-        metadata = context.action.javaClass.getAnnotation(ActionMetadata::class.java)
+        metadata = context.action::class.java.getAnnotation(ActionMetadata::class.java)
 
         if (metadata == null) {
-            println("Action ${context.action.javaClass} has no @${ActionMetadata::class.simpleName} annotation present!")
+            println("Action ${context.action::class.java} has no @${ActionMetadata::class.simpleName} annotation present!")
         }
 
         return super.before(context)
     }
 
     override fun after(context: ActionInterceptorContext): CompletableFuture<Unit> {
-        recorded.add(ActionRecord(metadata?.value ?: context.action.javaClass.simpleName, context.result))
+        recorded.add(ActionRecord(metadata?.value ?: context.action::class.java.simpleName, context.result))
 
         return super.after(context)
     }

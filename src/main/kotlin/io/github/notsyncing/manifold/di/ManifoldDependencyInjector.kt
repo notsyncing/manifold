@@ -110,7 +110,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun register(obj: Any) {
-        singletons.put(obj.javaClass, obj)
+        singletons.put(obj::class.java, obj)
     }
 
     override fun <T: S, S> registerMapping(instClass: Class<T>, intfClass: Class<S>) {

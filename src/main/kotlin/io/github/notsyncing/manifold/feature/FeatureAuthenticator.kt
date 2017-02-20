@@ -84,7 +84,7 @@ class FeatureAuthenticator : SceneAuthenticator() {
             return context.pass()
         }
 
-        val feature = context.scene.javaClass.getAnnotation(Feature::class.java)
+        val feature = context.scene::class.java.getAnnotation(Feature::class.java)
 
         if (feature == null) {
             return context.pass()

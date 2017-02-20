@@ -91,7 +91,7 @@ class ManifoldDependencyInjectorTest {
         di.registerMapping(A::class.java, IA::class.java)
         val a = di.get(IA::class.java)
 
-        Assert.assertEquals(A::class.java, a?.javaClass)
+        Assert.assertEquals(A::class.java, a?.let { it::class.java })
     }
 
     @Test

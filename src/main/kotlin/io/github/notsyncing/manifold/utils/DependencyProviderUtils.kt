@@ -5,8 +5,8 @@ import io.github.notsyncing.manifold.di.AutoProvide
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
-import kotlin.reflect.memberProperties
 
 object DependencyProviderUtils {
     private val propertyCache = ConcurrentHashMap<Class<*>, ArrayList<KMutableProperty1<Any, Any?>>>()
@@ -16,7 +16,7 @@ object DependencyProviderUtils {
     }
 
     fun autoProvideProperties(o: Any, provideDependency: (Class<*>) -> Any? = { Manifold.dependencyProvider?.get(it) }) {
-        val c = o.javaClass
+        val c = o::class.java
         val propList: ArrayList<KMutableProperty1<Any, Any?>>
 
         if (!propertyCache.containsKey(c)) {
