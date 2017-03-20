@@ -6,6 +6,7 @@ import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
 import io.github.notsyncing.manifold.authenticate.AuthRole
 import io.github.notsyncing.manifold.authenticate.SceneAuthenticator
 import io.github.notsyncing.manifold.authenticate.SpecialAuth
+import io.github.notsyncing.manifold.authenticate.SpecialRole
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -87,6 +88,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
         val feature = context.scene::class.java.getAnnotation(Feature::class.java)
 
         if (feature == null) {
+            return context.pass()
+        }
+
+        if (role == SpecialRole.SuperUser) {
             return context.pass()
         }
 
