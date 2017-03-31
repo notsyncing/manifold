@@ -7,6 +7,7 @@ import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine
 import io.github.notsyncing.manifold.bpmn.engine.ProcessResult
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
+import org.camunda.bpm.model.bpmn.GatewayDirection
 import org.camunda.bpm.model.bpmn.instance.ExclusiveGateway
 import java.security.InvalidParameterException
 
@@ -17,21 +18,28 @@ class ExclusiveGatewayProcessor : BpmnNodeProcessor<ExclusiveGateway> {
             engine.updateLastNodeResult(o)
         }
 
-        val nextRoute = currNode.outgoing
-                .filter {
-                    if (engine.hasNodeExpression(it)) {
-                        engine.executeNodeExpression(it).await() as Boolean
-                    } else {
-                        true
-                    }
-                }
-                .firstOrNull()
+        val direction = determineGatewayDirection(currNode)
 
-        if (nextRoute == null) {
-            throw InvalidParameterException("No branch of exclusive gateway $currNode is satisified in diagram ${engine.scene.bpmnProcessName}")
+        when (direction) {
+            GatewayDirection.Converging -> {
+                currExecuteInfo.nextNodeId = currNode.outgoing.first().target.id
+            }
+
+            GatewayDirection.Diverging -> {
+                val nextRoute = currNode.outgoing
+                        .filter { engine.executeNodeExpression(it).await() as Boolean }
+                        .firstOrNull()
+
+                if (nextRoute == null) {
+                    throw InvalidParameterException("No branch of exclusive gateway $currNode is satisified in diagram ${engine.scene.bpmnProcessName}")
+                }
+
+                currExecuteInfo.nextNodeId = nextRoute.target.id
+            }
+
+            else -> throw UnsupportedOperationException("Unsupported direction $direction in gateway $currNode of diagram ${engine.scene.bpmnProcessName}")
         }
 
-        currExecuteInfo.nextNodeId = nextRoute.target.id
         currExecuteInfo.state = BpmnNodeExecutionState.Executed
 
         ProcessResult(false)

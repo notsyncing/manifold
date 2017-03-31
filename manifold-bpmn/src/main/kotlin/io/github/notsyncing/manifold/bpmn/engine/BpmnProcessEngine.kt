@@ -143,7 +143,15 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
                 return@future processResult.result as R
             }
 
-            currNode = bpmn.getModelElementById(currExecuteInfo.nextNodeId) ?: currNode?.outgoing?.first()?.target
+            if (currExecuteInfo.nextNodeId == null) {
+                currNode = currNode?.outgoing?.first()?.target
+            } else {
+                currNode = bpmn.getModelElementById(currExecuteInfo.nextNodeId)
+
+                if (currNode == null) {
+                    throw InvalidParameterException("Node id ${currExecuteInfo.nextNodeId} not found in diagram $bpmnProcessName")
+                }
+            }
         }
 
         null as R
