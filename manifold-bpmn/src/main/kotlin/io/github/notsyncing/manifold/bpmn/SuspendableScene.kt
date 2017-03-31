@@ -12,7 +12,7 @@ abstract class SuspendableScene<R> : ManifoldScene<R>() {
         const val TASK_ID_FIELD = "manifold.scene.suspendable.task.id"
     }
 
-    protected var suspended = false
+    var suspended = false
 
     var resumedResults: Map<String, Any?>? = null
     var taskId: String? = null
