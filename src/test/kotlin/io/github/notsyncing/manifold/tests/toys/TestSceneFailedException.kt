@@ -37,7 +37,7 @@ class TestSceneFailedException : ManifoldScene<String> {
 
         add(SCENE_START)
 
-        m(TestDbActionSimple()).await()
+        m(TestTransActionSimple()).await()
 
         throw SceneFailedException("Failed!")
     }

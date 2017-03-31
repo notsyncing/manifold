@@ -67,6 +67,9 @@ object Manifold {
             features.featurePublisher = value
         }
 
+    private val onDestroyListeners = mutableListOf<() -> Unit>()
+    private val onResetListeners = mutableListOf<() -> Unit>()
+
     fun init() {
         if (dependencyProvider == null) {
             dependencyProvider = ManifoldDependencyInjector()
@@ -118,6 +121,8 @@ object Manifold {
     fun destroy(): CompletableFuture<Void> {
         reset()
 
+        onDestroyListeners.forEach { it() }
+
         sceneBgWorkerPool.shutdown()
 
         return ManifoldEventBus.stop()
@@ -146,6 +151,8 @@ object Manifold {
         ManifoldScene.reset()
 
         DependencyProviderUtils.reset()
+
+        onResetListeners.forEach { it() }
     }
 
     inline fun <reified T: AuthenticateInformationProvider> authInfoProvider(): Manifold {
@@ -219,5 +226,13 @@ object Manifold {
 
         val s = constructor.newInstance(*params)
         return Manifold.run(s, sessionIdentifier) as CompletableFuture<R>
+    }
+
+    fun addOnDestroyListener(listener: () -> Unit) {
+        onDestroyListeners.add(listener)
+    }
+
+    fun addOnResetListener(listener: () -> Unit) {
+        onResetListeners.add(listener)
     }
 }

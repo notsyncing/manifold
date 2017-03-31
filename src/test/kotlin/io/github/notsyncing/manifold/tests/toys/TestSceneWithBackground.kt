@@ -44,7 +44,7 @@ class TestSceneWithBackground() : ManifoldScene<String>(enableEventNode = false)
 
         add(SCENE_START)
 
-        m(TestDbActionSimple()).await()
+        m(TestTransActionSimple()).await()
 
         runInBackground(keepTrans, {
             Thread.sleep(500)

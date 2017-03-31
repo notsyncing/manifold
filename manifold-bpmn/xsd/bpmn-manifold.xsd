@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://notsyncing.github.io/manifold/bpmn">
+    <xsd:import namespace="http://www.omg.org/spec/BPMN/20100524/MODEL" schemaLocation="Semantic.xsd"/>
+
+    <xsd:complexType name="tFlowNode" abstract="true">
+        <xsd:attribute name="expression" type="xsd:string" />
+    </xsd:complexType>
+</xsd:schema>

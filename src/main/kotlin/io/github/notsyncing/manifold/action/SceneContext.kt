@@ -10,4 +10,6 @@ class SceneContext {
     var transactionRefCount = 0
 
     var permissions: AggregatedPermissions? = null
+
+    var additionalData = mutableMapOf<String, Any?>()
 }
