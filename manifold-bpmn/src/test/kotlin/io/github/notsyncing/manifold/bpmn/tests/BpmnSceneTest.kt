@@ -8,6 +8,7 @@ import io.github.notsyncing.manifold.bpmn.SuspendableScene
 import io.github.notsyncing.manifold.bpmn.SuspendableSceneScheduler
 import io.github.notsyncing.manifold.bpmn.tests.toys.SimpleBpmnScene
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction2
+import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction3
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -19,12 +20,14 @@ import java.util.concurrent.CompletableFuture
 
 class BpmnSceneTest {
     private val simpleDiagram = readStringFromResource("/simple.bpmn")
+    private val exclusiveBranchDiagram = readStringFromResource("/exclusive_branch.bpmn")
     private val storage = SuspendableSceneScheduler.storageProvider as InMemorySuspendableSceneStorage
 
     private val bpmnStorage = object : BpmnStorageProvider {
         override fun getDiagram(name: String): CompletableFuture<String> {
             return CompletableFuture.completedFuture(when (name) {
                 "simple" -> simpleDiagram
+                "exclusive_branch" -> exclusiveBranchDiagram
                 else -> throw UnsupportedOperationException("Unknown diagram name $name")
             })
         }
@@ -36,6 +39,20 @@ class BpmnSceneTest {
 
     private fun readStringFromResource(path: String): String {
         return String(Files.readAllBytes(Paths.get(javaClass.getResource(path).toURI())))
+    }
+
+    private fun waitUntilNotNull(expr: () -> Any?, timeOut: Int) {
+        var count = timeOut * 10
+
+        while (expr() == null) {
+            Thread.sleep(100)
+
+            count--
+
+            if (count <= 0) {
+                break
+            }
+        }
     }
 
     @Before
@@ -55,8 +72,8 @@ class BpmnSceneTest {
 
     @Test
     fun testSimpleBpmn() {
-        val r1 = Manifold.run(SimpleBpmnScene("simple")).get()
-        assertNull(r1)
+        val r = Manifold.run(SimpleBpmnScene("simple")).get()
+        assertNull(r)
 
         val stateList = storage.getAsList()
         val state = stateList[0]
@@ -67,18 +84,46 @@ class BpmnSceneTest {
 
         Manifold.run(action).get()
 
-        var count = 20
-
-        while (SimpleBpmnScene.result == null) {
-            Thread.sleep(100)
-
-            count--
-
-            if (count <= 0) {
-                break
-            }
-        }
+        waitUntilNotNull({ SimpleBpmnScene.result }, 20)
 
         assertEquals("TestAction2", SimpleBpmnScene.result)
+    }
+
+    @Test
+    fun testExclusiveBranchBpmnA() {
+        Manifold.run(SimpleBpmnScene("exclusive_branch")).get()
+
+        val stateList = storage.getAsList()
+        val state = stateList[0]
+
+        TestAction3.result = true
+        val action = TestAction3()
+        action.context = SceneContext()
+        action.context.additionalData.put(SuspendableScene.TASK_ID_FIELD, state.sceneTaskId)
+
+        Manifold.run(action).get()
+
+        waitUntilNotNull({ SimpleBpmnScene.result }, 20)
+
+        assertEquals("TestAction2", SimpleBpmnScene.result)
+    }
+
+    @Test
+    fun testExclusiveBranchBpmnB() {
+        Manifold.run(SimpleBpmnScene("exclusive_branch")).get()
+
+        val stateList = storage.getAsList()
+        val state = stateList[0]
+
+        TestAction3.result = false
+        val action = TestAction3()
+        action.context = SceneContext()
+        action.context.additionalData.put(SuspendableScene.TASK_ID_FIELD, state.sceneTaskId)
+
+        Manifold.run(action).get()
+
+        waitUntilNotNull({ SimpleBpmnScene.result }, 20)
+
+        assertEquals("<NULL>", SimpleBpmnScene.result)
     }
 }

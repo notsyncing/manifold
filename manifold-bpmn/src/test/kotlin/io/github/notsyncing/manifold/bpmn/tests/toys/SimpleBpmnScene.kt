@@ -14,6 +14,6 @@ class SimpleBpmnScene(name: String) : BpmnScene<String?>(name) {
     constructor() : this("")
 
     override fun onEndEvent(result: String?) {
-        SimpleBpmnScene.result = result
+        SimpleBpmnScene.result = result ?: "<NULL>"
     }
 }
