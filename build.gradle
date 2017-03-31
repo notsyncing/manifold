@@ -14,7 +14,7 @@ plugins {
     id "com.jfrog.bintray" version "1.6"
 }
 
-def ver = "0.3.8"
+def ver = "0.4.0"
 def grp = "io.github.notsyncing.manifold"
 
 group grp
