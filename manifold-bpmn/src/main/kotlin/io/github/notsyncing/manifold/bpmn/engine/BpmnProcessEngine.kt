@@ -6,10 +6,7 @@ import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionInfo
 import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionState
 import io.github.notsyncing.manifold.bpmn.BpmnScene
 import io.github.notsyncing.manifold.bpmn.WaitStrategy
-import io.github.notsyncing.manifold.bpmn.engine.processors.EndEventProcessor
-import io.github.notsyncing.manifold.bpmn.engine.processors.ExclusiveGatewayProcessor
-import io.github.notsyncing.manifold.bpmn.engine.processors.StartEventProcessor
-import io.github.notsyncing.manifold.bpmn.engine.processors.TaskProcessor
+import io.github.notsyncing.manifold.bpmn.engine.processors.*
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import org.apache.commons.jexl3.JexlBuilder
@@ -35,6 +32,7 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
             registerProcessor<EndEvent>(EndEventProcessor())
             registerProcessor<ExclusiveGateway>(ExclusiveGatewayProcessor())
             registerProcessor<Task>(TaskProcessor())
+            registerProcessor<ParallelGateway>(ParallelGatewayProcessor())
         }
 
         private inline fun <reified N: FlowElement> registerProcessor(processor: BpmnNodeProcessor<*>) {
