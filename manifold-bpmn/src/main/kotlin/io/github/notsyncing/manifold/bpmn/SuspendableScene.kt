@@ -10,16 +10,19 @@ import java.util.concurrent.CompletableFuture
 abstract class SuspendableScene<R> : ManifoldScene<R>() {
     companion object {
         const val TASK_ID_FIELD = "manifold.scene.suspendable.task.id"
+
+        val SUSPENDED = Any()
     }
 
-    var suspended = false
+    var suspendAdditionalData: Map<String, Any?>? = null
 
-    var resumedResults: Map<String, Any?>? = null
+    var resumedState: SuspendableSceneState? = null
     var taskId: String? = null
 
-    protected fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, vararg actionClasses: Class<T>) {
-        SuspendableSceneScheduler.suspend(this, waitStrategy, actionClasses)
-        suspended = true
+    protected open fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, vararg actionClasses: Class<T>): Any {
+        SuspendableSceneScheduler.suspend(this, waitStrategy, actionClasses, suspendAdditionalData)
+        suspendAdditionalData = null
+        return SUSPENDED
     }
 
     abstract fun shouldAccept(state: SuspendableSceneState, actionContext: ActionInterceptorContext): Boolean

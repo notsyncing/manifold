@@ -22,6 +22,7 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
     companion object {
         const val BPMN_SCENE_EXECUTED_NODES = "manifold.bpmn.node.executed_list"
         const val BPMN_SCENE_PROCESS_NAME = "manifold.bpmn.process.name"
+        const val BPMN_SCENE_NODE_ID = "manifold.bpmn.node.id"
 
         const val MANIFOLD_BPMN_XML_NS = "http://notsyncing.github.io/manifold/bpmn"
 
@@ -46,12 +47,17 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
 
     var lastNodeResults: Map<String, Any?>? = null
     var currNode: FlowNode? = null
+    var currBpmnModel: BpmnModelInstance? = null
 
     var endEventHandler: ((R) -> Unit)? = null
 
     init {
         exprContext.set("scene", scene)
         exprContext.set(WaitStrategy::class.java.simpleName, WaitStrategy::class.java)
+    }
+
+    fun getNodeExecutionInfo(nodeId: String): BpmnNodeExecutionInfo? {
+        return executedNodes[nodeId]
     }
 
     fun serializeInto(o: JSONObject): JSONObject {
@@ -99,24 +105,28 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
         updateLastNodeResults(mapOf("RESULT" to result))
     }
 
-    fun process(bpmn: BpmnModelInstance) = future<R> {
-        val bpmnProcessName = scene.bpmnProcessName
+    fun getLastNodeResult() = lastNodeResults?.get("RESULT") ?: lastNodeResults?.values?.firstOrNull()
 
-        val starts = bpmn.getModelElementsByType(StartEvent::class.java)
-
-        if (starts.isEmpty()) {
-            throw InvalidObjectException("BPMN diagram $bpmnProcessName has no start element!")
-        }
-
-        val start = starts.first()
-        currNode = start
+    fun processFromNode(bpmn: BpmnModelInstance, node: FlowNode): CompletableFuture<ProcessResult> = future {
+        currBpmnModel = bpmn
+        currNode = node
 
         while (currNode != null) {
             val executedInfo = executedNodes[currNode!!.id]
 
             if (executedInfo?.state == BpmnNodeExecutionState.Executed) {
+                updateLastNodeResult(executedInfo.result)
+
                 if (executedInfo.nextNodeId != null) {
                     currNode = currNode!!.outgoing.first { it.target.id == executedInfo.nextNodeId }.target
+                } else if (executedInfo.everyNextNode) {
+                    var lastResult: ProcessResult? = null
+
+                    for (n in currNode!!.outgoing) {
+                        lastResult = processFromNode(bpmn, n.target).await()
+                    }
+
+                    return@future lastResult!!
                 } else {
                     currNode = currNode!!.outgoing.first().target
                 }
@@ -132,27 +142,43 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
             val processor = processors.entries.firstOrNull { it.key.isAssignableFrom(currNode!!::class.java) }?.value
 
             if (processor == null) {
-                throw UnsupportedOperationException("BPMN diagram $bpmnProcessName contains an unsupported node: $currNode")
+                throw UnsupportedOperationException("BPMN diagram ${scene.bpmnProcessName} contains an unsupported node: $currNode")
             }
 
             val processResult = processor.process(this, currNode as FlowNode, currExecuteInfo).await()
+            currExecuteInfo.result = processResult.result
 
             if (processResult.needReturn) {
-                return@future processResult.result as R
+                return@future processResult
             }
 
             if (currExecuteInfo.nextNodeId == null) {
-                currNode = currNode?.outgoing?.first()?.target
+                currNode = currNode?.outgoing?.firstOrNull()?.target
             } else {
                 currNode = bpmn.getModelElementById(currExecuteInfo.nextNodeId)
 
                 if (currNode == null) {
-                    throw InvalidParameterException("Node id ${currExecuteInfo.nextNodeId} not found in diagram $bpmnProcessName")
+                    throw InvalidParameterException("Node id ${currExecuteInfo.nextNodeId} not found in diagram ${scene.bpmnProcessName}")
                 }
             }
         }
 
-        null as R
+        ProcessResult(true, getLastNodeResult())
+    }
+
+    fun process(bpmn: BpmnModelInstance) = future<R> {
+        currBpmnModel = bpmn
+        val bpmnProcessName = scene.bpmnProcessName
+
+        val starts = bpmn.getModelElementsByType(StartEvent::class.java)
+
+        if (starts.isEmpty()) {
+            throw InvalidObjectException("BPMN diagram $bpmnProcessName has no start element!")
+        }
+
+        // TODO: Support multiple [StartEvent]s?
+        val start = starts.first()
+        processFromNode(bpmn, start).await().result as R
     }
 
     fun invokeEndHandler(r: Any?) {

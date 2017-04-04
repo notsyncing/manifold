@@ -7,6 +7,8 @@ import io.github.notsyncing.manifold.bpmn.SuspendableScene
 import io.github.notsyncing.manifold.bpmn.SuspendableSceneScheduler
 import io.github.notsyncing.manifold.bpmn.WaitStrategy
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction1
+import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction2
+import io.github.notsyncing.manifold.bpmn.tests.toys.TestAwaitBothSuspendScene
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestSimpleSuspendScene
 import org.junit.After
 import org.junit.Assert.*
@@ -38,12 +40,12 @@ class SuspendableSceneTest {
         val state = stateList[0]
         assertEquals("TEST_SESSION", state.sceneSessionId)
         assertNotNull(state.sceneTaskId)
-        assertEquals(WaitStrategy.And, state.awaitStrategy)
+        assertEquals(WaitStrategy.And, state.awaitingActions[0].waitStrategy)
         assertEquals(1, state.sceneState.getInteger("label"))
         assertEquals(TestSimpleSuspendScene::class.java.name, state.sceneClassFullName)
         assertEquals(1, state.awaitingActions.size)
 
-        val awaitingAction = state.awaitingActions.entries.first()
+        val awaitingAction = state.awaitingActions[0].results.entries.first()
         assertEquals(TestAction1::class.java.name, awaitingAction.key)
         assertFalse(awaitingAction.value.executed)
         assertNull(awaitingAction.value.result)
@@ -66,6 +68,47 @@ class SuspendableSceneTest {
     }
 
     @Test
+    fun testSuspendableSceneWaitForBoth() {
+        val r1 = Manifold.run(TestAwaitBothSuspendScene(), "TEST_SESSION").get()
+        assertEquals("", r1)
+
+        val stateList = storage.getAsList()
+        val state = stateList[0]
+        assertEquals(2, state.awaitingActions.size)
+
+        val awaitingAction1 = state.awaitingActions[0].results.entries.first()
+        val awaitingAction2 = state.awaitingActions[1].results.entries.first()
+
+        val action1 = TestAction1()
+        action1.context = SceneContext()
+        action1.context.additionalData.put(SuspendableScene.TASK_ID_FIELD, state.sceneTaskId)
+
+        Manifold.run(action1).get()
+
+        Thread.sleep(100)
+
+        assertTrue(awaitingAction1.value.executed)
+        assertFalse(awaitingAction2.value.executed)
+
+        assertEquals(1, storage.getCurrentCount())
+
+        val action2 = TestAction2()
+        action2.context = SceneContext()
+        action2.context.additionalData.put(SuspendableScene.TASK_ID_FIELD, state.sceneTaskId)
+
+        Manifold.run(action2).get()
+
+        Thread.sleep(100)
+
+        assertTrue(awaitingAction1.value.executed)
+        assertTrue(awaitingAction2.value.executed)
+
+        assertEquals("TestAction1 TestAction2", TestAwaitBothSuspendScene.finalResult)
+
+        assertEquals(0, storage.getCurrentCount())
+    }
+
+    @Test
     fun testSimpleSuspendableSceneWithWrongTaskId() {
         val storage = SuspendableSceneScheduler.storageProvider as InMemorySuspendableSceneStorage
 
@@ -83,7 +126,7 @@ class SuspendableSceneTest {
 
         Thread.sleep(100)
 
-        val awaitingAction = state.awaitingActions.entries.first()
+        val awaitingAction = state.awaitingActions[0].results.entries.first()
         assertEquals(TestAction1::class.java.name, awaitingAction.key)
         assertFalse(awaitingAction.value.executed)
         assertNull(awaitingAction.value.result)

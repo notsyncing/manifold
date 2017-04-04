@@ -2,9 +2,9 @@ package io.github.notsyncing.manifold.bpmn.tests.toys
 
 import io.github.notsyncing.manifold.bpmn.BpmnScene
 
-class SimpleBpmnScene(name: String) : BpmnScene<String?>(name) {
+class SimpleBpmnScene(name: String) : BpmnScene<Any?>(name) {
     companion object {
-        var result: String? = null
+        var result: Any? = null
 
         fun reset() {
             result = null
@@ -13,7 +13,7 @@ class SimpleBpmnScene(name: String) : BpmnScene<String?>(name) {
 
     constructor() : this("")
 
-    override fun onEndEvent(result: String?) {
+    override fun onEndEvent(result: Any?) {
         SimpleBpmnScene.result = result ?: "<NULL>"
     }
 }

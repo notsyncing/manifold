@@ -19,22 +19,37 @@ object SuspendableSceneScheduler {
         }
     }
 
-    fun <T: ManifoldAction<*>> suspend(scene: SuspendableScene<*>, waitStrategy: WaitStrategy, awaitActionClasses: Array<out Class<T>>) {
-        val state = SuspendableSceneState()
-        state.sceneClassFullName = scene.javaClass.name
-        state.awaitStrategy = waitStrategy
-        state.sceneState = scene.serialize()
-        state.awaitingActions = awaitActionClasses.associateBy({ it.name }, { ActionResult() })
-        state.sceneSessionId = scene.sessionIdentifier
-        state.sceneTaskId = scene.taskId
+    fun <T: ManifoldAction<*>> suspend(scene: SuspendableScene<*>, waitStrategy: WaitStrategy,
+                                       awaitActionClasses: Array<out Class<T>>,
+                                       additionalData: Map<String, Any?>? = null) {
+        val aw = SuspendableSceneState.AwaitingAction(waitStrategy, false,
+                awaitActionClasses.associateBy({ it.name }, { ActionResult() }).toMutableMap())
 
-        storageProvider.offer(state)
+        if (additionalData != null) {
+            aw.additionalData.putAll(additionalData)
+        }
+
+        var state: SuspendableSceneState? = storageProvider.getByTaskId(scene.taskId!!)
+
+        if (state == null) {
+            state = SuspendableSceneState()
+            state.sceneClassFullName = scene.javaClass.name
+            state.sceneState = scene.serialize()
+            state.awaitingActions.add(aw)
+            state.sceneSessionId = scene.sessionIdentifier
+            state.sceneTaskId = scene.taskId
+
+            storageProvider.offer(state)
+        } else {
+            state.sceneState = scene.serialize()
+            state.awaitingActions.add(aw)
+        }
     }
 
     fun resume(state: SuspendableSceneState) {
         val sceneClass = Class.forName(state.sceneClassFullName)
         val scene = sceneClass.newInstance() as SuspendableScene<*>
-        scene.resumedResults = state.awaitingActions.mapValues { it.value.result }
+        scene.resumedState = state
         scene.taskId = state.sceneTaskId
         scene.deserialize(state.sceneState)
 
@@ -55,41 +70,47 @@ object SuspendableSceneScheduler {
                     return@submit
                 }
 
-                f@ for (i in 1..storageProvider.getCurrentCount()) {
-                    val state = storageProvider.poll()
+                for (i in 1..storageProvider.getCurrentCount()) {
+                    val state = storageProvider.poll()!!
 
                     if (forTaskId != state.sceneTaskId) {
                         storageProvider.offer(state)
                         continue
                     }
 
-                    val r = state.awaitingActions[actionClassName]
+                    f@ for (aw in state.awaitingActions) {
+                        val r = aw.results[actionClassName]
 
-                    if ((r != null) && (!r.executed)) {
-                        val sceneClass = Class.forName(state.sceneClassFullName)
-                        val scene = sceneClass.newInstance() as SuspendableScene<*>
+                        if ((r != null) && (!r.executed)) {
+                            val sceneClass = Class.forName(state.sceneClassFullName)
+                            val scene = sceneClass.newInstance() as SuspendableScene<*>
 
-                        if (scene.shouldAccept(state, actionContext)) {
-                            r.executed = true
-                            r.result = actionContext.result
+                            if (scene.shouldAccept(state, actionContext)) {
+                                r.executed = true
+                                r.result = actionContext.result
 
-                            when (state.awaitStrategy) {
-                                WaitStrategy.And -> {
-                                    if (state.awaitingActions.all { (_, result) -> result.executed }) {
-                                        CompletableFuture.runAsync { resume(state) }
+                                when (aw.waitStrategy) {
+                                    WaitStrategy.And -> {
+                                        if (aw.results.all { (_, result) -> result.executed }) {
+                                            aw.passed = true
+                                            continue@f
+                                        }
+                                    }
+
+                                    WaitStrategy.Or -> {
+                                        aw.passed = true
                                         continue@f
                                     }
-                                }
-
-                                WaitStrategy.Or -> {
-                                    CompletableFuture.runAsync { resume(state) }
-                                    continue@f
                                 }
                             }
                         }
                     }
 
-                    storageProvider.offer(state)
+                    if (state.awaitingActions.all { it.passed }) {
+                        CompletableFuture.runAsync { resume(state) }
+                    } else {
+                        storageProvider.offer(state)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

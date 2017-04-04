@@ -9,7 +9,11 @@ import java.util.concurrent.CompletableFuture
 
 class EndEventProcessor : BpmnNodeProcessor<EndEvent> {
     override fun process(engine: BpmnProcessEngine<*>, currNode: EndEvent, currExecuteInfo: BpmnNodeExecutionInfo): CompletableFuture<ProcessResult> {
-        val r = engine.lastNodeResults?.values?.firstOrNull()
+        val r = when (engine.lastNodeResults?.size) {
+            null, 0 -> null
+            1 -> engine.lastNodeResults!!.values.firstOrNull()
+            else -> engine.lastNodeResults!!.values.toList()
+        }
 
         try {
             engine.invokeEndHandler(r)

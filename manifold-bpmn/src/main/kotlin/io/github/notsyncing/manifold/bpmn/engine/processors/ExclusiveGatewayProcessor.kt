@@ -13,8 +13,10 @@ import java.security.InvalidParameterException
 
 class ExclusiveGatewayProcessor : BpmnNodeProcessor<ExclusiveGateway> {
     override fun process(engine: BpmnProcessEngine<*>, currNode: ExclusiveGateway, currExecuteInfo: BpmnNodeExecutionInfo) = future<ProcessResult> {
+        var o: Any? = null
+
         if (engine.hasNodeExpression(currNode)) {
-            val o = engine.executeNodeExpression(currNode).await()
+            o = engine.executeNodeExpression(currNode).await()
             engine.updateLastNodeResult(o)
         }
 
@@ -42,6 +44,6 @@ class ExclusiveGatewayProcessor : BpmnNodeProcessor<ExclusiveGateway> {
 
         currExecuteInfo.state = BpmnNodeExecutionState.Executed
 
-        ProcessResult(false)
+        ProcessResult(false, o)
     }
 }

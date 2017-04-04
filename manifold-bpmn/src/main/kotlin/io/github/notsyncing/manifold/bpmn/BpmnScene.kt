@@ -32,8 +32,8 @@ open class BpmnScene<R>(var bpmnProcessName: String) : SuspendableScene<R>() {
         bpmnProcessName = o.getString(BPMN_SCENE_PROCESS_NAME)
     }
 
-    fun awaitFor(waitStrategy: WaitStrategy, actionClassName: String) {
-        super.awaitFor(waitStrategy, Class.forName(actionClassName) as Class<ManifoldAction<*>>)
+    fun awaitFor(waitStrategy: WaitStrategy, actionClassName: String): Any {
+        return super.awaitFor(waitStrategy, Class.forName(actionClassName) as Class<ManifoldAction<*>>)
     }
 
     fun executeAction(actionClassName: String, vararg args: Any?): CompletableFuture<Any?> {

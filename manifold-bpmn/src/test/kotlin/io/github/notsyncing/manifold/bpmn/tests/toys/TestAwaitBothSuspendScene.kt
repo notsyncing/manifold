@@ -8,7 +8,7 @@ import io.github.notsyncing.manifold.bpmn.WaitStrategy
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 
-class TestSimpleSuspendScene : SuspendableScene<String>() {
+class TestAwaitBothSuspendScene : SuspendableScene<String>() {
     companion object {
         var finalResult: String? = null
     }
@@ -35,11 +35,12 @@ class TestSimpleSuspendScene : SuspendableScene<String>() {
             0 -> {
                 label = 1
                 awaitFor(WaitStrategy.And, TestAction1::class.java)
+                awaitFor(WaitStrategy.And, TestAction2::class.java)
                 finalResult = ""
             }
 
             1 -> {
-                finalResult = resumedState?.awaitingActions?.get(0)?.results?.values?.firstOrNull()?.result?.toString()
+                finalResult = resumedState?.awaitingActions?.flatMap { it.results.values }?.map{ it.result }?.joinToString(separator = " ")
             }
 
             else -> {
