@@ -36,5 +36,6 @@ class InMemorySuspendableSceneStorage : SuspendableSceneStorageProvider {
 
     override fun reset() {
         sceneQueue.clear()
+        sceneAccessor.clear()
     }
 }
