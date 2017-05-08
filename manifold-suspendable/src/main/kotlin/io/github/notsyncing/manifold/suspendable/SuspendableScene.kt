@@ -3,7 +3,6 @@ package io.github.notsyncing.manifold.suspendable
 import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldScene
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
@@ -24,8 +23,6 @@ abstract class SuspendableScene<R> : ManifoldScene<R>() {
         suspendAdditionalData = null
         return SUSPENDED
     }
-
-    abstract fun shouldAccept(state: SuspendableSceneState, actionContext: ActionInterceptorContext): Boolean
 
     abstract fun serialize(): JSONObject
     abstract fun deserialize(o: JSONObject)

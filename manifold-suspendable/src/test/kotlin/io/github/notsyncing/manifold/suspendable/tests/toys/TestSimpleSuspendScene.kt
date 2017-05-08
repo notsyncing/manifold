@@ -1,9 +1,7 @@
 package io.github.notsyncing.manifold.suspendable.tests.toys
 
 import com.alibaba.fastjson.JSONObject
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import io.github.notsyncing.manifold.suspendable.SuspendableScene
-import io.github.notsyncing.manifold.suspendable.SuspendableSceneState
 import io.github.notsyncing.manifold.suspendable.WaitStrategy
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
@@ -14,10 +12,6 @@ class TestSimpleSuspendScene : SuspendableScene<String>() {
     }
 
     private var label: Int = 0
-
-    override fun shouldAccept(state: SuspendableSceneState, actionContext: ActionInterceptorContext): Boolean {
-        return true
-    }
 
     override fun serialize(): JSONObject {
         return JSONObject()

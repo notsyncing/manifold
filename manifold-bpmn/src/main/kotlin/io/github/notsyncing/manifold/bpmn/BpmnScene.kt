@@ -2,12 +2,10 @@ package io.github.notsyncing.manifold.bpmn
 
 import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.action.ManifoldAction
-import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine
 import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine.Companion.BPMN_SCENE_PROCESS_NAME
 import io.github.notsyncing.manifold.di.AutoProvide
 import io.github.notsyncing.manifold.suspendable.SuspendableScene
-import io.github.notsyncing.manifold.suspendable.SuspendableSceneState
 import io.github.notsyncing.manifold.suspendable.WaitStrategy
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
@@ -21,10 +19,6 @@ open class BpmnScene<R>(var bpmnProcessName: String) : SuspendableScene<R>() {
     private val engine = BpmnProcessEngine<R>(this)
 
     constructor() : this("")
-
-    override fun shouldAccept(state: SuspendableSceneState, actionContext: ActionInterceptorContext): Boolean {
-        return true
-    }
 
     override fun serialize(): JSONObject {
         return engine.serializeInto(JSONObject())

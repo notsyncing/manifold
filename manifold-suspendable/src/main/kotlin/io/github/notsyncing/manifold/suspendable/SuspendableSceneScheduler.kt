@@ -4,14 +4,9 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContext
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executors
 
 object SuspendableSceneScheduler {
     var storageProvider: SuspendableSceneStorageProvider = InMemorySuspendableSceneStorage()
-
-    private val worker = Executors.newSingleThreadExecutor {
-        Thread(it).apply { this.isDaemon = true }
-    }
 
     init {
         Manifold.addOnResetListener {
@@ -57,60 +52,54 @@ object SuspendableSceneScheduler {
     }
 
     fun onActionExecuted(actionContext: ActionInterceptorContext) {
-        SuspendableSceneScheduler.worker.submit {
+        CompletableFuture.runAsync {
             try {
-                if (SuspendableSceneScheduler.storageProvider.getCurrentCount() <= 0) {
-                    return@submit
+                if (storageProvider.getCurrentCount() <= 0) {
+                    return@runAsync
                 }
 
                 val actionClassName = actionContext.action.javaClass.name
-                val forTaskId = actionContext.action.context.additionalData[SuspendableScene.TASK_ID_FIELD]
+                val forTaskId = actionContext.action.context.additionalData[SuspendableScene.TASK_ID_FIELD] as String?
 
                 if (forTaskId == null) {
-                    return@submit
+                    return@runAsync
                 }
 
-                for (i in 1..SuspendableSceneScheduler.storageProvider.getCurrentCount()) {
-                    val state = SuspendableSceneScheduler.storageProvider.poll()!!
+                val state = storageProvider.pollByTaskId(forTaskId)
 
-                    if (forTaskId != state.sceneTaskId) {
-                        SuspendableSceneScheduler.storageProvider.offer(state)
+                if (state == null) {
+                    return@runAsync
+                }
+
+                f@ for (aw in state.awaitingActions) {
+                    val r = aw.results[actionClassName]
+
+                    if ((r == null) || (r.executed)) {
                         continue
                     }
 
-                    f@ for (aw in state.awaitingActions) {
-                        val r = aw.results[actionClassName]
+                    r.executed = true
+                    r.result = actionContext.result
 
-                        if ((r != null) && (!r.executed)) {
-                            val sceneClass = Class.forName(state.sceneClassFullName)
-                            val scene = sceneClass.newInstance() as SuspendableScene<*>
-
-                            if (scene.shouldAccept(state, actionContext)) {
-                                r.executed = true
-                                r.result = actionContext.result
-
-                                when (aw.waitStrategy) {
-                                    WaitStrategy.And -> {
-                                        if (aw.results.all { (_, result) -> result.executed }) {
-                                            aw.passed = true
-                                            continue@f
-                                        }
-                                    }
-
-                                    WaitStrategy.Or -> {
-                                        aw.passed = true
-                                        continue@f
-                                    }
-                                }
+                    when (aw.waitStrategy) {
+                        WaitStrategy.And -> {
+                            if (aw.results.all { (_, result) -> result.executed }) {
+                                aw.passed = true
+                                continue@f
                             }
                         }
-                    }
 
-                    if (state.awaitingActions.all { it.passed }) {
-                        CompletableFuture.runAsync { SuspendableSceneScheduler.resume(state) }
-                    } else {
-                        SuspendableSceneScheduler.storageProvider.offer(state)
+                        WaitStrategy.Or -> {
+                            aw.passed = true
+                            continue@f
+                        }
                     }
+                }
+
+                if (state.awaitingActions.all { it.passed }) {
+                    resume(state)
+                } else {
+                    storageProvider.offer(state)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -119,6 +108,6 @@ object SuspendableSceneScheduler {
     }
 
     fun reset() {
-        SuspendableSceneScheduler.storageProvider.reset()
+        storageProvider.reset()
     }
 }
