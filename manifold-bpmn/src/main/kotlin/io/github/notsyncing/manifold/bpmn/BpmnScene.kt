@@ -6,6 +6,9 @@ import io.github.notsyncing.manifold.action.interceptors.ActionInterceptorContex
 import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine
 import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine.Companion.BPMN_SCENE_PROCESS_NAME
 import io.github.notsyncing.manifold.di.AutoProvide
+import io.github.notsyncing.manifold.suspendable.SuspendableScene
+import io.github.notsyncing.manifold.suspendable.SuspendableSceneState
+import io.github.notsyncing.manifold.suspendable.WaitStrategy
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import org.camunda.bpm.model.bpmn.Bpmn

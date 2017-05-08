@@ -3,13 +3,13 @@ package io.github.notsyncing.manifold.bpmn.tests
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.SceneContext
 import io.github.notsyncing.manifold.bpmn.BpmnStorageProvider
-import io.github.notsyncing.manifold.bpmn.InMemorySuspendableSceneStorage
-import io.github.notsyncing.manifold.bpmn.SuspendableScene
-import io.github.notsyncing.manifold.bpmn.SuspendableSceneScheduler
 import io.github.notsyncing.manifold.bpmn.tests.toys.SimpleBpmnScene
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction1
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction2
 import io.github.notsyncing.manifold.bpmn.tests.toys.TestAction3
+import io.github.notsyncing.manifold.suspendable.InMemorySuspendableSceneStorage
+import io.github.notsyncing.manifold.suspendable.SuspendableScene
+import io.github.notsyncing.manifold.suspendable.SuspendableSceneScheduler
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before

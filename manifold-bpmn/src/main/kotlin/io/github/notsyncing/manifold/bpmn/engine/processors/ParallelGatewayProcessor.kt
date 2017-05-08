@@ -2,10 +2,10 @@ package io.github.notsyncing.manifold.bpmn.engine.processors
 
 import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionInfo
 import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionState
-import io.github.notsyncing.manifold.bpmn.SuspendableScene.Companion.SUSPENDED
 import io.github.notsyncing.manifold.bpmn.engine.BpmnNodeProcessor
 import io.github.notsyncing.manifold.bpmn.engine.BpmnProcessEngine
 import io.github.notsyncing.manifold.bpmn.engine.ProcessResult
+import io.github.notsyncing.manifold.suspendable.SuspendableScene.Companion.SUSPENDED
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import org.camunda.bpm.model.bpmn.GatewayDirection

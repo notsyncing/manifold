@@ -5,8 +5,8 @@ import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionInfo
 import io.github.notsyncing.manifold.bpmn.BpmnNodeExecutionState
 import io.github.notsyncing.manifold.bpmn.BpmnScene
-import io.github.notsyncing.manifold.bpmn.WaitStrategy
 import io.github.notsyncing.manifold.bpmn.engine.processors.*
+import io.github.notsyncing.manifold.suspendable.WaitStrategy
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import org.apache.commons.jexl3.JexlBuilder

@@ -2,4 +2,6 @@ rootProject.name = 'manifold'
 include 'manifold-spec'
 include 'manifold-eventbus'
 include 'manifold-bpmn'
+include 'manifold-story'
+include 'manifold-suspendable'
 

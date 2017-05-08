@@ -1,8 +1,6 @@
 apply plugin: "com.jfrog.bintray"
 
 dependencies {
-    compile group: 'org.camunda.bpm.model', name: 'camunda-bpmn-model', version: '7.6.0'
-    compile group: 'org.apache.commons', name: 'commons-jexl3', version: '3.0'
     compile project(":manifold-suspendable")
 
     testCompile 'org.slf4j:slf4j-api:1.7.21'
@@ -13,7 +11,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId rootProject.ext.grp
-            artifactId 'manifold-bpmn'
+            artifactId 'manifold-story'
             version rootProject.ext.ver
             from components.java
 
@@ -29,7 +27,7 @@ bintray {
 
     pkg {
         repo = 'maven'
-        name = 'manifold-bpmn'
+        name = 'manifold-story'
         licenses = [ 'GPL-3.0' ]
         vcsUrl = 'https://github.com/notsyncing/manifold.git'
 
