@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.di
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import java.lang.reflect.Constructor
 import java.util.*
@@ -13,6 +14,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
         private val constructorMap = ConcurrentHashMap<Class<*>, Constructor<*>>()
         var scanner = createScanner()
+        var classScanResult: ScanResult? = null
 
         private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
 
@@ -20,7 +22,10 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun init() {
-        scanner.matchClassesWithAnnotation(EarlyProvide::class.java) { earlyProvide(it) }.scan()
+        classScanResult = scanner.scan()
+
+        classScanResult!!.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+                .forEach { earlyProvide(Class.forName(it)) }
     }
 
     override fun <T> get(type: Class<T>, singleton: Boolean): T? {
@@ -93,6 +98,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         classMap.clear()
         constructorMap.clear()
         scanner = createScanner()
+        classScanResult = scanner.scan()
     }
 
     private fun earlyProvide(c: Class<*>) {
@@ -125,14 +131,17 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
-        scanner.matchClassesWithAnnotation(anno) { handler.invoke(it as Class<A>) }.scan()
+        classScanResult?.getNamesOfClassesWithAnnotation(anno)
+                ?.forEach { handler.invoke(Class.forName(it)) }
     }
 
     override fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
-        scanner.matchSubclassesOf(superClass) { handler.invoke(it as Class<S>) }.scan()
+        classScanResult?.getNamesOfSubclassesOf(superClass)
+                ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
     }
 
     override fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
-        scanner.matchClassesImplementing(implInterface) { handler.invoke(it as Class<S>) }.scan()
+        classScanResult?.getNamesOfClassesImplementing(implInterface)
+                ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
     }
 }
