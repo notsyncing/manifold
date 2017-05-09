@@ -14,7 +14,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
         private val constructorMap = ConcurrentHashMap<Class<*>, Constructor<*>>()
         var scanner = createScanner()
-        var classScanResult: ScanResult? = null
+        var classScanResult: ScanResult = scanner.scan()
 
         private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
 
@@ -22,9 +22,7 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun init() {
-        classScanResult = scanner.scan()
-
-        classScanResult!!.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+        classScanResult.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
                 .forEach { earlyProvide(Class.forName(it)) }
     }
 
@@ -131,17 +129,17 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
-        classScanResult?.getNamesOfClassesWithAnnotation(anno)
+        classScanResult.getNamesOfClassesWithAnnotation(anno)
                 ?.forEach { handler.invoke(Class.forName(it)) }
     }
 
     override fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
-        classScanResult?.getNamesOfSubclassesOf(superClass)
+        classScanResult.getNamesOfSubclassesOf(superClass)
                 ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
     }
 
     override fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
-        classScanResult?.getNamesOfClassesImplementing(implInterface)
+        classScanResult.getNamesOfClassesImplementing(implInterface)
                 ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
     }
 }
