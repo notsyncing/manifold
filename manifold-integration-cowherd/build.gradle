@@ -1,0 +1,42 @@
+apply plugin: "com.jfrog.bintray"
+
+dependencies {
+    compile "io.github.notsyncing.cowherd:cowherd-api:0.9.5"
+    compile rootProject
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile 'org.slf4j:slf4j-api:1.7.21'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId rootProject.ext.grp
+            artifactId 'manifold-integration-cowherd'
+            version rootProject.ext.ver
+            from components.java
+
+            artifact sourceJar
+            artifact javadocJar
+        }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    pkg {
+        repo = 'maven'
+        name = 'manifold-integration-cowherd'
+        licenses = [ 'GPL-3.0' ]
+        vcsUrl = 'https://github.com/notsyncing/manifold.git'
+
+        version {
+            name = rootProject.ext.ver
+            vcsTag = rootProject.ext.ver
+        }
+    }
+
+    publications = [ 'maven' ]
+}
