@@ -17,6 +17,7 @@ import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import java.io.InvalidClassException
+import java.io.InvalidObjectException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
@@ -49,6 +50,7 @@ object Manifold {
     private val sceneTransitionConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
     private val sceneEventConstructorCache = ConcurrentHashMap<Class<ManifoldScene<*>>, Constructor<ManifoldScene<*>>>()
 
+    val actionMetadata = ConcurrentHashMap<String, Class<ManifoldAction<*>>>()
     val interceptors = InterceptorManager()
 
     val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
@@ -69,6 +71,7 @@ object Manifold {
 
     private val onDestroyListeners = mutableListOf<() -> Unit>()
     private val onResetListeners = mutableListOf<() -> Unit>()
+    private val onInitListeners = mutableListOf<() -> Unit>()
 
     fun init() {
         if (dependencyProvider == null) {
@@ -83,7 +86,11 @@ object Manifold {
 
         processScenes()
 
+        processActions()
+
         processInterceptors()
+
+        onInitListeners.forEach { it() }
     }
 
     private fun processScenes() {
@@ -96,6 +103,20 @@ object Manifold {
         }
 
         features.publishFeatures()
+    }
+
+    private fun processActions() {
+        dependencyProvider?.getAllSubclasses(ManifoldAction::class.java) {
+            if (it.isAnnotationPresent(ActionMetadata::class.java)) {
+                val metadata = it.getAnnotation(ActionMetadata::class.java)
+
+                if (actionMetadata.contains(metadata.value)) {
+                    throw InvalidObjectException("Action metadata ${metadata.value} of $it conflicted with previous ${actionMetadata[metadata.value]}")
+                }
+
+                actionMetadata[metadata.value] = it
+            }
+        }
     }
 
     private fun processInterceptors() {
@@ -234,5 +255,9 @@ object Manifold {
 
     fun addOnResetListener(listener: () -> Unit) {
         onResetListeners.add(listener)
+    }
+
+    fun addOnInitListener(listener: () -> Unit) {
+        onInitListeners.add(listener)
     }
 }

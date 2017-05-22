@@ -1,8 +1,10 @@
 apply plugin: "com.jfrog.bintray"
 
 dependencies {
-    compile "io.github.notsyncing.cowherd:cowherd-api:0.9.5"
+    compile "io.github.notsyncing.cowherd:cowherd-api:0.9.6"
     compile rootProject
+    compile project(":manifold-suspendable")
+    compile project(":manifold-story")
 
     testCompile group: 'junit', name: 'junit', version: '4.12'
     testCompile 'org.slf4j:slf4j-api:1.7.21'

@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.suspendable.tests
 
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.SceneContext
+import io.github.notsyncing.manifold.action.interceptors.InterceptorException
 import io.github.notsyncing.manifold.suspendable.InMemorySuspendableSceneStorage
 import io.github.notsyncing.manifold.suspendable.SuspendableScene
 import io.github.notsyncing.manifold.suspendable.SuspendableSceneScheduler
@@ -122,7 +123,11 @@ class SuspendableSceneTest {
         action.context = SceneContext()
         action.context.additionalData.put(SuspendableScene.TASK_ID_FIELD, "ANOTHER_TASK_ID")
 
-        Manifold.run(action).get()
+        try {
+            Manifold.run(action).get()
+        } catch (e: Exception) {
+            assertTrue(e.cause is InterceptorException)
+        }
 
         Thread.sleep(100)
 

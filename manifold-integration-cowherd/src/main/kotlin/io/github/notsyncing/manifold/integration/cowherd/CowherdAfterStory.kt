@@ -1,6 +1,5 @@
 package io.github.notsyncing.manifold.integration.cowherd
 
-import com.alibaba.fastjson.JSON
 import io.github.notsyncing.manifold.story.AfterStory
 import io.vertx.core.http.HttpServerRequest
 import java.util.concurrent.CompletableFuture

@@ -7,5 +7,4 @@ object Opcodes {
     const val Return = "ret"
     const val FinalReturn = "ret_final"
     const val IfFailed = "if_failed"
-    const val RestartFrom = "restart_from"
 }

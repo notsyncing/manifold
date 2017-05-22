@@ -38,6 +38,14 @@ open class Sentence(val type: SentenceType,
 
             return Sentence(type, instruction, parameters)
         }
+
+        fun directive(directive: String, parameters: List<String> = listOf()): Sentence {
+            return Sentence(SentenceType.Directive, directive, parameters)
+        }
+
+        fun opcode(opcode: String, parameters: List<String> = listOf()): Sentence {
+            return Sentence(SentenceType.OpCode, opcode, parameters)
+        }
     }
 
     override fun toString(): String {

@@ -5,8 +5,9 @@ import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldScene
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
-abstract class SuspendableScene<R> : ManifoldScene<R>() {
+abstract class SuspendableScene<R>(var noPersist: Boolean = false) : ManifoldScene<R>() {
     companion object {
         const val TASK_ID_FIELD = "manifold.scene.suspendable.task.id"
 
@@ -16,12 +17,26 @@ abstract class SuspendableScene<R> : ManifoldScene<R>() {
     var suspendAdditionalData: Map<String, Any?>? = null
 
     var resumedState: SuspendableSceneState? = null
+    var lastResult: Any? = null
+    var lastException: Throwable? = null
     var taskId: String? = null
 
-    protected open fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, vararg actionClasses: Class<T>): Any {
-        SuspendableSceneScheduler.suspend(this, waitStrategy, actionClasses, suspendAdditionalData)
+    open fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, timeout: Long, timeoutUnit: TimeUnit, vararg actionClasses: Class<T>): Any {
+        SuspendableSceneScheduler.suspend(this, waitStrategy, actionClasses, timeout, timeoutUnit, suspendAdditionalData)
         suspendAdditionalData = null
         return SUSPENDED
+    }
+
+    open fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, vararg actionClasses: Class<T>): Any {
+        return awaitFor(waitStrategy, 10, TimeUnit.MINUTES, *actionClasses)
+    }
+
+    open fun <T: ManifoldAction<*>> awaitForever(waitStrategy: WaitStrategy, vararg actionClasses: Class<T>): Any {
+        return awaitFor(waitStrategy, 0, TimeUnit.MILLISECONDS, *actionClasses)
+    }
+
+    open fun <T: ManifoldAction<*>> awaitFor(actionClasses: Class<T>): Any {
+        return awaitFor(WaitStrategy.And, actionClasses)
     }
 
     abstract fun serialize(): JSONObject
@@ -32,6 +47,12 @@ abstract class SuspendableScene<R> : ManifoldScene<R>() {
             taskId = UUID.randomUUID().toString()
         }
 
+        SuspendableSceneScheduler.onTaskCreated(taskId!!)
+
         return CompletableFuture.completedFuture(null as R)
+    }
+
+    fun done() {
+        SuspendableSceneScheduler.taskDone(taskId!!)
     }
 }

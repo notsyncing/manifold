@@ -52,6 +52,10 @@ class StoryParser {
                             currLabel = sentence.parameters[0]
                         }
 
+                        Directives.NoPersist -> {
+                            currChapter!!.noPersist = true
+                        }
+
                         else -> {
                             errors.add("Unknown directive in sentence $sentence")
                         }
