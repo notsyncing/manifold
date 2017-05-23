@@ -8,6 +8,8 @@ import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerRequest
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KCallable
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.primaryConstructor
 
 class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) : ApiExecutor() {
     companion object {
@@ -25,8 +27,8 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         }
     }
 
-    override fun execute(method: KCallable<*>, args: MutableList<Any?>, sessionIdentifier: String?, request: HttpServerRequest?): CompletableFuture<Any?> {
-        val inst = method.call(*args.toTypedArray()) as ManifoldScene<*>
+    override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?, request: HttpServerRequest?): CompletableFuture<Any?> {
+        val inst = method.callBy(args) as ManifoldScene<*>
 
         inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(request?.method())
         inst.context.additionalData[REQUEST_OBJECT] = request
@@ -38,10 +40,10 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         var f = sceneConstructors[sceneClass]
 
         if (f == null) {
-            f = sceneClass.kotlin.constructors.firstOrNull { it.parameters.isEmpty() }
+            f = sceneClass.kotlin.primaryConstructor
 
             if (f == null) {
-                throw NoSuchMethodException("Scene $sceneClass has no parameter-less constructor!")
+                throw NoSuchMethodException("Scene $sceneClass has no primary constructor!")
             }
 
             sceneConstructors[sceneClass] = f

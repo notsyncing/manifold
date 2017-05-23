@@ -8,12 +8,14 @@ import io.vertx.core.http.HttpServerRequest
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import kotlin.reflect.KCallable
+import kotlin.reflect.KParameter
 
 class ManifoldStoryNarrator : ApiExecutor() {
     fun doNothing() {}
 
-    override fun execute(method: KCallable<*>, args: MutableList<Any?>, sessionIdentifier: String?, request: HttpServerRequest?) = future<Any?> {
-        val sceneName = args[0] as String
+    override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?,
+                         request: HttpServerRequest?) = future<Any?> {
+        val sceneName = args.values.first() as String
         var (taskId, ending) = StoryLibrary.tell(sceneName, sessionIdentifier).await()
 
         if (SuspendableSceneScheduler.isTaskDone(taskId)) {

@@ -13,6 +13,7 @@ import io.vertx.core.http.HttpServerRequest
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import java.security.InvalidParameterException
+import kotlin.reflect.full.primaryConstructor
 
 class ActionPortalScene(private val actionName: String,
                         private val taskId: String,
@@ -36,10 +37,10 @@ class ActionPortalScene(private val actionName: String,
             throw IllegalAccessException("Acion $actionName does not like to be called with $currentDataPolicy")
         }
 
-        val actionConstructor = actionClass.kotlin.constructors.first()
-        val params = CowherdApiUtils.expandJsonToMethodParameters(actionConstructor, parameters)
+        val actionConstructor = actionClass.kotlin.primaryConstructor!!
+        val params = CowherdApiUtils.expandJsonToMethodParameters(actionConstructor, parameters, null)
 
-        m(actionConstructor.call(*params.toTypedArray())).await()
+        m(actionConstructor.callBy(params)).await()
 
         val (done, r) = SuspendableSceneScheduler.taskStep(taskId).await()
         var ending = r
