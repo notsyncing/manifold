@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.integration.cowherd
 import com.alibaba.fastjson.JSON
 import io.github.notsyncing.cowherd.api.ApiExecutor
 import io.github.notsyncing.cowherd.models.ActionContext
+import io.github.notsyncing.cowherd.models.UploadFileInfo
 import io.github.notsyncing.manifold.story.vm.StoryLibrary
 import io.github.notsyncing.manifold.suspendable.SuspendableSceneScheduler
 import kotlinx.coroutines.experimental.future.await
