@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.integration.cowherd
 
 import io.github.notsyncing.cowherd.api.ApiExecutor
 import io.github.notsyncing.cowherd.models.ActionContext
+import io.github.notsyncing.cowherd.models.UploadFileInfo
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneMetadata
@@ -20,6 +21,7 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
 
         const val DATA_POLICY = "manifold.scene.api.data_policy"
         const val REQUEST_OBJECT = "manifold.scene.api.request_object"
+        const val ALL_UPLOADS = "manifold.scene.api.all_uploads"
     }
 
     private fun httpMethodToDataPolicy(httpMethod: HttpMethod?): DataPolicy {
@@ -31,13 +33,14 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
     }
 
     override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?,
-                         context: ActionContext) = future {
+                         context: ActionContext, uploads: List<UploadFileInfo>?) = future {
         context.config.isEnumReturnsString = true
 
         val inst = method.callBy(args) as ManifoldScene<*>
 
         inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(context.request.method())
         inst.context.additionalData[REQUEST_OBJECT] = context.request
+        inst.context.additionalData[ALL_UPLOADS] = uploads
 
         var ending = Manifold.run(inst, sessionIdentifier).await()
         val sceneName = inst.javaClass.getAnnotation(SceneMetadata::class.java)?.value

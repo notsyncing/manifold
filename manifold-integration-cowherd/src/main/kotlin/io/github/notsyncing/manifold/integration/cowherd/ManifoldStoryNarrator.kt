@@ -14,7 +14,7 @@ class ManifoldStoryNarrator : ApiExecutor() {
     fun doNothing() {}
 
     override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?,
-                         context: ActionContext) = future<Any?> {
+                         context: ActionContext, uploads: List<UploadFileInfo>?) = future<Any?> {
         val sceneName = args.values.first() as String
         var (taskId, ending) = StoryLibrary.tell(sceneName, sessionIdentifier).await()
 
