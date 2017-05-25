@@ -1,11 +1,11 @@
 package io.github.notsyncing.manifold.integration.cowherd
 
 import io.github.notsyncing.cowherd.api.ApiExecutor
+import io.github.notsyncing.cowherd.models.ActionContext
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.describe.DataPolicy
 import io.vertx.core.http.HttpMethod
-import io.vertx.core.http.HttpServerRequest
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
@@ -27,11 +27,14 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         }
     }
 
-    override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?, request: HttpServerRequest?): CompletableFuture<Any?> {
+    override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?,
+                         context: ActionContext): CompletableFuture<Any?> {
+        context.config.isEnumReturnsString = true
+
         val inst = method.callBy(args) as ManifoldScene<*>
 
-        inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(request?.method())
-        inst.context.additionalData[REQUEST_OBJECT] = request
+        inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(context.request.method())
+        inst.context.additionalData[REQUEST_OBJECT] = context.request
 
         return Manifold.run(inst, sessionIdentifier) as CompletableFuture<Any?>
     }
