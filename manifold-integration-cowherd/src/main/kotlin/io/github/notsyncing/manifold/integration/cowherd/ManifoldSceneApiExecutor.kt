@@ -4,9 +4,12 @@ import io.github.notsyncing.cowherd.api.ApiExecutor
 import io.github.notsyncing.cowherd.models.ActionContext
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.action.describe.DataPolicy
+import io.github.notsyncing.manifold.story.vm.StoryLibrary
 import io.vertx.core.http.HttpMethod
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.experimental.future.await
+import kotlinx.coroutines.experimental.future.future
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
@@ -28,7 +31,7 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
     }
 
     override fun execute(method: KCallable<*>, args: MutableMap<KParameter, Any?>, sessionIdentifier: String?,
-                         context: ActionContext): CompletableFuture<Any?> {
+                         context: ActionContext) = future {
         context.config.isEnumReturnsString = true
 
         val inst = method.callBy(args) as ManifoldScene<*>
@@ -36,7 +39,21 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(context.request.method())
         inst.context.additionalData[REQUEST_OBJECT] = context.request
 
-        return Manifold.run(inst, sessionIdentifier) as CompletableFuture<Any?>
+        var ending = Manifold.run(inst, sessionIdentifier).await()
+        val sceneName = inst.javaClass.getAnnotation(SceneMetadata::class.java)?.value
+
+        if (sceneName != null) {
+            for (s in StoryLibrary.afterStories(sceneName)) {
+                if (!CowherdAfterStory::class.java.isAssignableFrom(s)) {
+                    continue
+                }
+
+                val afterStory = s.newInstance() as CowherdAfterStory
+                ending = afterStory.continuation(ending, context.request, sessionIdentifier).await()
+            }
+        }
+
+        ending
     }
 
     override fun getDefaultMethod(): KCallable<*> {
