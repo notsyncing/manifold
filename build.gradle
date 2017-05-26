@@ -127,6 +127,9 @@ subprojects {
         }
     }
 
+    group grp
+    version ver
+
     repositories {
         mavenLocal()
         mavenCentral()

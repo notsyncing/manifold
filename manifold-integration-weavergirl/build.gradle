@@ -1,0 +1,43 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "io.github.notsyncing.weavergirl:weavergirl-gradle-plugin:0.1.0"
+    }
+}
+
+apply plugin: "io.github.notsyncing.weavergirl.gradle"
+
+dependencies {
+}
+
+weavergirl {
+    useBabel = true
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId rootProject.ext.grp
+            artifactId 'manifold-integration-weavergirl'
+            version rootProject.ext.ver
+
+            artifact(file("${buildDir}/weavergirl/${project.name}-${rootProject.ext.ver}.jar")) {
+                builtBy makeWeavergirlJar
+            }
+
+            pom.withXml {
+                def dependencies = asNode().appendNode('dependencies')
+                configurations.compile.getResolvedConfiguration().getFirstLevelModuleDependencies().each {
+                    def dependency = dependencies.appendNode('dependency')
+                    dependency.appendNode('groupId', it.moduleGroup)
+                    dependency.appendNode('artifactId', it.moduleName)
+                    dependency.appendNode('version', it.moduleVersion)
+                }
+            }
+        }
+    }
+}
