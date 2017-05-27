@@ -4,15 +4,23 @@ class Manifold {
         let payload = "";
 
         if (parameters) {
-            payload = `json=${encodeURIComponent(JSON.stringify(parameters))}`;
+            if (parameters instanceof FormData) {
+                payload = parameters;
+            } else {
+                payload = `json=${encodeURIComponent(JSON.stringify(parameters))}`;
+            }
         }
 
         if (sessionIdentifier) {
-            if (payload !== "") {
-                payload += "&";
-            }
+            if (payload instanceof FormData) {
+                payload.append("access_token", sessionIdentifier);
+            } else {
+                if (payload !== "") {
+                    payload += "&";
+                }
 
-            payload += `access_token=${sessionIdentifier}`;
+                payload += `access_token=${sessionIdentifier}`;
+            }
         }
 
         if (payload) {
@@ -42,7 +50,25 @@ class Manifold {
 
     static _serializeForm(form) {
         if (form.enctype === "multipart/form-data") {
-            // FIXME: Implement this!
+            let json = Manifold._serializeForm(form);
+            let formData = new FormData();
+            formData.append("json", JSON.stringify(json));
+
+            for (let e of form.childNodes) {
+                if (!(e instanceof HTMLInputElement)) {
+                    continue;
+                }
+
+                if (e.type !== "file") {
+                    continue;
+                }
+
+                for (let f of e.files) {
+                    formData.append(e.name, f);
+                }
+            }
+
+            return formData;
         } else {
             return Weavergirl.Form.serializeToJson(form);
         }
