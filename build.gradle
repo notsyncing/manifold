@@ -146,9 +146,9 @@ subprojects {
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+        compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
         compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.12'
+        compile 'org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:0.15'
         compile group: 'io.github.lukehutch', name: 'fast-classpath-scanner', version: '2.0.3'
         compile group: 'com.alibaba', name: 'fastjson', version: '1.2.17'
 
