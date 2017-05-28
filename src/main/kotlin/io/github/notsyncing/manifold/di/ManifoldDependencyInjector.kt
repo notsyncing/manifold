@@ -4,6 +4,7 @@ import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import java.lang.reflect.Constructor
+import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -79,7 +80,23 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
                 params.add(p)
             }
 
-            o = constructor.newInstance(*params.toArray()) as T
+            try {
+                o = constructor.newInstance(*params.toArray()) as T
+            } catch (e: InvocationTargetException) {
+                if (e.cause !is NullPointerException) {
+                    throw e
+                }
+
+                if (!params.contains(null)) {
+                    throw e
+                }
+
+                if (!keepQuietOnResolveFailure) {
+                    throw e
+                } else {
+                    return null
+                }
+            }
         }
 
         if ((t.isAnnotationPresent(ProvideAsSingleton::class.java)) || (singleton)
