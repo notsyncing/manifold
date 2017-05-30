@@ -49,8 +49,9 @@ class Manifold {
     }
 
     static _serializeForm(form) {
+        let json = Weavergirl.Form.serializeToJson(form);
+
         if (form.enctype === "multipart/form-data") {
-            let json = Manifold._serializeForm(form);
             let formData = new FormData();
             formData.append("json", JSON.stringify(json));
 
@@ -69,9 +70,9 @@ class Manifold {
             }
 
             return formData;
-        } else {
-            return Weavergirl.Form.serializeToJson(form);
         }
+
+        return json;
     }
 
     static getScene(name, parameters, sessionIdentifier) {
