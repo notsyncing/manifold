@@ -75,7 +75,36 @@ class Manifold {
         return json;
     }
 
+    static _mergeObjects(objs) {
+        if (!(objs instanceof Array)) {
+            return objs;
+        }
+
+        let base = null;
+
+        for (let o of objs) {
+            if (o instanceof HTMLFormElement) {
+                o = Manifold._serializeForm(o);
+            }
+
+            if (!base) {
+                base = o;
+                continue;
+            }
+
+            for (let k of Object.keys(o)) {
+                base[k] = o[k];
+            }
+        }
+
+        return base;
+    }
+
     static getScene(name, parameters, sessionIdentifier) {
+        if (parameters instanceof Array) {
+            parameters = Manifold._mergeObjects(parameters);
+        }
+
         if (parameters instanceof Element) {
             parameters = Manifold._serializeForm(parameters);
         }
@@ -84,6 +113,10 @@ class Manifold {
     }
 
     static postScene(name, parameters, sessionIdentifier) {
+        if (parameters instanceof Array) {
+            parameters = Manifold._mergeObjects(parameters);
+        }
+
         if (parameters instanceof Element) {
             parameters = Manifold._serializeForm(parameters);
         }
