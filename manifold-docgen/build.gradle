@@ -1,0 +1,41 @@
+apply plugin: "com.jfrog.bintray"
+
+dependencies {
+    compile rootProject
+    compile project(":manifold-story")
+
+    testCompile 'junit:junit:4.12'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId rootProject.ext.grp
+            artifactId 'manifold-docgen'
+            version rootProject.ext.ver
+            from components.java
+
+            artifact sourceJar
+            artifact javadocJar
+        }
+    }
+}
+
+bintray {
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
+
+    pkg {
+        repo = 'maven'
+        name = 'manifold-docgen'
+        licenses = [ 'GPL-3.0' ]
+        vcsUrl = 'https://github.com/notsyncing/manifold.git'
+
+        version {
+            name = rootProject.ext.ver
+            vcsTag = rootProject.ext.ver
+        }
+    }
+
+    publications = [ 'maven' ]
+}

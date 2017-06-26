@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <link type="text/css" rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+
+    <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="node_modules/dot/doT.min.js"></script>
+    <script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="node_modules/echarts/dist/echarts.min.js"></script>
+
+    <script type="text/javascript" src="data.js"></script>
+
+    <title>Document</title>
+
+    <style>
+        .scene-state {
+            height: 600px;
+            width: 800px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="container" class="container"></div>
+
+<script type="text/x-dot-template" id="template">
+    {{ for (let sceneGroup of Object.keys(it)) { }}
+    <div class="scene-group">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <a data-toggle="collapse" data-target=".scene-list" data-parent=".scene-group">{{=sceneGroup}}</a>
+                </h5>
+            </div>
+
+            <div class="collapse show scene-list">
+                <div class="card-block">
+                    {{ for (let scene of it[sceneGroup]) { }}
+                    <div class="card scene-info">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                {{=scene.name}}
+                                <span>{{=scene.fullName}}</span>
+                            </h5>
+                        </div>
+
+                        <div class="card-block">
+                            <h4 class="card-title">{{=scene.name}}</h4>
+                            <p class="card-text">{{=scene.fullName}}</p>
+                            <p class="card-text">{{=scene.description}}</p>
+
+                            <table class="table table-striped table-bordered scene-parameters">
+                                <thead class="thead-default">
+                                <tr>
+                                    <th>名称</th>
+                                    <th>字段</th>
+                                    <th>类型</th>
+                                    <th>描述</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{ for (let p of scene.parameters) { }}
+                                <tr>
+                                    <td>{{=p.name}}</td>
+                                    <td>{{=p.realName}}</td>
+                                    <td>{{=p.type}}</td>
+                                    <td>{{=p.description}}</td>
+                                </tr>
+                                {{ } }}
+                                </tbody>
+                            </table>
+
+                            {{ if (!!scene.states) { }}
+                            <div class="scene-state {{="scene-state-" + scene.fullName.replace(/\./g, "_")}}"></div>
+                        {{ drawStateDiagram(".scene-state-" + scene.fullName.replace(/\./g, "_"), scene); }}
+                        {{ } }}
+                    </div>
+                </div>
+                {{ } }}
+            </div>
+        </div>
+    </div>
+    </div>
+    {{ } }}
+</script>
+
+<script type="text/javascript">
+    function drawStateDiagram(elem, data) {
+        setTimeout(() => {
+            let states = [];
+
+            for (let s of data.states) {
+                if (s.realName === "Unknown") {
+                    continue;
+                }
+
+                let o = {
+                    name: s.name || s.realName,
+                    draggable: true
+                };
+
+                if (s.realName === "Entry") {
+                    o.x = 50;
+                    o.y = 50;
+                }
+
+                states.push(o);
+            }
+
+            let links = [];
+
+            for (let trans of data.transitions) {
+                let fromState = data.states.filter(s => s.realName === trans.from)[0];
+
+                for (let b of trans.branches) {
+                    let toState = data.states.filter(s => s.realName === b.to)[0];
+
+                    links.push({
+                        source: fromState.name || fromState.realName,
+                        target: toState.name || toState.realName,
+                        value: trans.on + "\n" + b.cond,
+                        lineStyle: {
+                            normal: {
+                                curveness: 0.2
+                            }
+                        }
+                    });
+                }
+            }
+
+            let option = {
+                title: {
+                    text: ''
+                },
+                tooltip: {},
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                label: {
+                    normal: {
+                        show: true,
+                        textStyle: {
+                            fontSize: 12
+                        },
+                    }
+                },
+                series: [
+                    {
+                        type: 'graph',
+                        layout: 'force',
+                        symbolSize: 45,
+                        focusNodeAdjacency: true,
+                        roam: true,
+                        label: {
+                            normal: {
+                                show: true,
+                                textStyle: {
+                                    fontSize: 12
+                                },
+                            }
+                        },
+                        force: {
+                            repulsion: 1000
+                        },
+                        edgeSymbol: ["none", "arrow"],
+                        edgeLabel: {
+                            normal: {
+                                show: true,
+                                textStyle: {
+                                    fontSize: 10,
+                                    color: "#000"
+                                },
+                                formatter: "{c}"
+                            }
+                        },
+                        data: states,
+                        links: links,
+                        lineStyle: {
+                            normal: {
+                                width: 2,
+                                color: "#000"
+                            }
+                        }
+                    }
+                ]
+            };
+
+            let chart = echarts.init(document.querySelector(elem));
+            chart.setOption(option);
+        }, 0);
+    }
+
+    $(() => {
+        let data = sceneData();
+        let template = doT.template(document.getElementById("template").text);
+        $("#container").html(template(data));
+    });
+</script>
+</body>
+
+</html>
