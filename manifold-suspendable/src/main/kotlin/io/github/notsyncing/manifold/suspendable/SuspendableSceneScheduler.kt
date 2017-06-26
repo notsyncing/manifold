@@ -88,9 +88,14 @@ object SuspendableSceneScheduler {
             val r = state.awaitingActions[0].results.values.firstOrNull()
             scene.lastResult = r?.result
             scene.lastException = r?.exception
+
+            val actionClassName = state.awaitingActions[0].results.keys.firstOrNull()
+
+            scene.lastActionClass = if (actionClassName == null) null else Class.forName(actionClassName) as Class<ManifoldAction<*>>
         } else {
             scene.lastResult = null
             scene.lastException = null
+            scene.lastActionClass = null
         }
 
         scene.deserialize(state.sceneState)

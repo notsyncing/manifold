@@ -19,6 +19,7 @@ abstract class SuspendableScene<R>(var noPersist: Boolean = false) : ManifoldSce
     var resumedState: SuspendableSceneState? = null
     var lastResult: Any? = null
     var lastException: Throwable? = null
+    var lastActionClass: Class<ManifoldAction<*>>? = null
     var taskId: String? = null
 
     open fun <T: ManifoldAction<*>> awaitFor(waitStrategy: WaitStrategy, timeout: Long, timeoutUnit: TimeUnit, vararg actionClasses: Class<T>): Any {
