@@ -43,6 +43,8 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         if (enableEventNode) {
             eventNode = eventNodes[this::class.java as Class<ManifoldScene<*>>]
         }
+
+        context.scene = this
     }
 
     constructor(event: ManifoldEvent) : this() {
