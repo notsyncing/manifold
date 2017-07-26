@@ -31,7 +31,7 @@ class ActionPortalScene(private val actionName: String,
             throw InvalidParameterException("You must specify a task id to call action $actionName")
         }
 
-        val currentDataPolicy = context.additionalData[ManifoldSceneApiExecutor.DATA_POLICY] as DataPolicy
+        val currentDataPolicy = this@ActionPortalScene.context.additionalData[ManifoldSceneApiExecutor.DATA_POLICY] as DataPolicy
 
         if (actionClass.getAnnotation(ActionMetadata::class.java).dataPolicy != currentDataPolicy) {
             throw IllegalAccessException("Acion $actionName does not like to be called with $currentDataPolicy")
@@ -49,7 +49,7 @@ class ActionPortalScene(private val actionName: String,
             val sceneName = SuspendableSceneScheduler.getTaskSceneName(taskId)
 
             if (sceneName != null) {
-                val request = context.additionalData[ManifoldSceneApiExecutor.REQUEST_OBJECT] as HttpServerRequest
+                val request = this@ActionPortalScene.context.additionalData[ManifoldSceneApiExecutor.REQUEST_OBJECT] as HttpServerRequest
 
                 for (s in StoryLibrary.afterStories(sceneName)) {
                     if (!CowherdAfterStory::class.java.isAssignableFrom(s)) {

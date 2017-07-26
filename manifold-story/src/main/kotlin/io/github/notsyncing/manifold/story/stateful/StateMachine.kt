@@ -54,7 +54,7 @@ interface StateMachine<S: StateHolder> {
         val transItem = stateTransitionMap.firstOrNull { (it.on == event) && (it.at == stateHolder.currState) }
 
         if (transItem == null) {
-            throw NoStateTransitionFoundException(this, event, stateHolder.currState)
+            throw NoStateTransitionFoundException(this@StateMachine, event, stateHolder.currState)
         }
 
         var r: Any?
