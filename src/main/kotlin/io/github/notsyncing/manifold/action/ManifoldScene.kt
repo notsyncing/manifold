@@ -100,11 +100,11 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     }
 
     protected fun splitTransaction() = future {
-        if ((context.transaction == null) || (context.autoCommit)) {
+        if ((this@ManifoldScene.context.transaction == null) || (this@ManifoldScene.context.autoCommit)) {
             return@future
         }
 
-        context.transaction!!.commit(false).await()
+        this@ManifoldScene.context.transaction!!.commit(false).await()
     }
 
     protected fun runInBackground(keepTransaction: Boolean, func: () -> Unit,
@@ -184,7 +184,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     abstract fun stage(): CompletableFuture<R>
 
     fun execute() = future<R> {
-        context.sessionIdentifier = sessionIdentifier
+        this@ManifoldScene.context.sessionIdentifier = sessionIdentifier
 
         val c = this@ManifoldScene::class.java as Class<ManifoldScene<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForScene(c)
@@ -267,27 +267,27 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     }
 
     private fun endTransaction(commit: Boolean = true) = future {
-        if (context.transaction != null) {
-            if (!context.autoCommit) {
+        if (this@ManifoldScene.context.transaction != null) {
+            if (!this@ManifoldScene.context.autoCommit) {
                 if (commit) {
-                    context.transaction!!.commit().await()
+                    this@ManifoldScene.context.transaction!!.commit().await()
                 }
             }
 
-            context.transaction!!.end().await()
+            this@ManifoldScene.context.transaction!!.end().await()
         }
     }
 
     protected fun rollbackTransaction() = future {
-        if (context.transaction != null) {
-            if (!context.autoCommit) {
-                context.transaction!!.rollback(false).await()
+        if (this@ManifoldScene.context.transaction != null) {
+            if (!this@ManifoldScene.context.autoCommit) {
+                this@ManifoldScene.context.transaction!!.rollback(false).await()
             }
         }
     }
 
     private fun afterExecution(commit: Boolean = true) = future {
-        if (context.transactionRefCount <= 0) {
+        if (this@ManifoldScene.context.transactionRefCount <= 0) {
             endTransaction(commit).await()
         }
     }

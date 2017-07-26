@@ -28,30 +28,30 @@ abstract class ManifoldTransactionalAction<T, R>(private var transClass: Class<T
             throw RuntimeException("Action ${this@ManifoldTransactionalAction::class.java} wants to use transaction, but no transaction provider found!")
         }
 
-        if (context.transaction == null) {
-            context.transaction = Manifold.transactionProvider!!.get(transClass)
+        if (this@ManifoldTransactionalAction.context.transaction == null) {
+            this@ManifoldTransactionalAction.context.transaction = Manifold.transactionProvider!!.get(transClass)
         }
 
-        transaction = context.transaction as ManifoldTransaction<T>?
+        transaction = this@ManifoldTransactionalAction.context.transaction as ManifoldTransaction<T>?
 
-        storageList.forEach { it.sceneContext = context }
+        storageList.forEach { it.sceneContext = this@ManifoldTransactionalAction.context }
 
-        context.transaction!!.begin(!context.autoCommit).await()
+        this@ManifoldTransactionalAction.context.transaction!!.begin(!this@ManifoldTransactionalAction.context.autoCommit).await()
 
         try {
             val r = super.execute(f).await()
 
-            if (context.autoCommit) {
-                context.transaction!!.end().await()
-                context.transaction = null
+            if (this@ManifoldTransactionalAction.context.autoCommit) {
+                this@ManifoldTransactionalAction.context.transaction!!.end().await()
+                this@ManifoldTransactionalAction.context.transaction = null
             }
 
             return@future r
         } catch (e: Exception) {
             e.printStackTrace()
 
-            context.transaction!!.end().await()
-            context.transaction = null
+            this@ManifoldTransactionalAction.context.transaction!!.end().await()
+            this@ManifoldTransactionalAction.context.transaction = null
 
             throw e
         }
