@@ -52,7 +52,7 @@ open class BpmnScene<R>(var bpmnProcessName: String) : SuspendableScene<R>() {
         val bpmnDiagram = storageProvider.getDiagram(bpmnProcessName).await()
         val bpmn = Bpmn.readModelFromStream(bpmnDiagram.byteInputStream())
 
-        engine.endEventHandler = this::onEndEvent
+        engine.endEventHandler = this@BpmnScene::onEndEvent
 
         engine.process(bpmn).await()
     }

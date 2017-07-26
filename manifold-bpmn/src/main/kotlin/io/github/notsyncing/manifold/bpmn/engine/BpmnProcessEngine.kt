@@ -145,7 +145,7 @@ class BpmnProcessEngine<R>(val scene: BpmnScene<*>) {
                 throw UnsupportedOperationException("BPMN diagram ${scene.bpmnProcessName} contains an unsupported node: $currNode")
             }
 
-            val processResult = processor.process(this, currNode as FlowNode, currExecuteInfo).await()
+            val processResult = processor.process(this@BpmnProcessEngine, currNode as FlowNode, currExecuteInfo).await()
             currExecuteInfo.result = processResult.result
 
             if (processResult.needReturn) {
