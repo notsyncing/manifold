@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
 import io.github.notsyncing.manifold.action.interceptors.Interceptor
@@ -10,6 +11,7 @@ import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
+import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
@@ -67,15 +69,21 @@ object Manifold {
         get() = features.featurePublisher
         set(value) {
             features.featurePublisher = value
+
+            features.republishAllFeatures()
         }
 
     private val onDestroyListeners = mutableListOf<() -> Unit>()
     private val onResetListeners = mutableListOf<() -> Unit>()
     private val onInitListeners = mutableListOf<() -> Unit>()
 
+    val rootDomain = ManifoldDomain()
+
     fun init() {
+        rootDomain.init()
+
         if (dependencyProvider == null) {
-            dependencyProvider = ManifoldDependencyInjector()
+            dependencyProvider = ManifoldDependencyInjector(rootDomain)
         }
 
         if (sessionStorageProvider == null) {
@@ -91,51 +99,94 @@ object Manifold {
         processInterceptors()
 
         onInitListeners.forEach { it() }
-    }
 
-    private fun processScenes() {
-        dependencyProvider?.getAllSubclasses(ManifoldScene::class.java) {
-            if (Modifier.isAbstract(it.modifiers)) {
-                return@getAllSubclasses
-            }
-
-            features.registerFeature(it)
+        ManifoldDomain.afterScan {
+            processScenes(it)
+            processActions(it)
+            processInterceptors(it)
         }
-
-        features.publishFeatures()
     }
 
-    private fun processActions() {
-        dependencyProvider?.getAllSubclasses(ManifoldAction::class.java) {
-            if (it.isAnnotationPresent(ActionMetadata::class.java)) {
-                val metadata = it.getAnnotation(ActionMetadata::class.java)
+    private fun processScenes(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResult, cl: ClassLoader ->
+            s.getNamesOfSubclassesOf(ManifoldScene::class.java).forEach {
+                val clazz = Class.forName(it, true, cl)
 
-                if (actionMetadata.contains(metadata.value)) {
-                    throw InvalidObjectException("Action metadata ${metadata.value} of $it conflicted with previous ${actionMetadata[metadata.value]}")
+                if (Modifier.isAbstract(clazz.modifiers)) {
+                    return@forEach
                 }
 
-                actionMetadata[metadata.value] = it
+                features.registerFeature(clazz as Class<ManifoldScene<*>>)
             }
+
+            features.publishFeatures()
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
         }
     }
 
-    private fun processInterceptors() {
-        dependencyProvider?.getAllSubclasses(Interceptor::class.java) { c ->
-            if (Modifier.isAbstract(c.modifiers)) {
-                return@getAllSubclasses
-            }
+    private fun processActions(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResult, cl: ClassLoader ->
+            s.getNamesOfSubclassesOf(ManifoldAction::class.java).forEach {
+                val clazz = Class.forName(it, true, cl)
 
-            if (c.annotations.isEmpty()) {
-                return@getAllSubclasses
-            }
+                if (clazz.isAnnotationPresent(ActionMetadata::class.java)) {
+                    val metadata = clazz.getAnnotation(ActionMetadata::class.java)
 
-            if (SceneInterceptor::class.java.isAssignableFrom(c)) {
-                interceptors.addSceneInterceptor(c as Class<SceneInterceptor>)
-            } else if (ActionInterceptor::class.java.isAssignableFrom(c)) {
-                interceptors.addActionInterceptor(c as Class<ActionInterceptor>)
-            } else {
-                throw InvalidClassException(c.canonicalName, "${c.canonicalName} is not an interceptor class")
+                    val actionName = if (domain.name == ManifoldDomain.ROOT)
+                        metadata.value
+                    else
+                        domain.name + "_" + metadata.value
+
+                    if (actionMetadata.contains(actionName)) {
+                        throw InvalidObjectException("Action metadata $actionName of $it conflicted with " +
+                                "previous ${actionMetadata[actionName]}")
+                    }
+
+                    actionMetadata[actionName] = clazz as Class<ManifoldAction<*>>
+                }
             }
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
+        }
+    }
+
+    private fun processInterceptors(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResult, cl: ClassLoader ->
+            s.getNamesOfSubclassesOf(Interceptor::class.java).forEach {
+                val clazz = Class.forName(it, true, cl)
+
+                if (Modifier.isAbstract(clazz.modifiers)) {
+                    return@forEach
+                }
+
+                if (clazz.annotations.isEmpty()) {
+                    return@forEach
+                }
+
+                if (SceneInterceptor::class.java.isAssignableFrom(clazz)) {
+                    interceptors.addSceneInterceptor(clazz as Class<SceneInterceptor>)
+                } else if (ActionInterceptor::class.java.isAssignableFrom(clazz)) {
+                    interceptors.addActionInterceptor(clazz as Class<ActionInterceptor>)
+                } else {
+                    throw InvalidClassException(clazz.canonicalName, "${clazz.canonicalName} is not an supported " +
+                            "interceptor class")
+                }
+            }
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
         }
     }
 
@@ -145,6 +196,8 @@ object Manifold {
         onDestroyListeners.forEach { it() }
 
         sceneBgWorkerPool.shutdown()
+
+        rootDomain.close()
 
         return ManifoldEventBus.stop()
     }
@@ -172,6 +225,8 @@ object Manifold {
         ManifoldScene.reset()
 
         DependencyProviderUtils.reset()
+
+        rootDomain.reset()
 
         onResetListeners.forEach { it() }
     }
@@ -236,7 +291,11 @@ object Manifold {
 
             if (constructor == null) {
                 try {
-                    constructor = scene.getConstructor(ManifoldEvent::class.java) as Constructor<ManifoldScene<*>>
+                    constructor = scene.getConstructor(ManifoldEvent::class.java)
+
+                    if (constructor == null) {
+                        throw NoSuchMethodException("In scene $scene")
+                    }
                 } catch (e: NoSuchMethodException) {
                     throw NoSuchMethodException("No constructor of scene $scene has only one event parameter!")
                 }

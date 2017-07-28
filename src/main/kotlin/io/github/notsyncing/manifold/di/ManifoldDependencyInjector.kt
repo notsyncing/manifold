@@ -1,30 +1,41 @@
 package io.github.notsyncing.manifold.di
 
-import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
+import io.github.notsyncing.manifold.domain.ManifoldDomain
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class ManifoldDependencyInjector : ManifoldDependencyProvider {
+class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : ManifoldDependencyProvider {
     companion object {
         private val singletons = ConcurrentHashMap<Class<*>, Any>()
         private val configs = ConcurrentHashMap<Class<*>, ProvideConfig>()
         private val classMap = ConcurrentHashMap<Class<*>, Class<*>>()
         private val constructorMap = ConcurrentHashMap<Class<*>, Constructor<*>>()
-        var scanner = createScanner()
-        var classScanResult: ScanResult = scanner.scan()
-
-        private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
 
         var keepQuietOnResolveFailure = true
     }
 
     override fun init() {
-        classScanResult.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
-                .forEach { earlyProvide(Class.forName(it)) }
+        rootDomain.inAllClassScanResults { s, cl ->
+            s.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+                    .forEach { earlyProvide(Class.forName(it, true, cl)) }
+        }
+
+        ManifoldDomain.afterScan {
+            it.inCurrentClassScanResult { s, cl ->
+                s.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+                        .forEach { earlyProvide(Class.forName(it, true, cl)) }
+            }
+        }
+
+        ManifoldDomain.onClose { domain, classLoader ->
+            singletons.entries.removeIf { it.key.classLoader == classLoader }
+            configs.entries.removeIf { it.key.classLoader == classLoader }
+            classMap.entries.removeIf { (it.key.classLoader == classLoader) || (it.value.classLoader == classLoader) }
+            constructorMap.entries.removeIf { it.key.classLoader == classLoader }
+        }
     }
 
     override fun <T> get(type: Class<T>, singleton: Boolean): T? {
@@ -112,8 +123,8 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
         configs.clear()
         classMap.clear()
         constructorMap.clear()
-        scanner = createScanner()
-        classScanResult = scanner.scan()
+
+        rootDomain.reset()
     }
 
     private fun earlyProvide(c: Class<*>) {
@@ -146,17 +157,23 @@ class ManifoldDependencyInjector : ManifoldDependencyProvider {
     }
 
     override fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
-        classScanResult.getNamesOfClassesWithAnnotation(anno)
-                ?.forEach { handler.invoke(Class.forName(it)) }
+        rootDomain.inAllClassScanResults { s, cl ->
+            s.getNamesOfClassesWithAnnotation(anno)
+                    ?.forEach { handler.invoke(Class.forName(it, true, cl)) }
+        }
     }
 
     override fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
-        classScanResult.getNamesOfSubclassesOf(superClass)
-                ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
+        rootDomain.inAllClassScanResults { s, cl ->
+            s.getNamesOfSubclassesOf(superClass)
+                    ?.forEach { handler.invoke(Class.forName(it, true, cl) as Class<S>) }
+        }
     }
 
     override fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
-        classScanResult.getNamesOfClassesImplementing(implInterface)
-                ?.forEach { handler.invoke(Class.forName(it) as Class<S>) }
+        rootDomain.inAllClassScanResults { s, cl ->
+            s.getNamesOfClassesImplementing(implInterface)
+                    ?.forEach { handler.invoke(Class.forName(it, true, cl) as Class<S>) }
+        }
     }
 }

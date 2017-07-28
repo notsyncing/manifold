@@ -1,7 +1,7 @@
 apply plugin: "com.jfrog.bintray"
 
 dependencies {
-    compile "io.github.notsyncing.cowherd:cowherd-api:0.9.6"
+    compile "io.github.notsyncing.cowherd:cowherd-api:0.9.8"
     compile rootProject
     compile project(":manifold-suspendable")
     compile project(":manifold-story")

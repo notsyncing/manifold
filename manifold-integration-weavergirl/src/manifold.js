@@ -1,5 +1,5 @@
 class Manifold {
-    static sceneUrl(method, name, parameters, sessionIdentifier) {
+    static sceneUrl(method, name, parameters, sessionIdentifier, namespace) {
         let url = `${Manifold.serverUrl}/${name}`;
         let payload = "";
 
@@ -23,6 +23,20 @@ class Manifold {
             }
         }
 
+        namespace = namespace || Manifold.namespace;
+
+        if (namespace) {
+            if (payload instanceof FormData) {
+                payload.append("namespace", namespace);
+            } else {
+                if (payload !== "") {
+                    payload += "&";
+                }
+
+                payload += `namespace=${namespace}`;
+            }
+        }
+
         if (payload) {
             if (method === "get") {
                 url += `?${payload}`;
@@ -36,13 +50,13 @@ class Manifold {
         };
     }
 
-    static getSceneUrl(method, name, parameters, sessionIdentifier) {
-        let o = Manifold.sceneUrl(method, name, parameters, sessionIdentifier);
+    static getSceneUrl(method, name, parameters, sessionIdentifier, namespace) {
+        let o = Manifold.sceneUrl(method, name, parameters, sessionIdentifier, namespace);
         return o.url;
     }
 
-    static callScene(method, name, parameters, sessionIdentifier) {
-        let o = Manifold.sceneUrl(method, name, parameters, sessionIdentifier);
+    static callScene(method, name, parameters, sessionIdentifier, namespace) {
+        let o = Manifold.sceneUrl(method, name, parameters, sessionIdentifier, namespace);
 
         return Weavergirl.Http.ajax(method, o.url, o.payload)
             .then(r => r.response);
@@ -100,7 +114,7 @@ class Manifold {
         return base;
     }
 
-    static getScene(name, parameters, sessionIdentifier) {
+    static getScene(name, parameters, sessionIdentifier, namespace) {
         if (parameters instanceof Array) {
             parameters = Manifold._mergeObjects(parameters);
         }
@@ -109,10 +123,10 @@ class Manifold {
             parameters = Manifold._serializeForm(parameters);
         }
 
-        return Manifold.callScene("get", name, parameters, sessionIdentifier);
+        return Manifold.callScene("get", name, parameters, sessionIdentifier, namespace);
     }
 
-    static postScene(name, parameters, sessionIdentifier) {
+    static postScene(name, parameters, sessionIdentifier, namespace) {
         if (parameters instanceof Array) {
             parameters = Manifold._mergeObjects(parameters);
         }
@@ -121,11 +135,12 @@ class Manifold {
             parameters = Manifold._serializeForm(parameters);
         }
 
-        return Manifold.callScene("post", name, parameters, sessionIdentifier);
+        return Manifold.callScene("post", name, parameters, sessionIdentifier, namespace);
     }
 }
 
-Manifold.serverUrl = "http://localhost:8080/service/gateway";
+Manifold.serverUrl = "http://localhost:8080/manifold/gateway";
+Manifold.namespace = null;
 
 try {
     if (module) {

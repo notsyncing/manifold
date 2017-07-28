@@ -32,6 +32,8 @@ class ManifoldTest {
 
         Manifold.reset()
 
+        Manifold.enableFeatureManagement = false
+
         Manifold.dependencyProvider = Mockito.mock(ManifoldDependencyProvider::class.java)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(null)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestStorage::class.java)).thenReturn(TestStorage())

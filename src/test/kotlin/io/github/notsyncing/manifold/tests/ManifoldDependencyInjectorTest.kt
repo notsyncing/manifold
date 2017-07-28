@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.tests
 
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
+import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.tests.toys.TestAnno
 import io.github.notsyncing.manifold.tests.toys.di.*
 import org.junit.After
@@ -9,11 +10,11 @@ import org.junit.Before
 import org.junit.Test
 
 class ManifoldDependencyInjectorTest {
-    var di = ManifoldDependencyInjector()
+    var di = ManifoldDependencyInjector(ManifoldDomain().apply { this.init() })
 
     @Before
     fun setUp() {
-        di = ManifoldDependencyInjector()
+        di = ManifoldDependencyInjector(ManifoldDomain().apply { this.init() })
         di.init()
 
         E.counter = 0
@@ -132,5 +133,13 @@ class ManifoldDependencyInjectorTest {
         Assert.assertTrue(l.contains<Any>(AC::class.java))
         Assert.assertTrue(l.contains<Any>(AC2::class.java))
         Assert.assertTrue(l.contains<Any>(AC3::class.java))
+    }
+
+    @Test
+    fun testGetSystemClass() {
+        val s = di.get(Any::class.java)
+
+        Assert.assertNotNull(s)
+        Assert.assertEquals(Any::class.java.name, s?.javaClass?.name)
     }
 }

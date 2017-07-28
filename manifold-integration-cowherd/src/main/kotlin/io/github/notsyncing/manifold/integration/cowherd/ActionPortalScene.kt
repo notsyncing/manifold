@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.integration.cowherd
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.cowherd.api.CowherdApiUtils
+import io.github.notsyncing.cowherd.api.MethodCallInfo
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ActionMetadata
 import io.github.notsyncing.manifold.action.ManifoldScene
@@ -21,6 +22,7 @@ class ActionPortalScene(private val actionName: String,
     constructor() : this("", "", JSONObject())
 
     override fun stage() = future<Any?> {
+        // FIXME: Use domain-aware action name!
         val actionClass = Manifold.actionMetadata[actionName]
 
         if (actionClass == null) {
@@ -38,7 +40,8 @@ class ActionPortalScene(private val actionName: String,
         }
 
         val actionConstructor = actionClass.kotlin.primaryConstructor!!
-        val params = CowherdApiUtils.expandJsonToMethodParameters(actionConstructor, parameters, null)
+        val methodCallInfo = MethodCallInfo(actionConstructor)
+        val params = CowherdApiUtils.expandJsonToMethodParameters(methodCallInfo, parameters, null)
 
         m(actionConstructor.callBy(params)).await()
 

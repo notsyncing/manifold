@@ -160,4 +160,12 @@ class FeatureManager {
 
         featurePublished = true
     }
+
+    fun republishAllFeatures() {
+        availableFeatures.forEach {
+            if (!it.internal) {
+                publishFeature(it.sceneClass)
+            }
+        }
+    }
 }
