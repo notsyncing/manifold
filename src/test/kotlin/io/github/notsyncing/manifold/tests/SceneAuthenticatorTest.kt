@@ -101,8 +101,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleA, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -112,8 +112,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleA, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -123,8 +123,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleA, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -134,27 +134,27 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleA, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticatorWithAgg.permission!!.state)
 
         val p = context.sceneContext.permissions
         Assert.assertNotNull(p)
         Assert.assertEquals(4, p!!.permissions.size)
-        Assert.assertEquals(TestAuthModule.ModuleA, p.permissions[0].module)
-        Assert.assertEquals(TestAuthType.Read, p.permissions[0].type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, p.permissions[0].module)
+        Assert.assertEquals(TestAuthType.Read.name, p.permissions[0].type)
         Assert.assertEquals(PermissionState.Allowed, p.permissions[0].state)
 
-        Assert.assertEquals(TestAuthModule.ModuleA, p.permissions[1].module)
-        Assert.assertEquals(TestAuthType.Write, p.permissions[1].type)
+        Assert.assertEquals(TestAuthModule.ModuleA.name, p.permissions[1].module)
+        Assert.assertEquals(TestAuthType.Write.name, p.permissions[1].type)
         Assert.assertEquals(PermissionState.Allowed, p.permissions[1].state)
 
-        Assert.assertEquals(TestAuthModule.ModuleB, p.permissions[2].module)
-        Assert.assertEquals(TestAuthType.Read, p.permissions[2].type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, p.permissions[2].module)
+        Assert.assertEquals(TestAuthType.Read.name, p.permissions[2].type)
         Assert.assertEquals(PermissionState.Forbidden, p.permissions[2].state)
 
-        Assert.assertEquals(TestAuthModule.ModuleB, p.permissions[3].module)
-        Assert.assertEquals(TestAuthType.Write, p.permissions[3].type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, p.permissions[3].module)
+        Assert.assertEquals(TestAuthType.Write.name, p.permissions[3].type)
         Assert.assertEquals(PermissionState.Allowed, p.permissions[3].state)
     }
 
@@ -165,8 +165,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Forbidden, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -177,8 +177,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Forbidden, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -190,8 +190,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Undefined, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -203,8 +203,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Undefined, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -214,8 +214,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -225,8 +225,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -237,8 +237,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Forbidden, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -249,8 +249,8 @@ class SceneAuthenticatorTest {
         Assert.assertEquals(InterceptorResult.Stop, context.interceptorResult)
         Assert.assertNotNull(context.exception)
         Assert.assertTrue(context.exception is NoPermissionException)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Read, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Read.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Forbidden, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -260,8 +260,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleC, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleC.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -271,8 +271,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleC, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleC.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 
@@ -282,8 +282,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticator.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticator.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticator.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticator.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticator.permission!!.state)
     }
 
@@ -293,8 +293,8 @@ class SceneAuthenticatorTest {
 
         Assert.assertEquals(InterceptorResult.Continue, context.interceptorResult)
         Assert.assertNull(context.exception)
-        Assert.assertEquals(TestAuthModule.ModuleB, TestSceneAuthenticatorWithAgg.permission!!.module)
-        Assert.assertEquals(TestAuthType.Write, TestSceneAuthenticatorWithAgg.permission!!.type)
+        Assert.assertEquals(TestAuthModule.ModuleB.name, TestSceneAuthenticatorWithAgg.permission!!.module)
+        Assert.assertEquals(TestAuthType.Write.name, TestSceneAuthenticatorWithAgg.permission!!.type)
         Assert.assertEquals(PermissionState.Allowed, TestSceneAuthenticatorWithAgg.permission!!.state)
     }
 }

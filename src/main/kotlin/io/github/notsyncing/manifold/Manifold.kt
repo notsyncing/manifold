@@ -10,6 +10,7 @@ import io.github.notsyncing.manifold.action.interceptors.SceneInterceptor
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
+import io.github.notsyncing.manifold.authenticate.PermissionManager
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
@@ -72,6 +73,8 @@ object Manifold {
 
             features.republishAllFeatures()
         }
+
+    val permissions = PermissionManager()
 
     private val onDestroyListeners = mutableListOf<() -> Unit>()
     private val onResetListeners = mutableListOf<() -> Unit>()

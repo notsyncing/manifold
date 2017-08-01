@@ -38,6 +38,8 @@ class ManifoldTest {
         Mockito.`when`(Manifold.dependencyProvider?.get(TestManager::class.java)).thenReturn(null)
         Mockito.`when`(Manifold.dependencyProvider?.get(TestStorage::class.java)).thenReturn(TestStorage())
 
+        Manifold.interceptors.reset()
+
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
             override fun get(): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {

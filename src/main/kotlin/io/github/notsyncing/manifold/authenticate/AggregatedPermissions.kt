@@ -7,6 +7,10 @@ class AggregatedPermissions(val permissions: MutableList<Permission>) {
     constructor() : this(mutableListOf())
 
     fun get(module: Enum<*>, type: Enum<*>): Permission {
+        return get(module.name, type.name)
+    }
+
+    fun get(module: String, type: String): Permission {
         val r = permissions.firstOrNull { (it.module == module) && (it.type == type) }
 
         if (r == null) {

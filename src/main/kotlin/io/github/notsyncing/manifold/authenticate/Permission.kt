@@ -1,7 +1,10 @@
 package io.github.notsyncing.manifold.authenticate
 
-class Permission(val module: Enum<*>,
-                 val type: Enum<*>,
+import io.github.notsyncing.manifold.Manifold
+import java.security.InvalidParameterException
+
+class Permission(val module: String,
+                 val type: String,
                  val state: PermissionState = PermissionState.Undefined,
                  var additionalData: Any? = null,
                  var inherited: Boolean = false) {
@@ -46,9 +49,13 @@ class Permission(val module: Enum<*>,
 
     constructor(module: Int, type: Int, state: PermissionState = PermissionState.Undefined,
                 additionalData: Any? = null, inherited: Boolean = false)
-            : this(SceneAuthenticator.authModuleEnumClass.enumConstants[module],
-                    SceneAuthenticator.authTypeEnumClass.enumConstants[type], state, additionalData, inherited) {
-    }
+            : this(if (module >= 0) SceneAuthenticator.authModuleEnumClass.enumConstants[module].name else Manifold.permissions.getCustomPermission(module)?.name ?: throw InvalidParameterException("Unknown permission module $module"),
+            if (type >= 0) SceneAuthenticator.authTypeEnumClass.enumConstants[type].name else "", state, additionalData,
+            inherited)
+
+    constructor(module: Enum<*>, type: Enum<*>, state: PermissionState = PermissionState.Undefined,
+                additionalData: Any? = null, inherited: Boolean = false)
+            : this(module.name, type.name, state, additionalData, inherited)
 
     constructor() : this(0, 0)
 

@@ -134,6 +134,10 @@ abstract class SceneAuthenticator : SceneInterceptor() {
     }
 
     private fun getPermissionFromRole(module: Enum<*>, type: Enum<*>): Permission {
+        return getPermissionFromRole(module.name, type.name)
+    }
+
+    private fun getPermissionFromRole(module: String, type: String): Permission {
         for (o in authOrder) {
             if (o == AuthOrder.Role) {
                 for (p in currentRole.permissions) {
