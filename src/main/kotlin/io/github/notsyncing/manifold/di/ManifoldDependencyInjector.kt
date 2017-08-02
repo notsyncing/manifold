@@ -176,4 +176,10 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
                     ?.forEach { handler.invoke(Class.forName(it, true, cl) as Class<S>) }
         }
     }
+
+    override fun getAllClasspathFiles(handler: (String) -> Unit) {
+        rootDomain.inAllFileScanResults { l, cl ->
+            l.forEach { handler(it) }
+        }
+    }
 }

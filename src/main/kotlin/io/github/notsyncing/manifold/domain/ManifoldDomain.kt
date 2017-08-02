@@ -4,6 +4,7 @@ import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.utils.FileUtils
 import java.io.IOException
+import java.io.InputStream
 import java.lang.ref.WeakReference
 import java.net.URL
 import java.nio.file.*
@@ -40,6 +41,7 @@ class ManifoldDomain(val name: String = ROOT,
 
     private lateinit var scanner: FastClasspathScanner
     private lateinit var classScanResult: ScanResult
+    private val fileScanResult = mutableListOf<String>()
 
     init {
         if (parentDomain != null) {
@@ -138,11 +140,29 @@ class ManifoldDomain(val name: String = ROOT,
         handler(classScanResult, classLoader)
     }
 
+    fun inAllFileScanResults(handler: (List<String>, ClassLoader) -> Unit) {
+        handler(fileScanResult, classLoader)
+
+        childDomains.forEach { it.inAllFileScanResults(handler) }
+    }
+
+    fun inCurrentFileScanResult(handler: (List<String>, ClassLoader) -> Unit) {
+        handler(fileScanResult, classLoader)
+    }
+
     private fun scanClasspath() {
         scanning = true
         needRescan = false
 
-        classScanResult = scanner.scan()
+        fileScanResult.clear()
+
+        classScanResult = scanner
+                .matchFilenamePattern("*") { relativePath: String?, _: InputStream?, _: Long ->
+                    if (relativePath != null) {
+                        fileScanResult.add(relativePath)
+                    }
+                }
+                .scan()
 
         afterScanHandlers.forEach { it(this) }
 

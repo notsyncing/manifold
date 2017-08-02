@@ -50,4 +50,16 @@ interface ManifoldDependencyProvider {
 
         return list.toArray(arrayOf())
     }
+
+    fun getAllClasspathFiles(handler: (String) -> Unit) {
+        throw UnsupportedOperationException("Not implemented")
+    }
+
+    fun getAllClasspathFiles(): List<String> {
+        val list = mutableListOf<String>()
+
+        getAllClasspathFiles { list.add(it) }
+
+        return list
+    }
 }
