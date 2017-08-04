@@ -8,7 +8,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ActionMetadata
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.describe.DataPolicy
-import io.github.notsyncing.manifold.story.vm.StoryLibrary
+import io.github.notsyncing.manifold.story.StoryLibrary
 import io.github.notsyncing.manifold.suspendable.SuspendableSceneScheduler
 import io.vertx.core.http.HttpServerRequest
 import kotlinx.coroutines.experimental.future.await

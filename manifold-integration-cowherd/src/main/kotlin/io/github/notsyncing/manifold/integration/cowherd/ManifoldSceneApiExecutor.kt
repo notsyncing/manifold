@@ -7,7 +7,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.action.describe.DataPolicy
-import io.github.notsyncing.manifold.story.vm.StoryLibrary
+import io.github.notsyncing.manifold.story.StoryLibrary
 import io.vertx.core.http.HttpMethod
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future

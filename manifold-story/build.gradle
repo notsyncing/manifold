@@ -2,7 +2,6 @@ apply plugin: "com.jfrog.bintray"
 
 dependencies {
     compile project(":manifold-suspendable")
-    compile group: 'com.vladsch.flexmark', name: 'flexmark', version: '0.19.4'
     compile 'net.arnx:nashorn-promise:0.1.0'
 
     testCompile 'org.slf4j:slf4j-api:1.7.21'

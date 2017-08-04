@@ -1,18 +1,11 @@
-package io.github.notsyncing.manifold.story.vm
+package io.github.notsyncing.manifold.story
 
 import io.github.notsyncing.manifold.Manifold
-import io.github.notsyncing.manifold.story.AfterStory
-import io.github.notsyncing.manifold.story.AfterStoryOf
-import io.github.notsyncing.manifold.story.StoryScene
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
-import java.io.InvalidObjectException
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 object StoryLibrary {
-    private val chapters = ConcurrentHashMap<String, Chapter>()
     private val afterStories = ConcurrentHashMap<String, MutableList<Class<AfterStory>>>()
 
     fun init() {
@@ -34,30 +27,7 @@ object StoryLibrary {
     }
 
     fun reset() {
-        chapters.clear()
         afterStories.clear()
-    }
-
-    fun read(storyFile: Path) {
-        val parser = StoryParser.parse(Files.newInputStream(storyFile))
-
-        parser.chapters.forEach {
-            chapters[it.name] = it
-        }
-    }
-
-    fun get(sceneName: String): Chapter {
-        val chapter = chapters[sceneName]
-
-        if (chapter == null) {
-            throw NoSuchMethodException("Scene $sceneName not found!")
-        }
-
-        if (chapter.type != ChapterType.Scene) {
-            throw InvalidObjectException("Chapter $sceneName is not a scene!")
-        }
-
-        return chapter
     }
 
     fun tell(sceneName: String, sessionIdentifier: String?) = future {
