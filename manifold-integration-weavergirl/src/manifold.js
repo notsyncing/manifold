@@ -137,6 +137,23 @@ class Manifold {
 
         return Manifold.callScene("post", name, parameters, sessionIdentifier, namespace);
     }
+
+    static performDramaAction(name, parameters, sessionIdentifier, namespace) {
+        if (parameters instanceof Array) {
+            parameters = Manifold._mergeObjects(parameters);
+        }
+
+        if (parameters instanceof Element) {
+            parameters = Manifold._serializeForm(parameters);
+        }
+
+        let p = {
+            action: name,
+            parameters: parameters
+        };
+
+        return postScene("manifold.drama.entry", p, sessionIdentifier, namespace);
+    }
 }
 
 Manifold.serverUrl = "http://localhost:8080/manifold/gateway";

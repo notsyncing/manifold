@@ -22,7 +22,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
     private var succCond2: (() -> R)? = null
 
     protected var event: ManifoldEvent? = null
-    protected var eventNode: ManifoldEventNode? = null
+    var eventNode: ManifoldEventNode? = null
 
     lateinit var m: ManifoldActionContextRunner
 
@@ -95,11 +95,11 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
     }
 
-    protected fun useTransaction() {
+    fun useTransaction() {
         context.autoCommit = false
     }
 
-    protected fun splitTransaction() = future {
+    fun splitTransaction() = future {
         if ((this@ManifoldScene.context.transaction == null) || (this@ManifoldScene.context.autoCommit)) {
             return@future
         }
