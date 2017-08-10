@@ -157,7 +157,7 @@ class ManifoldDomain(val name: String = ROOT,
         fileScanResult.clear()
 
         classScanResult = scanner
-                .matchFilenamePattern("*") { relativePath: String?, _: InputStream?, _: Long ->
+                .matchFilenamePattern(".*") { relativePath: String?, _: InputStream?, _: Long ->
                     if (relativePath != null) {
                         fileScanResult.add(relativePath)
                     }
