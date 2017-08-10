@@ -29,6 +29,16 @@ abstract class SceneAuthenticator : SceneInterceptor() {
             denyUndefinedPermissions = true
         }
 
+        fun getAuthTypeId(name: String): Int {
+            for (ec in authTypeEnumClass.enumConstants) {
+                if (ec.name == name) {
+                    return ec.ordinal
+                }
+            }
+
+            return -1
+        }
+
         fun aggregatePermissions(role: AuthRole): AggregatedPermissions {
             if (role.groups.isEmpty()) {
                 return AggregatedPermissions(role.permissions.toMutableList())

@@ -5,8 +5,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 class PermissionManager {
     private val customPermissions = ConcurrentHashMap<Int, CustomPermissionInfo>()
+    private val customPermissionNameIndex = ConcurrentHashMap<String, CustomPermissionInfo>()
 
     fun getCustomPermission(id: Int) = customPermissions[id]
+
+    fun getCustomPermission(name: String) = customPermissionNameIndex[name]
 
     fun getCustomPermissions() = customPermissions.values.toList()
 
@@ -17,5 +20,22 @@ class PermissionManager {
         }
 
         customPermissions[info.id] = info
+        customPermissionNameIndex[info.name] = info
+    }
+
+    fun getPermissionId(name: String): Int {
+        val customId = getCustomPermission(name)?.id
+
+        if (customId != null) {
+            return customId
+        }
+
+        for (ec in SceneAuthenticator.authModuleEnumClass.enumConstants) {
+            if (ec.name == name) {
+                return ec.ordinal
+            }
+        }
+
+        throw InvalidParameterException("Unknown permission $name")
     }
 }
