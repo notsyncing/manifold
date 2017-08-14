@@ -31,6 +31,7 @@ class ManifoldDomain(val name: String = ROOT,
 
     private val childDomains = mutableListOf<ManifoldDomain>()
     private val urls = mutableListOf<URL>()
+    private val urlsFromWars = mutableMapOf<URL, URL>()
     private var classLoader: DomainClassLoader = createClassLoader()
     private val classpathWatcher = FileSystems.getDefault().newWatchService()
     private val classpathWatcherKeys = ConcurrentHashMap<WatchKey, Path>()
@@ -206,7 +207,11 @@ class ManifoldDomain(val name: String = ROOT,
         if (Files.isDirectory(warLibs)) {
             Files.list(warLibs)
                     .filter { it.fileName.toString().endsWith(".jar") }
-                    .forEach { urls.add(it.toUri().toURL()) }
+                    .forEach {
+                        val url = it.toUri().toURL()
+                        urls.add(url)
+                        urlsFromWars[url] = path.toUri().toURL()
+                    }
         }
     }
 
@@ -241,6 +246,31 @@ class ManifoldDomain(val name: String = ROOT,
         addClasspath(*files.map { it.toUri().toURL() }.toTypedArray())
     }
 
+    fun removeClasspath(vararg urls: URL) {
+        urls.forEach {
+            this.urls.remove(it)
+
+            val iter = urlsFromWars.iterator()
+
+            while (iter.hasNext()) {
+                val (fileUrl, warUrl) = iter.next()
+
+                if (warUrl == it) {
+                    this.urls.remove(fileUrl)
+                }
+            }
+        }
+
+        closeClassLoader()
+        classLoader = createClassLoader()
+
+        scanClasspath()
+    }
+
+    fun removeClasspath(vararg files: Path) {
+        removeClasspath(*files.map { it.toUri().toURL() }.toTypedArray())
+    }
+
     fun closeClassLoader() {
         onCloseHandlers.forEach { it(this, classLoader) }
 
@@ -249,6 +279,8 @@ class ManifoldDomain(val name: String = ROOT,
 
     override fun close() {
         closed = true
+        classpathWatcherKeys.forEach { key, _ -> key.cancel() }
+        classpathWatcherKeys.clear()
         classpathWatcher.close()
 
         onClose().thenAccept {
