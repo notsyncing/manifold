@@ -62,7 +62,13 @@ object ManifoldEventBus {
     }
 
     private fun addNode(node: ManifoldEventNode) {
-        nodes.put(node.id, node)
+        val nodeId = if (node.local) {
+            node.id
+        } else {
+            "${node.id}@${node.transport.source}"
+        }
+
+        nodes.put(nodeId, node)
 
         node.groups.forEach {
             if (!groupNodes.containsKey(it)) {
@@ -237,15 +243,18 @@ object ManifoldEventBus {
 
         debug("Received remote event $event")
 
+        event.source = event.source + "@" + transDesc.source
+
         if (event.type == EventType.Beacon) {
             val beaconEvent = event
             val beaconData = beaconEvent.getData(BeaconData::class.java)
+            val beaconDataSourceNodeId = beaconData.id + "@" + transDesc.source
 
             if (beaconEvent.event == BeaconEvent.Beacon) {
                 val node: ManifoldEventNode
 
-                if (nodes.containsKey(beaconData.id)) {
-                    node = nodes[beaconData.id]!!
+                if (nodes.containsKey(beaconDataSourceNodeId)) {
+                    node = nodes[beaconDataSourceNodeId]!!
 
                     if (node.transport is LocalTransport) {
                         return
@@ -255,11 +264,11 @@ object ManifoldEventBus {
                     node.load = beaconData.load
                     node.transport = transDesc
                 } else {
-                    node = ManifoldEventNode(beaconData.id, beaconData.groups, beaconData.load, transDesc)
+                    node = ManifoldEventNode(beaconDataSourceNodeId, beaconData.groups, beaconData.load, transDesc)
                     addNode(node)
                 }
             } else if (beaconEvent.event == BeaconEvent.Exit) {
-                removeNode(beaconData.id)
+                removeNode(beaconDataSourceNodeId)
             } else {
                 throw RuntimeException("Unsupported beacon event: " + event.event)
             }
