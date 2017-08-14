@@ -69,7 +69,11 @@ class Manifold {
             let formData = new FormData();
             formData.append("json", JSON.stringify(json));
 
-            for (let e of form.childNodes) {
+            let inputs = form.querySelectorAll("input");
+
+            for (let i = 0; i < inputs.length; i++) {
+                let e = inputs[i];
+
                 if (!(e instanceof HTMLInputElement)) {
                     continue;
                 }
