@@ -271,6 +271,22 @@ class ManifoldDomain(val name: String = ROOT,
         removeClasspath(*files.map { it.toUri().toURL() }.toTypedArray())
     }
 
+    fun clearAndAddClasspath(vararg urls: URL) {
+        this.urls.clear()
+        this.urlsFromWars.clear()
+
+        classpathWatcherKeys.forEach { key, _ -> key.cancel() }
+        classpathWatcherKeys.clear()
+
+        FileUtils.deleteRecursive(tempDir)
+
+        addClasspath(*urls)
+    }
+
+    fun clearAndAddClasspath(vararg files: Path) {
+        clearAndAddClasspath(*files.map { it.toUri().toURL() }.toTypedArray())
+    }
+
     fun closeClassLoader() {
         onCloseHandlers.forEach { it(this, classLoader) }
 
