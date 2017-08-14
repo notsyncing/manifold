@@ -38,6 +38,7 @@ class ManifoldDomain(val name: String = ROOT,
     private var scanning = false
     private var needRescan = false
     private val tempDir = Files.createTempDirectory("manifold-domain-")
+    private var onClose: () -> CompletableFuture<Unit> = { CompletableFuture.completedFuture(Unit) }
 
     private lateinit var scanner: FastClasspathScanner
     private lateinit var classScanResult: ScanResult
@@ -49,6 +50,10 @@ class ManifoldDomain(val name: String = ROOT,
         }
 
         thread(isDaemon = true, block = this::classpathWatcherThread)
+    }
+
+    fun onClose(handler: () -> CompletableFuture<Unit>) {
+        this.onClose = handler
     }
 
     private fun classpathWatcherThread() {
@@ -246,17 +251,19 @@ class ManifoldDomain(val name: String = ROOT,
         closed = true
         classpathWatcher.close()
 
-        FileUtils.deleteRecursive(tempDir)
+        onClose().thenAccept {
+            FileUtils.deleteRecursive(tempDir)
 
-        if (parentDomain != null) {
-            parentDomain.childDomains.remove(this)
+            if (parentDomain != null) {
+                parentDomain.childDomains.remove(this)
+            }
+
+            onCloseHandlers.forEach { it(this, classLoader) }
+
+            childDomains.forEach { it.close() }
+
+            classLoader.close()
         }
-
-        onCloseHandlers.forEach { it(this, classLoader) }
-
-        childDomains.forEach { it.close() }
-
-        classLoader.close()
     }
 
     fun findDomain(domainName: String): WeakReference<ManifoldDomain>? {
