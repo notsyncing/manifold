@@ -12,4 +12,7 @@ class FeatureInfo(val sceneClass: Class<ManifoldScene<*>>, val name: String,
             return FeatureInfo(sceneClass, f.value, f.groups, f.successorOf, f.internal, f.defaultSpecialAuths)
         }
     }
+
+    var initialized = false
+    var published = false
 }

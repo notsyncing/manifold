@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold
 
+import java.nio.file.Path
 import java.util.*
 
 interface ManifoldDependencyProvider {
@@ -51,14 +52,14 @@ interface ManifoldDependencyProvider {
         return list.toArray(arrayOf())
     }
 
-    fun getAllClasspathFiles(handler: (String) -> Unit) {
+    fun getAllClasspathFiles(handler: (Path, String) -> Unit) {
         throw UnsupportedOperationException("Not implemented")
     }
 
-    fun getAllClasspathFiles(): List<String> {
-        val list = mutableListOf<String>()
+    fun getAllClasspathFiles(): List<Pair<Path, String>> {
+        val list = mutableListOf<Pair<Path, String>>()
 
-        getAllClasspathFiles { list.add(it) }
+        getAllClasspathFiles { p, s -> list.add(Pair(p, s)) }
 
         return list
     }

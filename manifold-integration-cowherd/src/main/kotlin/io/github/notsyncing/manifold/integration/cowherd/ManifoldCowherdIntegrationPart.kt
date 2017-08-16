@@ -40,6 +40,10 @@ class ManifoldCowherdIntegrationPart : CowherdPart {
         apiRoute.isFastRoute = true
 
         ServiceManager.addServiceClass(ManifoldApiGatewayService::class.java, apiRoute)
+
+        ManifoldDomain.onClose { _, cl ->
+            ManifoldSceneApiExecutor.removeFromCacheIf { it.classLoader == cl }
+        }
     }
 
     override fun destroy() {
@@ -48,7 +52,7 @@ class ManifoldCowherdIntegrationPart : CowherdPart {
 
     private fun initFeaturePublisher() {
         Manifold.featurePublisher = object : FeaturePublisher {
-            override fun publishFeature(sceneClass: Class<ManifoldScene<*>>) {
+            private fun getDomainName(sceneClass: Class<ManifoldScene<*>>): String {
                 var domainName = ""
                 val domainClassLoader = findParentDomainClassLoader(sceneClass)
 
@@ -56,12 +60,30 @@ class ManifoldCowherdIntegrationPart : CowherdPart {
                     domainName = domainClassLoader.domainName + "_"
                 }
 
+                return domainName
+            }
+
+            override fun publishFeature(sceneClass: Class<ManifoldScene<*>>) {
+                val domainName = getDomainName(sceneClass)
+
                 CowherdApiHub.publish(domainName + sceneClass.name, ManifoldSceneApiExecutor(sceneClass))
 
                 if (sceneClass.isAnnotationPresent(SceneMetadata::class.java)) {
                     val serviceName = domainName + sceneClass.getAnnotation(SceneMetadata::class.java).value
 
                     CowherdApiHub.publish(serviceName, ManifoldSceneApiExecutor(sceneClass))
+                }
+            }
+
+            override fun revokeFeature(sceneClass: Class<ManifoldScene<*>>) {
+                val domainName = getDomainName(sceneClass)
+
+                CowherdApiHub.revoke(domainName + sceneClass.name)
+
+                if (sceneClass.isAnnotationPresent(SceneMetadata::class.java)) {
+                    val serviceName = domainName + sceneClass.getAnnotation(SceneMetadata::class.java).value
+
+                    CowherdApiHub.revoke(serviceName)
                 }
             }
         }

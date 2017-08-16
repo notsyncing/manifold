@@ -1,7 +1,8 @@
 package io.github.notsyncing.manifold.feature
 
 import io.github.notsyncing.manifold.action.ManifoldScene
-import java.util.*
+import io.github.notsyncing.manifold.domain.ManifoldDomain
+import io.github.notsyncing.manifold.utils.removeIf
 import java.util.concurrent.ConcurrentHashMap
 
 class FeatureManager {
@@ -14,9 +15,24 @@ class FeatureManager {
     private val disabledFeatureGroups = ConcurrentHashMap.newKeySet<String>()
 
     private val allFeatures = ConcurrentHashMap<Class<ManifoldScene<*>>, FeatureInfo>()
-    private val availableFeatures = ArrayList<FeatureInfo>()
+    private val availableFeatures = ConcurrentHashMap<Class<ManifoldScene<*>>, FeatureInfo>()
 
     private var featurePublished = false
+
+    fun init() {
+        ManifoldDomain.onClose { _, classLoader ->
+            allFeatures.removeIf { (clazz, _) ->
+                if (clazz.classLoader == classLoader) {
+                    featurePublisher?.revokeFeature(clazz)
+                    true
+                } else {
+                    false
+                }
+            }
+
+            availableFeatures.removeIf { (clazz, _) -> clazz.classLoader == classLoader }
+        }
+    }
 
     fun destroy() {
         FeatureAuthenticator.reset()
@@ -29,7 +45,7 @@ class FeatureManager {
         allFeatures.clear()
         availableFeatures.clear()
 
-        availableFeatures.forEach { it.sceneClass.newInstance().destroy() }
+        availableFeatures.forEachValue(1) { it.sceneClass.newInstance().destroy() }
 
         featurePublished = false
     }
@@ -49,11 +65,13 @@ class FeatureManager {
 
     fun initEnabledFeatures() {
         if (enableFeatureManagement) {
-            allFeatures.filterValues { isFeatureEnabled(it) }
+            allFeatures.filterKeys { !availableFeatures.containsKey(it) }
+                    .filterValues { isFeatureEnabled(it) }
                     .filterValues { v -> !allFeatures.any { it.value.successorOf == v.name } }
-                    .forEach { c, info -> availableFeatures.add(info) }
+                    .forEach { c, info -> availableFeatures[c] = info }
         } else {
-            allFeatures.forEach { availableFeatures.add(it.value) }
+            allFeatures.filterKeys { !availableFeatures.containsKey(it) }
+                    .forEach { availableFeatures[it.key] = it.value }
         }
     }
 
@@ -80,7 +98,7 @@ class FeatureManager {
         featureGroups.forEach { enabledFeatureGroups.add(it) }
 
         if (featurePublished) {
-            // TODO: Support dynamic feature enabling
+            publishFeatures()
         }
     }
 
@@ -131,7 +149,7 @@ class FeatureManager {
                 return true
             }
 
-            return isFeatureEnabled(allFeatures[c]!!) && availableFeatures.any { it.sceneClass == sceneClass }
+            return isFeatureEnabled(allFeatures[c]!!) && availableFeatures.containsKey(sceneClass)
         } else {
             return isFeatureEnabled(FeatureInfo.from(c))
         }
@@ -146,15 +164,21 @@ class FeatureManager {
     fun publishFeatures() {
         initEnabledFeatures()
 
-        availableFeatures.forEach {
-            try {
-                it.sceneClass.newInstance().init()
-            } catch (e: Exception) {
-                e.printStackTrace()
+        availableFeatures.forEach { sceneClass, info ->
+            if (!info.initialized) {
+                try {
+                    sceneClass.newInstance().init()
+                    info.initialized = true
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
             }
 
-            if (!it.internal) {
-                publishFeature(it.sceneClass)
+            if (!info.internal) {
+                if (!info.published) {
+                    publishFeature(sceneClass)
+                    info.published = true
+                }
             }
         }
 
@@ -162,9 +186,9 @@ class FeatureManager {
     }
 
     fun republishAllFeatures() {
-        availableFeatures.forEach {
-            if (!it.internal) {
-                publishFeature(it.sceneClass)
+        availableFeatures.forEach { sceneClass, info ->
+            if (!info.internal) {
+                publishFeature(sceneClass)
             }
         }
     }

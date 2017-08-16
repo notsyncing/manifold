@@ -4,6 +4,7 @@ import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -19,14 +20,14 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
 
     override fun init() {
         rootDomain.inAllClassScanResults { s, cl ->
-            s.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
-                    .forEach { earlyProvide(Class.forName(it, true, cl)) }
+            s?.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+                    ?.forEach { earlyProvide(Class.forName(it, true, cl)) }
         }
 
         ManifoldDomain.afterScan {
             it.inCurrentClassScanResult { s, cl ->
-                s.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
-                        .forEach { earlyProvide(Class.forName(it, true, cl)) }
+                s?.getNamesOfClassesWithAnnotation(EarlyProvide::class.java)
+                        ?.forEach { earlyProvide(Class.forName(it, true, cl)) }
             }
         }
 
@@ -158,28 +159,28 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
 
     override fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit) {
         rootDomain.inAllClassScanResults { s, cl ->
-            s.getNamesOfClassesWithAnnotation(anno)
+            s?.getNamesOfClassesWithAnnotation(anno)
                     ?.forEach { handler.invoke(Class.forName(it, true, cl)) }
         }
     }
 
     override fun <S> getAllSubclasses(superClass: Class<S>, handler: (Class<S>) -> Unit) {
         rootDomain.inAllClassScanResults { s, cl ->
-            s.getNamesOfSubclassesOf(superClass)
+            s?.getNamesOfSubclassesOf(superClass)
                     ?.forEach { handler.invoke(Class.forName(it, true, cl) as Class<S>) }
         }
     }
 
     override fun <S> getAllClassesImplemented(implInterface: Class<S>, handler: (Class<S>) -> Unit) {
         rootDomain.inAllClassScanResults { s, cl ->
-            s.getNamesOfClassesImplementing(implInterface)
+            s?.getNamesOfClassesImplementing(implInterface)
                     ?.forEach { handler.invoke(Class.forName(it, true, cl) as Class<S>) }
         }
     }
 
-    override fun getAllClasspathFiles(handler: (String) -> Unit) {
+    override fun getAllClasspathFiles(handler: (Path, String) -> Unit) {
         rootDomain.inAllFileScanResults { l, cl ->
-            l.forEach { handler(it) }
+            l.forEach { (classpathElem, relPath) -> handler(classpathElem, relPath) }
         }
     }
 }

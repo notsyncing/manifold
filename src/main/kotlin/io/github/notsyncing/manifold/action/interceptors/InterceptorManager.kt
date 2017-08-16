@@ -2,6 +2,8 @@ package io.github.notsyncing.manifold.action.interceptors
 
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.action.ManifoldScene
+import io.github.notsyncing.manifold.domain.ManifoldDomain
+import io.github.notsyncing.manifold.utils.removeIf
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -10,6 +12,15 @@ class InterceptorManager {
     private val sceneInterceptorMap = ConcurrentHashMap<Class<ManifoldScene<*>>, ArrayList<SceneInterceptorInfo>>()
     private val actionInterceptors = ConcurrentHashMap.newKeySet<Class<ActionInterceptor>>()
     private val actionInterceptorMap = ConcurrentHashMap<Class<ManifoldAction<*>>, ArrayList<ActionInterceptorInfo>>()
+
+    fun init() {
+        ManifoldDomain.onClose { _, cl ->
+            sceneInterceptors.removeIf { it.classLoader == cl }
+            sceneInterceptorMap.removeIf { (clazz, _) -> clazz.classLoader == cl }
+            actionInterceptors.removeIf { it.classLoader == cl }
+            actionInterceptorMap.removeIf { (clazz, _) -> clazz.classLoader == cl }
+        }
+    }
 
     fun reset() {
         sceneInterceptors.clear()

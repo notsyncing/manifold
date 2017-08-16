@@ -40,7 +40,7 @@ class ActionPortalScene(private val actionName: String,
         }
 
         val actionConstructor = actionClass.kotlin.primaryConstructor!!
-        val methodCallInfo = MethodCallInfo(actionConstructor)
+        val methodCallInfo = MethodCallInfo(actionConstructor, actionName)
         val params = CowherdApiUtils.expandJsonToMethodParameters(methodCallInfo, parameters, null)
 
         m(actionConstructor.callBy(params)).await()

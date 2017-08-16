@@ -19,6 +19,7 @@ import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
+import io.github.notsyncing.manifold.utils.removeIf
 import java.io.InvalidClassException
 import java.io.InvalidObjectException
 import java.lang.reflect.Constructor
@@ -83,6 +84,15 @@ object Manifold {
     val rootDomain = ManifoldDomain()
 
     fun init() {
+        ManifoldDomain.onClose { _, cl ->
+            sceneTransitionConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
+            sceneEventConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
+
+            actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
+
+            DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
+        }
+
         rootDomain.init()
 
         if (dependencyProvider == null) {
@@ -92,6 +102,9 @@ object Manifold {
         if (sessionStorageProvider == null) {
             sessionStorageProvider = ManifoldSessionStorage()
         }
+
+        features.init()
+        interceptors.init()
 
         ManifoldEventBus.init()
 
@@ -111,8 +124,8 @@ object Manifold {
     }
 
     private fun processScenes(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult, cl: ClassLoader ->
-            s.getNamesOfSubclassesOf(ManifoldScene::class.java).forEach {
+        val handler = { s: ScanResult?, cl: ClassLoader ->
+            s?.getNamesOfSubclassesOf(ManifoldScene::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
                 if (Modifier.isAbstract(clazz.modifiers)) {
@@ -133,8 +146,8 @@ object Manifold {
     }
 
     private fun processActions(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult, cl: ClassLoader ->
-            s.getNamesOfSubclassesOf(ManifoldAction::class.java).forEach {
+        val handler = { s: ScanResult?, cl: ClassLoader ->
+            s?.getNamesOfSubclassesOf(ManifoldAction::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
                 if (clazz.isAnnotationPresent(ActionMetadata::class.java)) {
@@ -153,6 +166,8 @@ object Manifold {
                     actionMetadata[actionName] = clazz as Class<ManifoldAction<*>>
                 }
             }
+
+            Unit
         }
 
         if (domain == rootDomain) {
@@ -163,8 +178,8 @@ object Manifold {
     }
 
     private fun processInterceptors(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult, cl: ClassLoader ->
-            s.getNamesOfSubclassesOf(Interceptor::class.java).forEach {
+        val handler = { s: ScanResult?, cl: ClassLoader ->
+            s?.getNamesOfSubclassesOf(Interceptor::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
                 if (Modifier.isAbstract(clazz.modifiers)) {
@@ -184,6 +199,8 @@ object Manifold {
                             "interceptor class")
                 }
             }
+
+            Unit
         }
 
         if (domain == rootDomain) {

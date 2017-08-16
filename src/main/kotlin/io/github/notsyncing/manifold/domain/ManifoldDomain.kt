@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.domain
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.utils.FileUtils
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.lang.ref.WeakReference
@@ -42,8 +43,8 @@ class ManifoldDomain(val name: String = ROOT,
     private var onClose: () -> CompletableFuture<Unit> = { CompletableFuture.completedFuture(Unit) }
 
     private lateinit var scanner: FastClasspathScanner
-    private lateinit var classScanResult: ScanResult
-    private val fileScanResult = mutableListOf<String>()
+    private var classScanResult: ScanResult? = null
+    private val fileScanResult = mutableListOf<Pair<Path, String>>()
 
     init {
         if (parentDomain != null) {
@@ -69,6 +70,11 @@ class ManifoldDomain(val name: String = ROOT,
                     }
 
                     val file = event.context() as Path
+                    val fileStr = file.toString()
+
+                    if ((!fileStr.endsWith(".jar")) && (!fileStr.endsWith(".war"))) {
+                        continue
+                    }
 
                     val dir = classpathWatcherKeys[key]
 
@@ -77,12 +83,13 @@ class ManifoldDomain(val name: String = ROOT,
                     }
 
                     val fullPath = dir.resolve(file)
+                    val url = fullPath.toUri().toURL()
 
                     if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                        urls.remove(fullPath.toUri().toURL())
+                        urls.remove(url)
                     } else {
-                        if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                            urls.add(fullPath.toUri().toURL())
+                        if ((event.kind() == StandardWatchEventKinds.ENTRY_CREATE) && (!fileStr.endsWith(".war"))) {
+                            urls.add(url)
                         }
 
                         if (file.toString().endsWith(".war")) {
@@ -115,6 +122,12 @@ class ManifoldDomain(val name: String = ROOT,
                     }
                 }
             } catch (e: Exception) {
+                if (e is ClosedWatchServiceException) {
+                    if (closed) {
+                        continue
+                    }
+                }
+
                 e.printStackTrace()
             }
         }
@@ -130,29 +143,24 @@ class ManifoldDomain(val name: String = ROOT,
             parentDomain?.classLoader ?: javaClass.classLoader)
 
     private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
-            .apply {
-                if (parentDomain != null) {
-                    this.overrideClassLoaders(classLoader)
-                }
-            }
 
-    fun inAllClassScanResults(handler: (ScanResult, ClassLoader) -> Unit) {
+    fun inAllClassScanResults(handler: (ScanResult?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
 
         childDomains.forEach { it.inAllClassScanResults(handler) }
     }
 
-    fun inCurrentClassScanResult(handler: (ScanResult, ClassLoader) -> Unit) {
+    fun inCurrentClassScanResult(handler: (ScanResult?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
     }
 
-    fun inAllFileScanResults(handler: (List<String>, ClassLoader) -> Unit) {
+    fun inAllFileScanResults(handler: (List<Pair<Path, String>>, ClassLoader) -> Unit) {
         handler(fileScanResult, classLoader)
 
         childDomains.forEach { it.inAllFileScanResults(handler) }
     }
 
-    fun inCurrentFileScanResult(handler: (List<String>, ClassLoader) -> Unit) {
+    fun inCurrentFileScanResult(handler: (List<Pair<Path, String>>, ClassLoader) -> Unit) {
         handler(fileScanResult, classLoader)
     }
 
@@ -161,11 +169,21 @@ class ManifoldDomain(val name: String = ROOT,
         needRescan = false
 
         fileScanResult.clear()
+        classScanResult = null
+
+        if ((this.name != ROOT) && (urls.isEmpty())) {
+            return
+        }
 
         classScanResult = scanner
-                .matchFilenamePattern(".*") { relativePath: String?, _: InputStream?, _: Long ->
-                    if (relativePath != null) {
-                        fileScanResult.add(relativePath)
+                .apply {
+                    if (this@ManifoldDomain.name != ROOT) {
+                        this.overrideClasspath(urls)
+                    }
+                }
+                .matchFilenamePattern(".*") { classpathElem: File?, relativePath: String?, _: InputStream?, _: Long ->
+                    if ((classpathElem != null) && (relativePath != null)) {
+                        fileScanResult.add(Pair(classpathElem.toPath(), relativePath))
                     }
                 }
                 .scan()
@@ -217,7 +235,7 @@ class ManifoldDomain(val name: String = ROOT,
 
     fun addClasspath(vararg urls: URL) {
         urls.forEach {
-            if (it.protocol === "file") {
+            if (it.protocol == "file") {
                 val path = Paths.get(it.toURI())
 
                 if (path.fileName.toString().endsWith(".war")) {
@@ -227,11 +245,22 @@ class ManifoldDomain(val name: String = ROOT,
                 }
 
                 if (Files.isDirectory(path)) {
-                    path.register(classpathWatcher, StandardWatchEventKinds.ENTRY_MODIFY,
+                    if (classpathWatcherKeys.containsValue(path)) {
+                        return@forEach
+                    }
+
+                    val key = path.register(classpathWatcher, StandardWatchEventKinds.ENTRY_MODIFY,
                             StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE)
+                    classpathWatcherKeys[key] = path
                 } else {
-                    path.parent.register(classpathWatcher, StandardWatchEventKinds.ENTRY_MODIFY,
+                    if (classpathWatcherKeys.containsValue(path.parent)) {
+                        return@forEach
+                    }
+
+                    val key = path.parent.register(classpathWatcher, StandardWatchEventKinds.ENTRY_MODIFY,
                             StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE)
+
+                    classpathWatcherKeys[key] = path.parent
                 }
             }
         }

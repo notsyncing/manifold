@@ -59,11 +59,11 @@ object DramaManager {
         for (path in dramaSearchPaths) {
             if (path == "$") {
                 Manifold.dependencyProvider?.getAllClasspathFiles()
-                        ?.filter { it.endsWith(".drama.js") }
-                        ?.forEach { f ->
-                            DramaScene::class.java.getResourceAsStream(f)
+                        ?.filter { (_, relPath) -> relPath.endsWith(".drama.js") }
+                        ?.forEach { (_, relPath) ->
+                            DramaScene::class.java.getResourceAsStream(relPath)
                                     .use {
-                                        evalDrama(it, f)
+                                        evalDrama(it, relPath)
                                     }
                         }
             } else {
@@ -144,7 +144,7 @@ object DramaManager {
             for (event in key.pollEvents()) {
                 val kind = event.kind()
 
-                if (kind === StandardWatchEventKinds.OVERFLOW) {
+                if (kind == StandardWatchEventKinds.OVERFLOW) {
                     logger.warning("Drama watcher overflow, at ${dramaWatchingPaths[key]}")
                     continue
                 }

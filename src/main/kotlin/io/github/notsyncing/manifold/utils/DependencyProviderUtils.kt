@@ -15,6 +15,10 @@ object DependencyProviderUtils {
         propertyCache.clear()
     }
 
+    fun removeFromCacheIf(predicate: (Class<*>) -> Boolean) {
+        propertyCache.removeIf { (clazz, _) -> predicate(clazz) }
+    }
+
     fun autoProvideProperties(o: Any, provideDependency: (Class<*>) -> Any? = { Manifold.dependencyProvider?.get(it) }) {
         val c = o::class.java
         val propList: ArrayList<KMutableProperty1<Any, Any?>>

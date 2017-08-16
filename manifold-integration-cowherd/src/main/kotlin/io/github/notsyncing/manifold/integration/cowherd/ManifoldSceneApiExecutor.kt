@@ -8,20 +8,34 @@ import io.github.notsyncing.manifold.action.ManifoldScene
 import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.action.describe.DataPolicy
 import io.github.notsyncing.manifold.story.StoryLibrary
+import io.github.notsyncing.manifold.utils.removeIf
 import io.vertx.core.http.HttpMethod
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 
 class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) : ApiExecutor() {
     companion object {
-        private val sceneConstructors = mutableMapOf<Class<ManifoldScene<*>>, KCallable<*>>()
+        private val sceneConstructors = ConcurrentHashMap<Class<ManifoldScene<*>>, KCallable<*>>()
 
         const val DATA_POLICY = "manifold.scene.api.data_policy"
         const val REQUEST_OBJECT = "manifold.scene.api.request_object"
         const val ALL_UPLOADS = "manifold.scene.api.all_uploads"
+
+        fun removeFromCacheIf(predicate: (Class<ManifoldScene<*>>) -> Boolean) {
+            sceneConstructors.removeIf { (clazz, _) -> predicate(clazz) }
+        }
+
+        fun removeFromCache(sceneClass: Class<ManifoldScene<*>>) {
+            sceneConstructors.remove(sceneClass)
+        }
+
+        fun reset() {
+            sceneConstructors.clear()
+        }
     }
 
     private fun httpMethodToDataPolicy(httpMethod: HttpMethod?): DataPolicy {
