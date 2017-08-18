@@ -13,18 +13,28 @@ import java.util.concurrent.ConcurrentHashMap
 @ForEveryScene
 class FeatureAuthenticator : SceneAuthenticator() {
     companion object {
-        private val featureAuthMap = ConcurrentHashMap<String, Pair<Enum<*>, Enum<*>>>()
+        private val featureAuthMap = ConcurrentHashMap<String, Pair<String, String>>()
 
         class FeatureAuthMapItem(val features: Array<String>) {
-            lateinit var authModule: Enum<*>
-            lateinit var authType: Enum<*>
+            lateinit var authModule: String
+            lateinit var authType: String
 
+            @Deprecated("Please use String to specify module")
             infix fun needs(module: Enum<*>): FeatureAuthMapItem {
+                return needs(module.name)
+            }
+
+            infix fun needs(module: String): FeatureAuthMapItem {
                 this.authModule = module
                 return this
             }
 
+            @Deprecated("Please use String to specify type")
             infix fun type(type: Enum<*>): FeatureAuthMapItem {
+                return type(type.name)
+            }
+
+            infix fun type(type: String): FeatureAuthMapItem {
                 this.authType = type
 
                 for (f in features) {
@@ -63,12 +73,12 @@ class FeatureAuthenticator : SceneAuthenticator() {
             featureAuthMap.clear()
         }
 
-        fun getAuth(feature: String): Pair<Enum<*>, Enum<*>> {
-            return featureAuthMap[feature] ?: Pair(DefaultModule.Undefined, DefaultAuth.Undefined)
+        fun getAuth(feature: String): Pair<String, String> {
+            return featureAuthMap[feature] ?: Pair("manifold.modules.undefined", "manifold.types.undefined")
         }
     }
 
-    private fun checkSpecialAuths(context: SceneInterceptorContext, role: AuthRole, auths: Array<SpecialAuth>): CompletableFuture<Unit> {
+    private fun checkSpecialAuths(context: SceneInterceptorContext, role: AuthRole, auths: Array<String>): CompletableFuture<Unit> {
         for (a in auths) {
             if (a == SpecialAuth.LoginOnly) {
                 if (role.roleId.isEmpty()) {

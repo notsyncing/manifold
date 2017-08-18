@@ -13,13 +13,18 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         var authOrder = arrayOf(AuthOrder.Role, AuthOrder.UpperGroup)
         var denyUndefinedPermissions = true
 
+        @Deprecated("Please use String to specify modules")
         lateinit var authModuleEnumClass: Class<Enum<*>>
+
+        @Deprecated("Please use String to specify types")
         lateinit var authTypeEnumClass: Class<Enum<*>>
 
+        @Deprecated("Please use String to specify modules")
         inline fun <reified T: Enum<*>> authModule() {
             authModuleEnumClass = T::class.java as Class<Enum<*>>
         }
 
+        @Deprecated("Please use String to specify types")
         inline fun <reified T: Enum<*>> authType() {
             authTypeEnumClass = T::class.java as Class<Enum<*>>
         }
@@ -29,6 +34,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
             denyUndefinedPermissions = true
         }
 
+        @Deprecated("Please use String to specify types")
         fun getAuthTypeId(name: String): Int {
             for (ec in authTypeEnumClass.enumConstants) {
                 if (ec.name == name) {
@@ -143,6 +149,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         return a
     }
 
+    @Deprecated("Please use String to specify types")
     private fun getPermissionFromRole(module: Enum<*>, type: Enum<*>): Permission {
         return getPermissionFromRole(module.name, type.name)
     }
@@ -233,6 +240,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         return Permission(module, type, PermissionState.Undefined)
     }
 
+    @Deprecated("Please use String to specify modules and types")
     protected fun SceneInterceptorContext.hasPermission(module: Enum<*>, type: Enum<*>): Boolean {
         val p: Permission
 
@@ -251,6 +259,25 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         }
     }
 
+    protected fun SceneInterceptorContext.hasPermission(module: String, type: String): Boolean {
+        val p: Permission
+
+        if (this.sceneContext.permissions != null) {
+            p = this.sceneContext.permissions!!.get(module, type)
+        } else {
+            p = getPermissionFromRole(module, type)
+        }
+
+        if (p.state == PermissionState.Forbidden) {
+            return false
+        } else if ((p.state == PermissionState.Undefined) && (denyUndefinedPermissions)) {
+            return false
+        } else {
+            return true
+        }
+    }
+
+    @Deprecated("Please use String to specify modules and types")
     protected fun SceneInterceptorContext.getPermission(module: Enum<*>, type: Enum<*>): Permission {
         if (this.sceneContext.permissions != null) {
             return this.sceneContext.permissions!!.get(module, type)
@@ -259,9 +286,23 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         }
     }
 
+    protected fun SceneInterceptorContext.getPermission(module: String, type: String): Permission {
+        if (this.sceneContext.permissions != null) {
+            return this.sceneContext.permissions!!.get(module, type)
+        } else {
+            return getPermissionFromRole(module, type)
+        }
+    }
+
+    @Deprecated("Please use String to specify modules and types")
     protected fun SceneInterceptorContext.checkPermission(module: Enum<*>, type: Enum<*>): CompletableFuture<Unit> {
         return if (hasPermission(module, type)) pass() else deny()
     }
+
+    protected fun SceneInterceptorContext.checkPermission(module: String, type: String): CompletableFuture<Unit> {
+        return if (hasPermission(module, type)) pass() else deny()
+    }
+
 
     override fun destroy(context: SceneInterceptorContext) = future<Unit> {
         if (authInfoProvider != null) {

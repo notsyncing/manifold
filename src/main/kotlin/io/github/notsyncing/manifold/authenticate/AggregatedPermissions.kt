@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject
 class AggregatedPermissions(val permissions: MutableList<Permission>) {
     constructor() : this(mutableListOf())
 
+    @Deprecated("Please use String to specify modules and types")
     fun get(module: Enum<*>, type: Enum<*>): Permission {
         return get(module.name, type.name)
     }

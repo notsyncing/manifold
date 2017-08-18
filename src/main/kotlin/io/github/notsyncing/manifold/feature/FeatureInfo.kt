@@ -1,11 +1,10 @@
 package io.github.notsyncing.manifold.feature
 
 import io.github.notsyncing.manifold.action.ManifoldScene
-import io.github.notsyncing.manifold.authenticate.SpecialAuth
 
 class FeatureInfo(val sceneClass: Class<ManifoldScene<*>>, val name: String,
                   val groups: Array<String> = arrayOf(), val successorOf: String = "",
-                  val internal: Boolean = false, val defaultSpecialAuths: Array<SpecialAuth> = arrayOf()) {
+                  val internal: Boolean = false, val defaultSpecialAuths: Array<String> = arrayOf()) {
     companion object {
         fun from(sceneClass: Class<ManifoldScene<*>>): FeatureInfo {
             val f = sceneClass.getAnnotation(Feature::class.java)
