@@ -177,10 +177,6 @@ class ManifoldDomain(val name: String = ROOT,
 
         classScanResult = ScanResultWrapper(scanner
                 .apply {
-//                    if (this@ManifoldDomain.name != ROOT) {
-//                        this.overrideClasspath(urls)
-//                    }
-//                    this.addClassLoader(classLoader)
                     this.overrideClassLoaders(classLoader)
                 }
                 .matchFilenamePattern(".*") { classpathElem: File?, relativePath: String?, _: InputStream?, _: Long ->
@@ -188,7 +184,7 @@ class ManifoldDomain(val name: String = ROOT,
                         fileScanResult.add(Pair(classpathElem.toPath(), relativePath))
                     }
                 }
-                .scan(), classLoader)
+                .scan(), if (classLoader.domainName == ROOT) null else classLoader)
 
         afterScanHandlers.forEach { it(this) }
 
