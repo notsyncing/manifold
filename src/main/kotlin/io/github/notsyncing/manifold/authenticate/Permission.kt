@@ -74,8 +74,8 @@ class Permission(val module: String,
     @Deprecated("Please use String to specify module and type")
     constructor(module: Int, type: Int, state: PermissionState = PermissionState.Undefined,
                 additionalData: Any? = null, inherited: Boolean = false)
-            : this(SceneAuthenticator.authModuleEnumClass.enumConstants[module].name,
-            SceneAuthenticator.authTypeEnumClass.enumConstants[type].name, state, additionalData, inherited)
+            : this(SceneAuthenticator.authModuleEnumClass!!.enumConstants[module].name,
+            SceneAuthenticator.authTypeEnumClass!!.enumConstants[type].name, state, additionalData, inherited)
 
     @Deprecated("Please use String to specify module and type")
     constructor(module: Enum<*>, type: Enum<*>, state: PermissionState = PermissionState.Undefined,

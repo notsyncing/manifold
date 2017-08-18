@@ -14,10 +14,10 @@ abstract class SceneAuthenticator : SceneInterceptor() {
         var denyUndefinedPermissions = true
 
         @Deprecated("Please use String to specify modules")
-        lateinit var authModuleEnumClass: Class<Enum<*>>
+        var authModuleEnumClass: Class<Enum<*>>? = null
 
         @Deprecated("Please use String to specify types")
-        lateinit var authTypeEnumClass: Class<Enum<*>>
+        var authTypeEnumClass: Class<Enum<*>>? = null
 
         @Deprecated("Please use String to specify modules")
         inline fun <reified T: Enum<*>> authModule() {
@@ -36,7 +36,7 @@ abstract class SceneAuthenticator : SceneInterceptor() {
 
         @Deprecated("Please use String to specify types")
         fun getAuthTypeId(name: String): Int {
-            for (ec in authTypeEnumClass.enumConstants) {
+            for (ec in authTypeEnumClass!!.enumConstants) {
                 if (ec.name == name) {
                     return ec.ordinal
                 }
