@@ -112,23 +112,33 @@ object DramaManager {
         actionMap.clear()
     }
 
-    private fun updateDramaActions(dramaFile: Path) {
+    private fun updateDramaActions(dramaFile: Path, type: WatchEvent.Kind<*>) {
         val iter = actionMap.iterator()
         val dramaFileStr = dramaFile.toString()
 
-        while (iter.hasNext()) {
-            val (_, info) = iter.next()
+        if ((type == StandardWatchEventKinds.ENTRY_MODIFY) || (type == StandardWatchEventKinds.ENTRY_DELETE)) {
+            while (iter.hasNext()) {
+                val (_, info) = iter.next()
 
-            if (info.fromPath == dramaFileStr) {
-                iter.remove()
+                if (Files.isDirectory(dramaFile)) {
+                    if (Paths.get(info.fromPath).startsWith(dramaFile)) {
+                        iter.remove()
+                    }
+                } else {
+                    if (info.fromPath == dramaFileStr) {
+                        iter.remove()
+                    }
+                }
             }
         }
 
-        Files.newBufferedReader(dramaFile).use {
-            engine.eval(it)
+        if (type != StandardWatchEventKinds.ENTRY_DELETE) {
+            Files.newBufferedReader(dramaFile).use {
+                engine.eval(it)
+            }
         }
 
-        logger.fine("Drama file $dramaFile updated.")
+        logger.fine("Drama file $dramaFile updated, type $type.")
     }
 
     private fun dramaWatcherThread() {
@@ -162,7 +172,7 @@ object DramaManager {
                     val fullPath = dir.resolve(filename)
 
                     CompletableFuture.runAsync {
-                        updateDramaActions(fullPath)
+                        updateDramaActions(fullPath, kind)
                     }
                 } catch (x: IOException) {
                     x.printStackTrace()
