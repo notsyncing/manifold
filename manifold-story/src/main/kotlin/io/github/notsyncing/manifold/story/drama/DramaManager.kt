@@ -9,10 +9,12 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
+import java.net.URI
 import java.nio.file.*
 import java.security.InvalidParameterException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.logging.LogManager
 import java.util.logging.Logger
 import javax.script.Compilable
 import javax.script.Invocable
@@ -25,7 +27,7 @@ object DramaManager {
     private val engineCompilable = engine as Compilable
     private val engineInvocable = engine as Invocable
 
-    val dramaSearchPaths = mutableListOf<String>()
+    val dramaSearchPaths = mutableListOf("$")
 
     private val dramaWatcher = FileSystems.getDefault().newWatchService()
     private val dramaWatchingPaths = mutableMapOf<WatchKey, Path>()
@@ -41,6 +43,10 @@ object DramaManager {
         engine.eval("load('classpath:manifold_story/drama-lib.js')")
     }
 
+    fun init() {
+        loadAllDramas()
+    }
+
     private fun evalDrama(reader: Reader, path: String) {
         reader.use {
             engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
@@ -52,26 +58,51 @@ object DramaManager {
         evalDrama(InputStreamReader(inputStream), path)
     }
 
-    fun loadAllDramas() {
+    private fun loadAllDramas() {
         dramaWatchingPaths.keys.forEach { it.cancel() }
         dramaWatchingPaths.clear()
+
+        actionMap.clear()
 
         for (path in dramaSearchPaths) {
             if (path == "$") {
                 Manifold.dependencyProvider?.getAllClasspathFiles()
                         ?.filter { (_, relPath) -> relPath.endsWith(".drama.js") }
-                        ?.forEach { (_, relPath) ->
-                            DramaScene::class.java.getResourceAsStream(relPath)
-                                    .use {
-                                        evalDrama(it, relPath)
-                                    }
+                        ?.forEach { (containingPath, relPath) ->
+                            val fullPath: Path
+                            val fileName = containingPath.fileName.toString()
+                            var fs: FileSystem? = null
+
+                            try {
+                                if (Files.isDirectory(containingPath)) {
+                                    fullPath = containingPath.resolve(relPath)
+                                } else if ((fileName.endsWith(".jar")) || (fileName.endsWith(".war"))) {
+                                    val uri = containingPath.toUri()
+                                    val zipUri = URI("jar:" + uri.scheme, uri.path, null)
+
+                                    fs = FileSystems.newFileSystem(zipUri, mutableMapOf<String, String>())
+                                    fullPath = fs.getPath(relPath)
+                                } else {
+                                    logger.warning("Unsupported element $containingPath $relPath on classpath, skipping.")
+                                    return@forEach
+                                }
+
+                                Files.newBufferedReader(fullPath).use {
+                                    logger.info("Loading drama $relPath from classpath")
+                                    evalDrama(it, relPath)
+                                }
+                            } finally {
+                                if (fs != null) {
+                                    fs.close()
+                                }
+                            }
                         }
             } else {
                 val p = Paths.get(path)
 
                 Files.list(p)
                         .forEach { f ->
-                            logger.fine("Loading drama $f")
+                            logger.info("Loading drama $f")
 
                             Files.newBufferedReader(f).use {
                                 evalDrama(it, f.toString())
@@ -83,20 +114,16 @@ object DramaManager {
                 dramaWatchingPaths[watchKey] = p
             }
         }
-
-        actionMap.clear()
     }
 
     @JvmStatic
-    fun registerAction(name: String, permissionName: String, permissionType: String, code: String, fromPath: String) {
+    fun registerAction(name: String, permissionName: String, permissionType: String, code: ScriptObjectMirror, fromPath: String) {
         if (actionMap.containsKey(name)) {
             logger.warning("Action map already contains an action named $name, the previous one " +
                     "will be overwritten!")
         }
 
-        val compiledCode = engineCompilable.compile(code)
-
-        val actionInfo = DramaActionInfo(name, permissionName, permissionType, compiledCode, fromPath)
+        val actionInfo = DramaActionInfo(name, permissionName, permissionType, code, fromPath)
         actionMap[name] = actionInfo
     }
 
@@ -138,7 +165,7 @@ object DramaManager {
             }
         }
 
-        logger.fine("Drama file $dramaFile updated, type $type.")
+        logger.info("Drama file $dramaFile updated, type $type.")
     }
 
     private fun dramaWatcherThread() {
@@ -192,12 +219,7 @@ object DramaManager {
 
     fun perform(scene: DramaScene, actionInfo: DramaActionInfo, parameters: JSONObject,
                 permissionParameters: JSONObject?) = future<Any?> {
-        val bindings = engine.createBindings()
-        val functor = actionInfo.code.eval(bindings)
-
-        if (functor !is ScriptObjectMirror) {
-            throw InvalidParameterException("Drama action ${actionInfo.name} has invalid code type $functor")
-        }
+        val functor = actionInfo.code
 
         if (!functor.isFunction) {
             throw InvalidParameterException("Drama action ${actionInfo.name} does not contain a function!")

@@ -1,6 +1,6 @@
 "use strict";
 
-var DramaManager = Java.type("io.github.notsyncing.manifold.story.DramaManager");
+var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaManager");
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 
 function Role(permissionName, permissionType) {
@@ -30,10 +30,10 @@ Role.prototype.on = function (actionName, handler) {
         }
     };
 
-    var code = h.toString();
-    code = code.replace("return handler(", "return (" + handler.toString() + ")(");
+    Object.freeze(h);
+    Object.seal(h);
 
-    DramaManager.registerAction(actionName, this.permissionName, this.permissionType, code, __MANIFOLD_DRAMA_CURRENT_FILE__);
+    DramaManager.registerAction(actionName, this.permissionName, this.permissionType, h, __MANIFOLD_DRAMA_CURRENT_FILE__);
 };
 
 function DramaPropertyRepositoryFactory() {
@@ -77,14 +77,14 @@ DramaPropertyRepositoryFactory.get = function (javaClassName) {
 
                     if (methodName === "get") {
                         return new Promise(function (resolve, reject) {
-                            result.thenCompose(function (r) {
+                            result.thenAccept(function (r) {
                                 var mixins = __this.mixinMap[r.class.name];
 
                                 if (mixins) {
                                     makeMixin(r, mixins);
                                 }
 
-                                return r;
+                                resolve(r);
                             }).exceptionally(reject);
                         });
                     }
@@ -103,3 +103,7 @@ DramaPropertyRepositoryFactory.mixin = function (javaClassName, classToMixin) {
 
     this.mixinMap[javaClassName].push(classToMixin);
 };
+
+function repo(javaClassName) {
+    return DramaPropertyRepositoryFactory.get(javaClassName);
+}

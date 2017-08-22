@@ -7,7 +7,7 @@ var accounter = new Role("OrderCheck", "Edit");
 var worker = new Role("OrderDone", "Edit");
 var servicer = new Role("OrderArchive", "Edit");
 
-var OrderRepository = DramaPropertyRepositoryFactory.get("io.github.notsyncing.manifold.story.OrderRepository");
+var OrderRepository = repo("io.github.notsyncing.manifold.story.OrderRepository");
 
 auditor.on("audit", function (context, params) {
     var orders = new OrderRepository(context);

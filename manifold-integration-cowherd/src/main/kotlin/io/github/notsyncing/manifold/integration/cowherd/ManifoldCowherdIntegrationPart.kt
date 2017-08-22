@@ -12,6 +12,7 @@ import io.github.notsyncing.manifold.domain.DomainClassLoader
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.feature.FeaturePublisher
 import io.github.notsyncing.manifold.story.StoryScene
+import io.github.notsyncing.manifold.story.drama.DramaScene
 import io.vertx.core.json.JsonObject
 
 class ManifoldCowherdIntegrationPart : CowherdPart {
@@ -109,5 +110,8 @@ class ManifoldCowherdIntegrationPart : CowherdPart {
         CowherdApiHub.publish(StoryScene::class.java) {
             ManifoldStoryNarrator()
         }
+
+        CowherdApiHub.publish(DramaScene::class.java.getAnnotation(SceneMetadata::class.java).value,
+                ManifoldSceneApiExecutor(DramaScene::class.java as Class<ManifoldScene<*>>))
     }
 }

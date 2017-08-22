@@ -13,6 +13,7 @@ class DramaActionContext(private val engine: ScriptEngine,
     private val engineInvocable = engine as Invocable
 
     val sceneContext get() = scene.context
+    val m get() = scene.m
 
     fun registerRepository(repo: DramaPropertyRepository<*>) {
         repoList.add(repo)
