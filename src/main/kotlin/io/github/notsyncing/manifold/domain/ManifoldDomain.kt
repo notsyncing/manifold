@@ -1,7 +1,7 @@
 package io.github.notsyncing.manifold.domain
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
-import io.github.notsyncing.manifold.di.ScanResultWrapper
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.utils.FileUtils
 import java.io.File
 import java.io.IOException
@@ -43,7 +43,7 @@ class ManifoldDomain(val name: String = ROOT,
     private var onClose: () -> CompletableFuture<Unit> = { CompletableFuture.completedFuture(Unit) }
 
     private lateinit var scanner: FastClasspathScanner
-    private var classScanResult: ScanResultWrapper? = null
+    private var classScanResult: ScanResult? = null
     private val fileScanResult = mutableListOf<Pair<Path, String>>()
 
     init {
@@ -144,13 +144,13 @@ class ManifoldDomain(val name: String = ROOT,
 
     private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
 
-    fun inAllClassScanResults(handler: (ScanResultWrapper?, ClassLoader) -> Unit) {
+    fun inAllClassScanResults(handler: (ScanResult?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
 
         childDomains.forEach { it.inAllClassScanResults(handler) }
     }
 
-    fun inCurrentClassScanResult(handler: (ScanResultWrapper?, ClassLoader) -> Unit) {
+    fun inCurrentClassScanResult(handler: (ScanResult?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
     }
 
@@ -175,16 +175,25 @@ class ManifoldDomain(val name: String = ROOT,
             return
         }
 
-        classScanResult = ScanResultWrapper(scanner
+        classScanResult = scanner
                 .apply {
-                    this.overrideClassLoaders(classLoader)
+                    if (name != ROOT) {
+                        this.overrideClassLoaders(classLoader)
+                                .ignoreParentClassLoaders()
+                    }
                 }
                 .matchFilenamePattern(".*") { classpathElem: File?, relativePath: String?, _: InputStream?, _: Long ->
+                    if (classLoader.domainName != ROOT) {
+                        if ((classpathElem == null) || (!urls.contains(classpathElem.toURI().toURL()))) {
+                            return@matchFilenamePattern
+                        }
+                    }
+
                     if ((classpathElem != null) && (relativePath != null)) {
                         fileScanResult.add(Pair(classpathElem.toPath(), relativePath))
                     }
                 }
-                .scan(), if (classLoader.domainName == ROOT) null else classLoader)
+                .scan()
 
         afterScanHandlers.forEach { it(this) }
 

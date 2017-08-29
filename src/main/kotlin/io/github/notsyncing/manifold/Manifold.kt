@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
 import io.github.notsyncing.manifold.action.interceptors.Interceptor
@@ -11,7 +12,6 @@ import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvid
 import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
 import io.github.notsyncing.manifold.authenticate.PermissionManager
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
-import io.github.notsyncing.manifold.di.ScanResultWrapper
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
@@ -124,7 +124,7 @@ object Manifold {
     }
 
     private fun processScenes(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+        val handler = { s: ScanResult?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(ManifoldScene::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
@@ -146,7 +146,7 @@ object Manifold {
     }
 
     private fun processActions(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+        val handler = { s: ScanResult?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(ManifoldAction::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
@@ -178,7 +178,7 @@ object Manifold {
     }
 
     private fun processInterceptors(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+        val handler = { s: ScanResult?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(Interceptor::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
