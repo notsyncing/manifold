@@ -84,13 +84,23 @@ object Manifold {
     val rootDomain = ManifoldDomain()
 
     fun init() {
-        ManifoldDomain.onClose { _, cl ->
+        ManifoldDomain.onClose { domain, cl ->
             sceneTransitionConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
             sceneEventConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
 
             actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
 
             DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
+
+            domain.inAllClassScanResults { sr, domainCl ->
+                sr?.getNamesOfSubclassesOf(ManifoldScene::class.java)
+                        ?.forEach {
+                            val clazz = domainCl.loadClass(it)
+                            val scene = clazz.newInstance() as ManifoldScene<*>
+
+                            scene.destroy()
+                        }
+            }
         }
 
         rootDomain.init()
