@@ -7,9 +7,7 @@ import io.github.notsyncing.manifold.eventbus.transports.LocalTransport
 import io.github.notsyncing.manifold.eventbus.transports.TransportDescriptor
 import io.github.notsyncing.manifold.eventbus.workers.EventBusWorker
 import io.github.notsyncing.manifold.utils.FutureUtils
-import java.util.*
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.*
 
 object ManifoldEventBus {
     var listenPort = 8500
@@ -20,7 +18,18 @@ object ManifoldEventBus {
     private val nodes = ConcurrentHashMap<String, ManifoldEventNode>()
     private val groupNodes = ConcurrentHashMap<String, ManifoldEventNodeGroup>()
 
-    private var beaconTimers = ConcurrentHashMap<String, Timer>()
+    private val beaconScheduler = ScheduledThreadPoolExecutor(1) { r ->
+        Thread(r).apply {
+            this.isDaemon = true
+            this.name = "manifold-eventbus-beacon-scheduler"
+        }
+    }
+
+    private val beaconTasks = ConcurrentHashMap<String, ScheduledFuture<*>>()
+
+    init {
+        beaconScheduler.removeOnCancelPolicy = true
+    }
 
     fun debug(msg: String) {
         if (debug) {
@@ -43,8 +52,9 @@ object ManifoldEventBus {
         nodes.clear()
         groupNodes.clear()
 
-        beaconTimers.values.forEach { it.cancel() }
-        beaconTimers.clear()
+        beaconTasks.forEachValue(1) { it.cancel(true) }
+        beaconTasks.clear()
+        beaconScheduler.shutdownNow()
 
         return CompletableFuture.allOf(*workers.map { it.value.close() }.toTypedArray())
     }
@@ -101,24 +111,24 @@ object ManifoldEventBus {
 
         debug("Registered local node $id, groups ${groups.joinToString { it }}")
 
-        val beaconTimer = Timer()
-        beaconTimer.schedule(object : TimerTask() {
-            override fun run() {
-                if (!nodes.containsKey(id)) {
-                    beaconTimer.cancel()
-                    return
-                }
-
-                val node = nodes[id]!!
-
-                sendBeacon(node).exceptionally {
-                    it.printStackTrace()
-                    return@exceptionally null
-                }
+        val task = beaconScheduler.scheduleAtFixedRate({
+            if (!nodes.containsKey(id)) {
+                return@scheduleAtFixedRate
             }
-        }, 0, beaconInterval)
 
-        beaconTimers.put(id, beaconTimer)
+            val node = nodes[id]!!
+
+            sendBeacon(node).exceptionally {
+                it.printStackTrace()
+                return@exceptionally null
+            }
+        }, 0, beaconInterval, TimeUnit.MILLISECONDS)
+
+        if (beaconTasks.containsKey(id)) {
+            beaconTasks[id]!!.cancel(true)
+        }
+
+        beaconTasks[id] = task
 
         sendBeacon(info)
 
@@ -131,12 +141,17 @@ object ManifoldEventBus {
         node.groups.forEach {
             if (groupNodes.containsKey(it)) {
                 groupNodes[it]!!.remove(node)
+
+                if (groupNodes[it]!!.count <= 0) {
+                    groupNodes.remove(it)
+                }
             }
         }
 
-        if (beaconTimers.containsKey(node.id)) {
-            beaconTimers[node.id]?.cancel()
-            beaconTimers.remove(node.id)
+        if (beaconTasks.containsKey(node.id)) {
+            beaconTasks[node.id]!!.cancel(true)
+            beaconTasks.remove(node.id)
+            beaconScheduler.purge()
         }
 
         debug("Unregistered local node ${node.id}")
