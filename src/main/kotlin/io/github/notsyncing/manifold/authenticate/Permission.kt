@@ -74,13 +74,16 @@ class Permission(val module: String,
     @Deprecated("Please use String to specify module and type")
     constructor(module: Int, type: Int, state: PermissionState = PermissionState.Undefined,
                 additionalData: Any? = null, inherited: Boolean = false)
-            : this(SceneAuthenticator.authModuleEnumClass!!.enumConstants[module].name,
-            SceneAuthenticator.authTypeEnumClass!!.enumConstants[type].name, state, additionalData, inherited)
+            : this(SceneAuthenticator.authModuleEnumClass!!.enumConstants[module].let { if (PermissionManager.useIntegerAsPermissions) it.ordinal.toString() else it.name },
+            SceneAuthenticator.authTypeEnumClass!!.enumConstants[type].let { if (PermissionManager.useIntegerAsPermissions) it.ordinal.toString() else it.name },
+            state, additionalData, inherited)
 
     @Deprecated("Please use String to specify module and type")
     constructor(module: Enum<*>, type: Enum<*>, state: PermissionState = PermissionState.Undefined,
                 additionalData: Any? = null, inherited: Boolean = false)
-            : this(module.name, type.name, state, additionalData, inherited)
+            : this(module.let { if (PermissionManager.useIntegerAsPermissions) it.ordinal.toString() else it.name },
+            type.let { if (PermissionManager.useIntegerAsPermissions) it.ordinal.toString() else it.name }, state,
+            additionalData, inherited)
 
     constructor() : this(0, 0)
 
