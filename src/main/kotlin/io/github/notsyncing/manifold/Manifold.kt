@@ -1,6 +1,9 @@
 package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.parser.ParserConfig
+import com.alibaba.fastjson.serializer.SerializeConfig
+import com.alibaba.fastjson.util.IdentityHashMap
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
@@ -18,12 +21,14 @@ import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
+import io.github.notsyncing.manifold.utils.BlackMagicUtils
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import io.github.notsyncing.manifold.utils.removeIf
 import java.io.InvalidClassException
 import java.io.InvalidObjectException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
+import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -94,6 +99,8 @@ object Manifold {
                             scene.destroy()
                         }
             }
+
+            BlackMagicUtils.clearFastJsonCache(cl)
 
             sceneTransitionConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
             sceneEventConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
