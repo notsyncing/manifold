@@ -85,13 +85,6 @@ object Manifold {
 
     fun init() {
         ManifoldDomain.onClose { domain, cl ->
-            sceneTransitionConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
-            sceneEventConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
-
-            actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
-
-            DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
-
             domain.inAllClassScanResults { sr, domainCl ->
                 sr?.getNamesOfSubclassesOf(ManifoldScene::class.java)
                         ?.forEach {
@@ -101,6 +94,13 @@ object Manifold {
                             scene.destroy()
                         }
             }
+
+            sceneTransitionConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
+            sceneEventConstructorCache.removeIf { (clazz, _) -> clazz.classLoader == cl }
+
+            actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
+
+            DependencyProviderUtils.removeFromCacheIf{ it.classLoader == cl }
         }
 
         rootDomain.init()
