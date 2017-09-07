@@ -8,7 +8,8 @@ import javax.script.Invocable
 import javax.script.ScriptEngine
 
 class DramaActionContext(private val engine: ScriptEngine,
-                         private val scene: DramaScene) {
+                         private val scene: DramaScene,
+                         private val domain: String? = null) {
     private val repoList = mutableListOf<DramaPropertyRepository<*>>()
     private val engineInvocable = engine as Invocable
 

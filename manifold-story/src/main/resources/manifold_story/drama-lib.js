@@ -2,6 +2,7 @@
 
 var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaManager");
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
+var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.utils");
 
 function Role(permissionName, permissionType) {
     this.permissionName = permissionName;
@@ -33,7 +34,8 @@ Role.prototype.on = function (actionName, handler) {
     Object.freeze(h);
     Object.seal(h);
 
-    DramaManager.registerAction(actionName, this.permissionName, this.permissionType, h, __MANIFOLD_DRAMA_CURRENT_FILE__);
+    DramaManager.registerAction(actionName, this.permissionName, this.permissionType, h,
+        __MANIFOLD_DRAMA_CURRENT_FILE__, __MANIFOLD_DRAMA_CURRENT_DOMAIN__);
 };
 
 function DramaPropertyRepositoryFactory() {
@@ -106,4 +108,20 @@ DramaPropertyRepositoryFactory.mixin = function (javaClassName, classToMixin) {
 
 function repo(javaClassName) {
     return DramaPropertyRepositoryFactory.get(javaClassName);
+}
+
+function type(javaClassName) {
+    var t = Java.type(javaClassName);
+
+    t.from = function (objOrJson, domainName) {
+        var json = objOrJson;
+
+        if (typeof json === "object") {
+            json = JSON.stringify(json);
+        }
+
+        return DramaUtils.jsonToObject(javaClassName, json, domainName);
+    };
+
+    return t;
 }

@@ -14,11 +14,12 @@ import java.util.concurrent.CompletableFuture
 
 @SceneMetadata("manifold.drama.entry", DataPolicy.Modify)
 class DramaScene(private val action: String,
+                 private val domain: String? = null,
                  private val parameters: JSONObject): ManifoldScene<Any?>() {
-    constructor() : this("", JSONObject())
+    constructor() : this("", "", JSONObject())
 
     override fun stage(): CompletableFuture<Any?> {
-        val actionInfo = DramaManager.getAction(action)
+        val actionInfo = DramaManager.getAction(action, domain)
 
         if (actionInfo == null) {
             return FutureUtils.failed(ClassNotFoundException("No such action $action found in dramas"))

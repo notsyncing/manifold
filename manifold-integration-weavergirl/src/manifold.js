@@ -153,6 +153,7 @@ class Manifold {
 
         let p = {
             action: name,
+            domain: namespace,
             parameters: parameters
         };
 

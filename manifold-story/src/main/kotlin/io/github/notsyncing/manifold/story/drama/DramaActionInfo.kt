@@ -7,5 +7,6 @@ class DramaActionInfo(val name: String,
                       val permissionName: String,
                       val permissionType: String,
                       val code: ScriptObjectMirror,
-                      val fromPath: String) {
+                      val fromPath: String,
+                      val domain: String? = null) {
 }
