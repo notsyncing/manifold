@@ -18,17 +18,17 @@ object ManifoldEventBus {
     private val nodes = ConcurrentHashMap<String, ManifoldEventNode>()
     private val groupNodes = ConcurrentHashMap<String, ManifoldEventNodeGroup>()
 
-    private val beaconScheduler = ScheduledThreadPoolExecutor(1) { r ->
+    private lateinit var beaconScheduler: ScheduledThreadPoolExecutor
+
+    private val beaconTasks = ConcurrentHashMap<String, ScheduledFuture<*>>()
+
+    private fun createScheduler() = ScheduledThreadPoolExecutor(1) { r ->
         Thread(r).apply {
             this.isDaemon = true
             this.name = "manifold-eventbus-beacon-scheduler"
         }
-    }
-
-    private val beaconTasks = ConcurrentHashMap<String, ScheduledFuture<*>>()
-
-    init {
-        beaconScheduler.removeOnCancelPolicy = true
+    }.apply {
+        this.removeOnCancelPolicy = true
     }
 
     fun debug(msg: String) {
@@ -44,6 +44,8 @@ object ManifoldEventBus {
     fun init(listenPort: Int = 8500, beaconInterval: Long = 10000L) {
         this.listenPort = listenPort
         this.beaconInterval = beaconInterval
+
+        beaconScheduler = createScheduler()
 
         debug("Manifold event bus initialized")
     }
