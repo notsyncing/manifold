@@ -365,4 +365,8 @@ class ManifoldDomain(val name: String = ROOT,
 
         return null
     }
+
+    fun loadClass(className: String): Class<*>? {
+        return classLoader.loadClass(className)
+    }
 }
