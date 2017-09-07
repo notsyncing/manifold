@@ -52,8 +52,8 @@ function makeMixin(target, mixins) {
     return target;
 }
 
-DramaPropertyRepositoryFactory.get = function (javaClassName) {
-    var repoClass = Java.type(javaClassName);
+DramaPropertyRepositoryFactory.get = function (javaClassName, domain) {
+    var repoClass = DramaUtils.type(javaClassName, domain || __MANIFOLD_DRAMA_CURRENT_DOMAIN__);
 
     if (!repoClass) {
         return null;
@@ -106,21 +106,22 @@ DramaPropertyRepositoryFactory.mixin = function (javaClassName, classToMixin) {
     this.mixinMap[javaClassName].push(classToMixin);
 };
 
-function repo(javaClassName) {
-    return DramaPropertyRepositoryFactory.get(javaClassName);
+function repo(javaClassName, domain) {
+    return DramaPropertyRepositoryFactory.get(javaClassName, domain || __MANIFOLD_DRAMA_CURRENT_DOMAIN__);
 }
 
-function type(javaClassName) {
-    var t = Java.type(javaClassName);
+function type(javaClassName, domain) {
+    var _domain = domain || __MANIFOLD_DRAMA_CURRENT_DOMAIN__;
+    var t = DramaUtils.type(javaClassName, _domain);
 
-    t.from = function (objOrJson, domainName) {
+    t.from = function (objOrJson) {
         var json = objOrJson;
 
         if (typeof json === "object") {
             json = JSON.stringify(json);
         }
 
-        return DramaUtils.jsonToObject(javaClassName, json, domainName);
+        return DramaUtils.jsonToObject(javaClassName, json, _domain);
     };
 
     return t;

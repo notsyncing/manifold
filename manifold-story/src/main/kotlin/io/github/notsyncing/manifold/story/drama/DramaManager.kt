@@ -57,7 +57,11 @@ object DramaManager {
         reader.use {
             engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
             engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain, ScriptContext.ENGINE_SCOPE)
+
             engine.eval(it)
+
+            engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", ScriptContext.ENGINE_SCOPE)
+            engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", ScriptContext.ENGINE_SCOPE)
         }
     }
 
