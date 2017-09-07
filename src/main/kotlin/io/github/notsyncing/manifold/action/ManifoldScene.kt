@@ -233,10 +233,16 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
                 afterExecution(false).await()
 
-                if (e is SceneFailedException) {
-                    interceptorContext.result = e.data
+                val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
+
+                if (!shouldUseAlternativeResult) {
+                    if (e is SceneFailedException) {
+                        interceptorContext.result = e.data
+                    } else {
+                        throw e
+                    }
                 } else {
-                    throw e
+                    interceptorContext.result = alternativeResult
                 }
             }
 
@@ -256,10 +262,16 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         } catch (e: Exception) {
             afterExecution(false).await()
 
-            if (e is SceneFailedException) {
-                r = e.data as R
+            val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
+
+            if (!shouldUseAlternativeResult) {
+                if (e is SceneFailedException) {
+                    r = e.data as R
+                } else {
+                    throw e
+                }
             } else {
-                throw e
+                r = alternativeResult as R
             }
         }
 
@@ -312,5 +324,9 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
 
         return true
+    }
+
+    protected open fun onFailure(exception: Exception): CompletableFuture<Pair<Boolean, R?>> {
+        return CompletableFuture.completedFuture(Pair(false, null))
     }
 }
