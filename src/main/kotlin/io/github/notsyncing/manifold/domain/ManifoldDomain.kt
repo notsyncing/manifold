@@ -44,7 +44,7 @@ class ManifoldDomain(val name: String = ROOT,
 
     private lateinit var scanner: FastClasspathScanner
     private var classScanResult: ScanResult? = null
-    private val fileScanResult = mutableListOf<Pair<Path, String>>()
+    private val fileScanResult = mutableListOf<Triple<ManifoldDomain, Path, String>>()
 
     init {
         if (parentDomain != null) {
@@ -154,13 +154,13 @@ class ManifoldDomain(val name: String = ROOT,
         handler(classScanResult, classLoader)
     }
 
-    fun inAllFileScanResults(handler: (List<Pair<Path, String>>, ClassLoader) -> Unit) {
+    fun inAllFileScanResults(handler: (List<Triple<ManifoldDomain, Path, String>>, ClassLoader) -> Unit) {
         handler(fileScanResult, classLoader)
 
         childDomains.forEach { it.inAllFileScanResults(handler) }
     }
 
-    fun inCurrentFileScanResult(handler: (List<Pair<Path, String>>, ClassLoader) -> Unit) {
+    fun inCurrentFileScanResult(handler: (List<Triple<ManifoldDomain, Path, String>>, ClassLoader) -> Unit) {
         handler(fileScanResult, classLoader)
     }
 
@@ -190,7 +190,7 @@ class ManifoldDomain(val name: String = ROOT,
                     }
 
                     if ((classpathElem != null) && (relativePath != null)) {
-                        fileScanResult.add(Pair(classpathElem.toPath(), relativePath))
+                        fileScanResult.add(Triple(this, classpathElem.toPath(), relativePath))
                     }
                 }
                 .scan()

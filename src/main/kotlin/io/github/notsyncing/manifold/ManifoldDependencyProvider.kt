@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold
 
+import io.github.notsyncing.manifold.domain.ManifoldDomain
 import java.nio.file.Path
 import java.util.*
 
@@ -60,6 +61,18 @@ interface ManifoldDependencyProvider {
         val list = mutableListOf<Pair<Path, String>>()
 
         getAllClasspathFiles { p, s -> list.add(Pair(p, s)) }
+
+        return list
+    }
+
+    fun getAllClasspathFilesWithDomain(handler: (ManifoldDomain, Path, String) -> Unit) {
+        throw UnsupportedOperationException("Not implemented")
+    }
+
+    fun getAllClasspathFilesWithDomain(): List<Triple<ManifoldDomain, Path, String>> {
+        val list = mutableListOf<Triple<ManifoldDomain, Path, String>>()
+
+        getAllClasspathFilesWithDomain { d, p, s -> list.add(Triple(d, p, s)) }
 
         return list
     }

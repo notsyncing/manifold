@@ -180,7 +180,13 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
 
     override fun getAllClasspathFiles(handler: (Path, String) -> Unit) {
         rootDomain.inAllFileScanResults { l, cl ->
-            l.forEach { (classpathElem, relPath) -> handler(classpathElem, relPath) }
+            l.forEach { (_, classpathElem, relPath) -> handler(classpathElem, relPath) }
+        }
+    }
+
+    override fun getAllClasspathFilesWithDomain(handler: (ManifoldDomain, Path, String) -> Unit) {
+        rootDomain.inAllFileScanResults { l, cl ->
+            l.forEach { (domain, classpathElem, relPath) -> handler(domain, classpathElem, relPath) }
         }
     }
 }
