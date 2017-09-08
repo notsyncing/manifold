@@ -2,7 +2,7 @@
 
 var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaManager");
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
-var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.utils");
+var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
 
 function Role(permissionName, permissionType) {
     this.permissionName = permissionName;
