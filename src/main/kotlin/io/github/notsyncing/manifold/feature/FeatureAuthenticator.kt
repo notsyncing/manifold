@@ -3,10 +3,7 @@ package io.github.notsyncing.manifold.feature
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.interceptors.ForEveryScene
 import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
-import io.github.notsyncing.manifold.authenticate.AuthRole
-import io.github.notsyncing.manifold.authenticate.SceneAuthenticator
-import io.github.notsyncing.manifold.authenticate.SpecialAuth
-import io.github.notsyncing.manifold.authenticate.SpecialRole
+import io.github.notsyncing.manifold.authenticate.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,7 +18,11 @@ class FeatureAuthenticator : SceneAuthenticator() {
 
             @Deprecated("Please use String to specify module")
             infix fun needs(module: Enum<*>): FeatureAuthMapItem {
-                return needs(module.name)
+                if (PermissionManager.useIntegerAsPermissions) {
+                    return needs(module.ordinal.toString())
+                } else {
+                    return needs(module.name)
+                }
             }
 
             infix fun needs(module: String): FeatureAuthMapItem {
@@ -31,7 +32,11 @@ class FeatureAuthenticator : SceneAuthenticator() {
 
             @Deprecated("Please use String to specify type")
             infix fun type(type: Enum<*>): FeatureAuthMapItem {
-                return type(type.name)
+                if (PermissionManager.useIntegerAsPermissions) {
+                    return type(type.ordinal.toString())
+                } else {
+                    return type(type.name)
+                }
             }
 
             infix fun type(type: String): FeatureAuthMapItem {
