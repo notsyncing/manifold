@@ -132,10 +132,14 @@ class ManifoldEventNode(var id: String,
 
     fun receive(event: ManifoldEvent) {
         if (local) {
+            ManifoldEventBus.debug("Local node $id received event $event")
+
             processEvent(event)
         } else {
             if ((event.sendType != EventSendType.Broadcast) && (event.sendType != EventSendType.MultiGroupUnicast)
                     && (event.sendType != EventSendType.Groupcast)) {
+                ManifoldEventBus.debug("Transporting event $event to remote node $id")
+
                 ManifoldEventBus.sendToRemote(event, this)
             }
         }
