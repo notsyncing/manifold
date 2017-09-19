@@ -16,6 +16,7 @@ import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvide
 import io.github.notsyncing.manifold.authenticate.PermissionManager
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.domain.ManifoldDomain
+import io.github.notsyncing.manifold.domain.ScanResultWrapper
 import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
@@ -141,7 +142,7 @@ object Manifold {
     }
 
     private fun processScenes(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult?, cl: ClassLoader ->
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(ManifoldScene::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
@@ -163,7 +164,7 @@ object Manifold {
     }
 
     private fun processActions(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult?, cl: ClassLoader ->
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(ManifoldAction::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 
@@ -195,7 +196,7 @@ object Manifold {
     }
 
     private fun processInterceptors(domain: ManifoldDomain = rootDomain) {
-        val handler = { s: ScanResult?, cl: ClassLoader ->
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
             s?.getNamesOfSubclassesOf(Interceptor::class.java)?.forEach {
                 val clazz = Class.forName(it, true, cl)
 

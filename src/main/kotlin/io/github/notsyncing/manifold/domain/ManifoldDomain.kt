@@ -1,7 +1,9 @@
 package io.github.notsyncing.manifold.domain
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
+import io.github.lukehutch.fastclasspathscanner.scanner.ClassInfo
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
+import io.github.lukehutch.fastclasspathscanner.scanner.ScanSpec
 import io.github.notsyncing.manifold.utils.FileUtils
 import java.io.File
 import java.io.IOException
@@ -43,7 +45,7 @@ class ManifoldDomain(val name: String = ROOT,
     private var onClose: () -> CompletableFuture<Unit> = { CompletableFuture.completedFuture(Unit) }
 
     private lateinit var scanner: FastClasspathScanner
-    private var classScanResult: ScanResult? = null
+    private var classScanResult: ScanResultWrapper? = null
     private val fileScanResult = mutableListOf<Triple<ManifoldDomain, Path, String>>()
 
     init {
@@ -144,13 +146,13 @@ class ManifoldDomain(val name: String = ROOT,
 
     private fun createScanner() = FastClasspathScanner("-com.github.mauricio", "-scala")
 
-    fun inAllClassScanResults(handler: (ScanResult?, ClassLoader) -> Unit) {
+    fun inAllClassScanResults(handler: (ScanResultWrapper?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
 
         childDomains.forEach { it.inAllClassScanResults(handler) }
     }
 
-    fun inCurrentClassScanResult(handler: (ScanResult?, ClassLoader) -> Unit) {
+    fun inCurrentClassScanResult(handler: (ScanResultWrapper?, ClassLoader) -> Unit) {
         handler(classScanResult, classLoader)
     }
 
@@ -164,6 +166,27 @@ class ManifoldDomain(val name: String = ROOT,
         handler(fileScanResult, classLoader)
     }
 
+    // Dark black magic lives here...
+    private fun filterScanResult(result: ScanResult): ScanResultWrapper {
+        if (this.name == ROOT) {
+            return ScanResultWrapper(result, emptySet(), classLoader)
+        }
+
+        val classGraphBuilderField = result.javaClass.getDeclaredField("classGraphBuilder")
+                .apply { this.isAccessible = true }
+        val classGraphBuilder = classGraphBuilderField.get(result)
+
+        val classNameToClassLoadersField = classGraphBuilder.javaClass.getDeclaredField("classNameToClassLoaders")
+                .apply { this.isAccessible = true }
+        val classNameToClassLoaders = classNameToClassLoadersField.get(classGraphBuilder) as MutableMap<String, List<ClassLoader>>
+
+        val classesToRemove = classNameToClassLoaders.filter { (_, classloaders) -> !classloaders.contains(classLoader) }
+                .map { (className, _) -> className }
+                .toHashSet()
+
+        return ScanResultWrapper(result, classesToRemove, classLoader)
+    }
+
     private fun scanClasspath() {
         scanning = true
         needRescan = false
@@ -175,11 +198,10 @@ class ManifoldDomain(val name: String = ROOT,
             return
         }
 
-        classScanResult = scanner
+        classScanResult = filterScanResult(scanner
                 .apply {
                     if (name != ROOT) {
                         this.overrideClassLoaders(classLoader)
-                                .ignoreParentClassLoaders()
                     }
                 }
                 .matchFilenamePattern(".*") { classpathElem: File?, relativePath: String?, _: InputStream?, _: Long ->
@@ -193,7 +215,7 @@ class ManifoldDomain(val name: String = ROOT,
                         fileScanResult.add(Triple(this, classpathElem.toPath(), relativePath))
                     }
                 }
-                .scan()
+                .scan())
 
         afterScanHandlers.forEach { it(this) }
 
