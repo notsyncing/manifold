@@ -1,0 +1,9 @@
+"use strict";
+
+(function () {
+    var user = new Role();
+
+    user.on("simpleActionExternal", function (context, params) {
+        return toCompletableFuture(Promise.resolve("Hello, world 2!"));
+    });
+})();

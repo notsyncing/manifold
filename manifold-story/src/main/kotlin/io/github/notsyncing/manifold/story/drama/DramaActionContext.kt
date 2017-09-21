@@ -1,22 +1,32 @@
 package io.github.notsyncing.manifold.story.drama
 
+import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.utils.FutureUtils
 import jdk.nashorn.api.scripting.ScriptObjectMirror
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
+import java.util.concurrent.CompletableFuture
 import javax.script.Invocable
 import javax.script.ScriptEngine
+import kotlin.reflect.KParameter
+import kotlin.reflect.full.primaryConstructor
 
 class DramaActionContext(private val engine: ScriptEngine,
                          private val scene: DramaScene,
                          private val domain: String? = null) {
-    private val repoList = mutableListOf<DramaPropertyRepository<*>>()
+    private val repoList = mutableListOf<DramaPropertyRepository>()
     private val engineInvocable = engine as Invocable
 
     val sceneContext get() = scene.context
     val m get() = scene.m
 
-    fun registerRepository(repo: DramaPropertyRepository<*>) {
+    val uploads get() = scene.context.additionalData["manifold.scene.api.all_uploads"]
+    val uploadMap get() = scene.context.additionalData["manifold.scene.api.all_uploads.map"]
+
+    val role get() = scene.context.role
+
+    fun registerRepository(repo: DramaPropertyRepository) {
         repoList.add(repo)
     }
 
@@ -41,5 +51,21 @@ class DramaActionContext(private val engine: ScriptEngine,
         val str = engineInvocable.invokeMethod(json, "stringify", data) as String
 
         emit(event, str)
+    }
+
+    fun fail(message: String): CompletableFuture<Any?> {
+        return FutureUtils.failed(DramaExecutionException(message))
+    }
+
+    fun m(actionClass: Class<ManifoldAction<*>>, params: Map<String, Any?>): CompletableFuture<Any?> {
+        val kotlinClass = actionClass.kotlin
+        val constructor = kotlinClass.primaryConstructor ?: return FutureUtils.failed(RuntimeException("Action $actionClass has no primary constructor!"))
+        val finalParams = mutableMapOf<KParameter, Any?>()
+
+        for (p in constructor.parameters) {
+            finalParams[p] = params[p.name]
+        }
+
+        return m.invoke(constructor.callBy(finalParams)) as CompletableFuture<Any?>
     }
 }

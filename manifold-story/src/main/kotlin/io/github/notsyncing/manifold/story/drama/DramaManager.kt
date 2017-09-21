@@ -16,6 +16,7 @@ import java.nio.file.*
 import java.security.InvalidParameterException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import java.util.logging.LogManager
 import java.util.logging.Logger
 import javax.script.Compilable
@@ -25,18 +26,31 @@ import javax.script.ScriptEngineManager
 import kotlin.concurrent.thread
 
 object DramaManager {
+    private const val DRAMA_EXT = ".drama.js"
+
     private val engine = ScriptEngineManager().getEngineByName("nashorn")
     private val engineCompilable = engine as Compilable
     private val engineInvocable = engine as Invocable
 
-    val dramaSearchPaths = mutableListOf("$")
+    private val dramaSearchPaths = mutableListOf("$")
+
+    var ignoreClasspathDramas = false
 
     private val dramaWatcher = FileSystems.getDefault().newWatchService()
     private val dramaWatchingPaths = mutableMapOf<WatchKey, Path>()
-    private val dramaWatchingThread = thread(isDaemon = true, block = this::dramaWatcherThread)
+    private val dramaWatchingThread = thread(name = "manifold.drama.watcher", isDaemon = true, block = this::dramaWatcherThread)
     private var dramaWatching = true
 
+    private var isInit = true
+
     private val actionMap = ConcurrentHashMap<String, DramaActionInfo>()
+
+    private val dramaReloadThread = Executors.newSingleThreadExecutor {
+        Thread(it).apply {
+            this.name = "manifold.drama.reloader"
+            this.isDaemon = true
+        }
+    }
 
     private val logger = Logger.getLogger(javaClass.simpleName)
 
@@ -45,12 +59,33 @@ object DramaManager {
         engine.eval("load('classpath:manifold_story/drama-lib.js')")
     }
 
+    fun addDramaSearchPath(p: Path) {
+        addDramaSearchPath(p.toAbsolutePath().normalize().toString())
+    }
+
+    fun addDramaSearchPath(p: String) {
+        if (dramaSearchPaths.contains(p)) {
+            logger.warning("Drama search paths already contain $p, will skip adding it.")
+            return
+        }
+
+        dramaSearchPaths.add(p)
+
+        if (!isInit) {
+            loadAndWatchDramasFromDirectory(p)
+        }
+    }
+
     fun init() {
+        isInit = true
+
         loadAllDramas()
 
         ManifoldDomain.onClose { domain, _ ->
             actionMap.removeIf { (_, info) -> info.domain == domain.name }
         }
+
+        isInit = false
     }
 
     private fun evalDrama(reader: Reader, domain: String?, path: String) {
@@ -69,6 +104,24 @@ object DramaManager {
         evalDrama(InputStreamReader(inputStream), domain, path)
     }
 
+    private fun loadAndWatchDramasFromDirectory(path: String) {
+        val p = Paths.get(path)
+
+        Files.list(p)
+                .filter { it.fileName.toString().endsWith(DRAMA_EXT) }
+                .forEach { f ->
+                    logger.info("Loading drama $f")
+
+                    Files.newBufferedReader(f).use {
+                        evalDrama(it, null, f.toString())
+                    }
+                }
+
+        val watchKey = p.register(dramaWatcher, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_MODIFY)
+        dramaWatchingPaths[watchKey] = p
+    }
+
     private fun loadAllDramas() {
         dramaWatchingPaths.keys.forEach { it.cancel() }
         dramaWatchingPaths.clear()
@@ -77,8 +130,12 @@ object DramaManager {
 
         for (path in dramaSearchPaths) {
             if (path == "$") {
+                if (ignoreClasspathDramas) {
+                    continue
+                }
+
                 Manifold.dependencyProvider?.getAllClasspathFilesWithDomain()
-                        ?.filter { (_, _, relPath) -> relPath.endsWith(".drama.js") }
+                        ?.filter { (_, _, relPath) -> relPath.endsWith(DRAMA_EXT) }
                         ?.forEach { (domain, containingPath, relPath) ->
                             val fullPath: Path
                             val fileName = containingPath.fileName.toString()
@@ -109,20 +166,7 @@ object DramaManager {
                             }
                         }
             } else {
-                val p = Paths.get(path)
-
-                Files.list(p)
-                        .forEach { f ->
-                            logger.info("Loading drama $f")
-
-                            Files.newBufferedReader(f).use {
-                                evalDrama(it, null, f.toString())
-                            }
-                        }
-
-                val watchKey = p.register(dramaWatcher, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_CREATE,
-                        StandardWatchEventKinds.ENTRY_MODIFY)
-                dramaWatchingPaths[watchKey] = p
+                loadAndWatchDramasFromDirectory(path)
             }
         }
     }
@@ -132,7 +176,7 @@ object DramaManager {
     }
 
     @JvmStatic
-    fun registerAction(name: String, permissionName: String, permissionType: String, code: ScriptObjectMirror,
+    fun registerAction(name: String, permissionName: String?, permissionType: String?, code: ScriptObjectMirror,
                        fromPath: String, domain: String?) {
         if (actionMap.containsKey(name)) {
             logger.warning("Action map already contains an action named $name, the previous one " +
@@ -141,7 +185,7 @@ object DramaManager {
 
         var realName = name
 
-        if (!domain.isNullOrBlank()) {
+        if ((!domain.isNullOrBlank()) && (domain != ManifoldDomain.ROOT)) {
             realName = "${domain}_$name"
         }
 
@@ -159,6 +203,8 @@ object DramaManager {
         dramaWatchingPaths.keys.forEach { it.cancel() }
         dramaWatchingPaths.clear()
         actionMap.clear()
+
+        ignoreClasspathDramas = false
     }
 
     private fun updateDramaActions(dramaFile: Path, type: WatchEvent.Kind<*>) {
@@ -183,7 +229,7 @@ object DramaManager {
 
         if (type != StandardWatchEventKinds.ENTRY_DELETE) {
             Files.newBufferedReader(dramaFile).use {
-                engine.eval(it)
+                evalDrama(it, null, dramaFileStr)
             }
         }
 
@@ -197,7 +243,13 @@ object DramaManager {
             try {
                 key = dramaWatcher.take()
             } catch (x: InterruptedException) {
-                return
+                continue
+            } catch (x: ClosedWatchServiceException) {
+                if (!dramaWatching) {
+                    continue
+                }
+
+                throw x
             }
 
             for (event in key.pollEvents()) {
@@ -210,6 +262,11 @@ object DramaManager {
 
                 val ev = event as WatchEvent<Path>
                 val filename = ev.context()
+
+                if (!filename.toString().endsWith(DRAMA_EXT)) {
+                    continue
+                }
+
                 val dir = dramaWatchingPaths[key]
 
                 if (dir == null) {
@@ -220,8 +277,13 @@ object DramaManager {
                 try {
                     val fullPath = dir.resolve(filename)
 
-                    CompletableFuture.runAsync {
-                        updateDramaActions(fullPath, kind)
+                    dramaReloadThread.submit {
+                        try {
+                            updateDramaActions(fullPath, kind)
+                        } catch (e: Exception) {
+                            logger.warning("An exception occured when reloading drama $fullPath: ${e.message}")
+                            e.printStackTrace()
+                        }
                     }
                 } catch (x: IOException) {
                     x.printStackTrace()

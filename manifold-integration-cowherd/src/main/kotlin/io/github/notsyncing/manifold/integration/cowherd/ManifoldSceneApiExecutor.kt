@@ -24,6 +24,7 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         const val DATA_POLICY = "manifold.scene.api.data_policy"
         const val REQUEST_OBJECT = "manifold.scene.api.request_object"
         const val ALL_UPLOADS = "manifold.scene.api.all_uploads"
+        const val ALL_UPLOADS_MAP = "manifold.scene.api.all_uploads.map"
 
         fun removeFromCacheIf(predicate: (Class<ManifoldScene<*>>) -> Boolean) {
             sceneConstructors.removeIf { (clazz, _) -> predicate(clazz) }
@@ -55,6 +56,7 @@ class ManifoldSceneApiExecutor(private val sceneClass: Class<ManifoldScene<*>>) 
         inst.context.additionalData[DATA_POLICY] = httpMethodToDataPolicy(context.request.method())
         inst.context.additionalData[REQUEST_OBJECT] = context.request
         inst.context.additionalData[ALL_UPLOADS] = uploads
+        inst.context.additionalData[ALL_UPLOADS_MAP] = uploads?.groupBy { it.parameterName }
 
         var ending = Manifold.run(inst, sessionIdentifier).await()
         val sceneName = inst.javaClass.getAnnotation(SceneMetadata::class.java)?.value
