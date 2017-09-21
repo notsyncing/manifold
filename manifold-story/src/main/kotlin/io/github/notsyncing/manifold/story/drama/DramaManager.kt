@@ -19,26 +19,23 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.LogManager
 import java.util.logging.Logger
-import javax.script.Compilable
-import javax.script.Invocable
-import javax.script.ScriptContext
-import javax.script.ScriptEngineManager
+import javax.script.*
 import kotlin.concurrent.thread
 
 object DramaManager {
     private const val DRAMA_EXT = ".drama.js"
 
-    private val engine = ScriptEngineManager().getEngineByName("nashorn")
-    private val engineCompilable = engine as Compilable
-    private val engineInvocable = engine as Invocable
+    private lateinit var engine: ScriptEngine
+    private val engineCompilable get() = engine as Compilable
+    private val engineInvocable get() = engine as Invocable
 
     private val dramaSearchPaths = mutableListOf("$")
 
     var ignoreClasspathDramas = false
 
-    private val dramaWatcher = FileSystems.getDefault().newWatchService()
+    private lateinit var dramaWatcher: WatchService
+    private lateinit var dramaWatchingThread: Thread
     private val dramaWatchingPaths = mutableMapOf<WatchKey, Path>()
-    private val dramaWatchingThread = thread(name = "manifold.drama.watcher", isDaemon = true, block = this::dramaWatcherThread)
     private var dramaWatching = true
 
     private var isInit = true
@@ -53,11 +50,6 @@ object DramaManager {
     }
 
     private val logger = Logger.getLogger(javaClass.simpleName)
-
-    init {
-        engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')")
-        engine.eval("load('classpath:manifold_story/drama-lib.js')")
-    }
 
     fun addDramaSearchPath(p: Path) {
         addDramaSearchPath(p.toAbsolutePath().normalize().toString())
@@ -78,6 +70,16 @@ object DramaManager {
 
     fun init() {
         isInit = true
+
+        engine = ScriptEngineManager().getEngineByName("nashorn")
+
+        engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')")
+        engine.eval("load('classpath:manifold_story/drama-lib.js')")
+
+        dramaWatcher = FileSystems.getDefault().newWatchService()
+
+        dramaWatching = true
+        dramaWatchingThread = thread(name = "manifold.drama.watcher", isDaemon = true, block = this::dramaWatcherThread)
 
         loadAllDramas()
 
@@ -196,12 +198,16 @@ object DramaManager {
     fun destroy() {
         dramaWatching = false
         dramaWatcher.close()
+
+        dramaWatchingThread.interrupt()
     }
 
     fun reset() {
         dramaSearchPaths.clear()
+        dramaSearchPaths.add("$")
         dramaWatchingPaths.keys.forEach { it.cancel() }
         dramaWatchingPaths.clear()
+
         actionMap.clear()
 
         ignoreClasspathDramas = false
