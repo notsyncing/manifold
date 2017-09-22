@@ -8,6 +8,7 @@ import io.github.notsyncing.manifold.eventbus.transports.TransportDescriptor
 import io.github.notsyncing.manifold.eventbus.workers.EventBusWorker
 import io.github.notsyncing.manifold.utils.FutureUtils
 import java.util.concurrent.*
+import java.util.logging.Logger
 
 object ManifoldEventBus {
     var listenPort = 8500
@@ -22,6 +23,8 @@ object ManifoldEventBus {
 
     private val beaconTasks = ConcurrentHashMap<String, ScheduledFuture<*>>()
 
+    private val logger = Logger.getLogger(javaClass.simpleName)
+
     private fun createScheduler() = ScheduledThreadPoolExecutor(1) { r ->
         Thread(r).apply {
             this.isDaemon = true
@@ -33,7 +36,7 @@ object ManifoldEventBus {
 
     fun debug(msg: String) {
         if (debug) {
-            System.out.println(msg)
+            logger.info(msg)
         }
     }
 
