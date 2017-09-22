@@ -180,15 +180,15 @@ object DramaManager {
     @JvmStatic
     fun registerAction(name: String, permissionName: String?, permissionType: String?, code: ScriptObjectMirror,
                        fromPath: String, domain: String?) {
-        if (actionMap.containsKey(name)) {
-            logger.warning("Action map already contains an action named $name, the previous one " +
-                    "will be overwritten!")
-        }
-
         var realName = name
 
         if ((!domain.isNullOrBlank()) && (domain != ManifoldDomain.ROOT)) {
             realName = "${domain}_$name"
+        }
+
+        if (actionMap.containsKey(realName)) {
+            logger.warning("Action map already contains an action named $name ($realName), the previous one " +
+                    "will be overwritten!")
         }
 
         val actionInfo = DramaActionInfo(name, permissionName, permissionType, code, fromPath, domain)

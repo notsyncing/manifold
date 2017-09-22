@@ -4,6 +4,10 @@ var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaMan
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
 
+function setCurrentDomain(domain) {
+    __MANIFOLD_DRAMA_CURRENT_DOMAIN__ = domain;
+}
+
 function toPromise(cf) {
     return new Promise(function (resolve, reject) {
         cf.thenAccept(resolve).exceptionally(reject);
