@@ -8,11 +8,15 @@ import io.github.notsyncing.manifold.action.describe.DataPolicy
 import io.github.notsyncing.manifold.authenticate.*
 import io.github.notsyncing.manifold.utils.FutureUtils
 import java.util.concurrent.CompletableFuture
+import java.util.logging.Level
+import java.util.logging.Logger
 
 @SceneMetadata("manifold.drama.entry", DataPolicy.Modify)
 class DramaScene(private val action: String,
                  private val domain: String? = null,
                  private val parameters: JSONObject = JSONObject()): ManifoldScene<Any?>() {
+    private val logger = Logger.getLogger(javaClass.simpleName)
+
     constructor() : this("")
 
     override fun stage(): CompletableFuture<Any?> {
@@ -52,6 +56,9 @@ class DramaScene(private val action: String,
         if (exception is DramaExecutionException) {
             val o = JSONObject()
                     .fluentPut("error", exception.message)
+
+            logger.log(Level.WARNING, "An exception occured when processing action $action in domain $domain with " +
+                    "parameters $parameters: ${exception.message}", exception)
 
             return CompletableFuture.completedFuture(Pair(true, o))
         } else {
