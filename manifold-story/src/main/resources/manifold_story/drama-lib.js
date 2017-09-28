@@ -81,6 +81,8 @@ DramaPropertyRepositoryFactory.get = function (javaClassName, domain) {
         return null;
     }
 
+    repoClass = repoClass.static;
+
     var __this = this;
 
     return new JSAdapter() {
@@ -134,7 +136,7 @@ function repo(javaClassName, domain) {
 
 function type(javaClassName, domain) {
     var _domain = domain || __MANIFOLD_DRAMA_CURRENT_DOMAIN__;
-    var t = DramaUtils.type(javaClassName, _domain);
+    var t = DramaUtils.type(javaClassName, _domain).static;
 
     t.from = function (objOrJson) {
         var json = objOrJson;
