@@ -1,13 +1,17 @@
 package io.github.notsyncing.manifold.spec.database
 
 import io.github.notsyncing.lightfur.DataSession
-import io.github.notsyncing.lightfur.entity.EntityDataMapper
+import io.github.notsyncing.lightfur.integration.vertx.VertxDataSession
 
 val database = DatabaseAccessor()
 
 class DatabaseAccessor {
+    init {
+        DataSession.setCreator { VertxDataSession() as DataSession<Any, Any, Any> }
+    }
+
     infix fun execute(sql: String): DatabaseResult {
-        val db = DataSession(EntityDataMapper())
+        val db: VertxDataSession = DataSession.start()
 
         try {
             val r = DatabaseResult(db.executeWithReturning(sql).get())
@@ -20,7 +24,7 @@ class DatabaseAccessor {
     }
 
     infix fun exists(sql: String): Boolean {
-        val db = DataSession(EntityDataMapper())
+        val db: VertxDataSession = DataSession.start()
 
         try {
             val r = db.query(sql).get()
