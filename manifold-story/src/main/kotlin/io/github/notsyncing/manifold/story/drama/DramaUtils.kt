@@ -12,6 +12,11 @@ object DramaUtils {
             Manifold.rootDomain.findDomain(domainName)?.get()?.loadClass(className)
         } ?: throw ClassNotFoundException("$className not found in domain $domainName when parsing from JSON $json")
 
+        return jsonToObject(clazz, json)
+    }
+
+    @JvmStatic
+    fun jsonToObject(clazz: Class<*>, json: String): Any? {
         return JSON.parseObject(json, clazz)
     }
 

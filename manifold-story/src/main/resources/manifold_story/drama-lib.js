@@ -136,17 +136,17 @@ function repo(javaClassName, domain) {
 
 function type(javaClassName, domain) {
     var _domain = domain || __MANIFOLD_DRAMA_CURRENT_DOMAIN__;
-    var t = DramaUtils.type(javaClassName, _domain).static;
+    return DramaUtils.type(javaClassName, _domain).static;
+}
 
-    t.from = function (objOrJson) {
-        var json = objOrJson;
+function fill(obj, json) {
+    if (typeof json === "object") {
+        json = JSON.stringify(json);
+    }
 
-        if (typeof json === "object") {
-            json = JSON.stringify(json);
-        }
+    if (!obj.class) {
+        throw new Error("You cannot fill a non-Java object " + obj);
+    }
 
-        return DramaUtils.jsonToObject(javaClassName, json, _domain);
-    };
-
-    return t;
+    return DramaUtils.jsonToObject(obj.class, json);
 }
