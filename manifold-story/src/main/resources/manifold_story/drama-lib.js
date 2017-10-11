@@ -3,6 +3,7 @@
 var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaManager");
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
+var Manifold = Java.type("io.github.notsyncing.manifold.Manifold");
 
 function setCurrentDomain(domain) {
     __MANIFOLD_DRAMA_CURRENT_DOMAIN__ = domain;
@@ -149,4 +150,15 @@ function fill(obj, json) {
     }
 
     return DramaUtils.jsonToObject(obj.class, json);
+}
+
+function hooking(name, domain, handler) {
+    if (typeof domain === "function") {
+        handler = domain;
+        domain = null;
+    }
+
+    var hooker = handler(Java.extend(Java.type("io.github.notsyncing.manifold.hooking.Hook")));
+
+    Manifold.hooks.registerHook(name, domain, hooker);
 }

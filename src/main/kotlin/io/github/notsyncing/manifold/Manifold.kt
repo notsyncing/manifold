@@ -1,10 +1,6 @@
 package io.github.notsyncing.manifold
 
 import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.parser.ParserConfig
-import com.alibaba.fastjson.serializer.SerializeConfig
-import com.alibaba.fastjson.util.IdentityHashMap
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
 import io.github.notsyncing.manifold.action.*
 import io.github.notsyncing.manifold.action.interceptors.ActionInterceptor
 import io.github.notsyncing.manifold.action.interceptors.Interceptor
@@ -22,6 +18,8 @@ import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
+import io.github.notsyncing.manifold.hooking.Hook
+import io.github.notsyncing.manifold.hooking.HookManager
 import io.github.notsyncing.manifold.utils.BlackMagicUtils
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import io.github.notsyncing.manifold.utils.removeIf
@@ -29,7 +27,6 @@ import java.io.InvalidClassException
 import java.io.InvalidObjectException
 import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
-import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -83,6 +80,8 @@ object Manifold {
 
     val permissions = PermissionManager()
 
+    val hooks = HookManager()
+
     private val onDestroyListeners = mutableListOf<() -> Unit>()
     private val onResetListeners = mutableListOf<() -> Unit>()
     private val onInitListeners = mutableListOf<() -> Unit>()
@@ -108,7 +107,9 @@ object Manifold {
 
             actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
 
-            DependencyProviderUtils.removeFromCacheIf{ it.classLoader == cl }
+            hooks.removeFromCacheIf { it.classLoader == cl }
+
+            DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
         }
 
         rootDomain.init()
@@ -127,10 +128,9 @@ object Manifold {
         ManifoldEventBus.init()
 
         processScenes()
-
         processActions()
-
         processInterceptors()
+        processHooks()
 
         onInitListeners.forEach { it() }
 
@@ -138,6 +138,7 @@ object Manifold {
             processScenes(it)
             processActions(it)
             processInterceptors(it)
+            processHooks(it)
         }
     }
 
@@ -228,6 +229,28 @@ object Manifold {
         }
     }
 
+    private fun processHooks(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+            s?.getNamesOfClassesImplementing(Hook::class.java)?.forEach {
+                val clazz = Class.forName(it, true, cl)
+
+                if ((Modifier.isAbstract(clazz.modifiers)) || (Modifier.isInterface(clazz.modifiers))) {
+                    return@forEach
+                }
+
+                hooks.registerHook(domain.name, clazz as Class<Hook<*>>)
+            }
+
+            Unit
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
+        }
+    }
+
     fun destroy(): CompletableFuture<Void> {
         reset()
 
@@ -257,6 +280,8 @@ object Manifold {
         sceneEventConstructorCache.clear()
 
         interceptors.reset()
+
+        hooks.reset()
 
         features.destroy()
 

@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.story.drama
 
+import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.utils.FutureUtils
@@ -14,7 +15,7 @@ import kotlin.reflect.full.primaryConstructor
 
 class DramaActionContext(private val engine: ScriptEngine,
                          private val scene: DramaScene,
-                         private val domain: String? = null) {
+                         val domain: String? = null) {
     private val repoList = mutableListOf<DramaPropertyRepository>()
     private val engineInvocable = engine as Invocable
 
@@ -67,5 +68,9 @@ class DramaActionContext(private val engine: ScriptEngine,
         }
 
         return m.invoke(constructor.callBy(finalParams)) as CompletableFuture<Any?>
+    }
+
+    fun hook(name: String, inputValue: Any?): CompletableFuture<Any?> {
+        return Manifold.hooks.runHooks(name, domain, inputValue)
     }
 }

@@ -7,6 +7,7 @@ import io.github.notsyncing.manifold.eventbus.ManifoldEventBus
 import io.github.notsyncing.manifold.eventbus.ManifoldEventNode
 import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.hooking.Hook
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
@@ -328,5 +329,13 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
     protected open fun onFailure(exception: Exception): CompletableFuture<Pair<Boolean, R?>> {
         return CompletableFuture.completedFuture(Pair(false, null))
+    }
+
+    protected fun <T> hook(name: String, domain: String? = null, inputValue: T?): CompletableFuture<T?> {
+        return Manifold.hooks.runHooks(name, domain, inputValue)
+    }
+
+    protected fun <T, H: Hook<T>> hook(h: Class<H>, domain: String? = null, inputValue: T?): CompletableFuture<T?> {
+        return Manifold.hooks.runHooks(h, domain, inputValue)
     }
 }

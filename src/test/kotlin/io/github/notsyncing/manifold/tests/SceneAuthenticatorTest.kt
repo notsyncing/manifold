@@ -66,7 +66,7 @@ class SceneAuthenticatorTest {
                     val r = AuthRole(0, groups = arrayOf(g, g2), permissions = p)
                     return CompletableFuture.completedFuture(r)
                 } else {
-                    return CompletableFuture.completedFuture(AuthRole(0, emptyArray(), emptyArray()))
+                    return CompletableFuture.completedFuture(AuthRole(0, "", emptyArray(), emptyArray()))
                 }
             }
         }
