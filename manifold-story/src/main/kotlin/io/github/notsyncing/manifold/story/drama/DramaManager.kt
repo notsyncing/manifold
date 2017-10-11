@@ -17,7 +17,6 @@ import java.security.InvalidParameterException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import java.util.logging.LogManager
 import java.util.logging.Logger
 import javax.script.*
 import kotlin.concurrent.thread
@@ -95,7 +94,11 @@ object DramaManager {
             engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
             engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain, ScriptContext.ENGINE_SCOPE)
 
-            engine.eval(it)
+            if ((domain == null) || (domain == ManifoldDomain.ROOT)) {
+                engine.eval("load('classpath:$path')")
+            } else {
+                engine.eval(it)
+            }
 
             engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", ScriptContext.ENGINE_SCOPE)
             engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", ScriptContext.ENGINE_SCOPE)
@@ -106,6 +109,18 @@ object DramaManager {
         evalDrama(InputStreamReader(inputStream), domain, path)
     }
 
+    private fun evalDrama(file: Path, domain: String?) {
+        val path = file.toAbsolutePath().normalize().toString()
+
+        engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
+        engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain, ScriptContext.ENGINE_SCOPE)
+
+        engine.eval("load('${path}')")
+
+        engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", ScriptContext.ENGINE_SCOPE)
+        engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", ScriptContext.ENGINE_SCOPE)
+    }
+
     private fun loadAndWatchDramasFromDirectory(path: String) {
         val p = Paths.get(path)
 
@@ -114,9 +129,7 @@ object DramaManager {
                 .forEach { f ->
                     logger.info("Loading drama $f")
 
-                    Files.newBufferedReader(f).use {
-                        evalDrama(it, null, f.toString())
-                    }
+                    evalDrama(f, null)
                 }
 
         val watchKey = p.register(dramaWatcher, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_CREATE,
@@ -215,7 +228,7 @@ object DramaManager {
 
     private fun updateDramaActions(dramaFile: Path, type: WatchEvent.Kind<*>) {
         val iter = actionMap.iterator()
-        val dramaFileStr = dramaFile.toString()
+        val dramaFilePathStr = dramaFile.toString()
 
         if ((type == StandardWatchEventKinds.ENTRY_MODIFY) || (type == StandardWatchEventKinds.ENTRY_DELETE)) {
             while (iter.hasNext()) {
@@ -226,7 +239,7 @@ object DramaManager {
                         iter.remove()
                     }
                 } else {
-                    if (info.fromPath == dramaFileStr) {
+                    if (info.fromPath == dramaFilePathStr) {
                         iter.remove()
                     }
                 }
@@ -234,9 +247,7 @@ object DramaManager {
         }
 
         if (type != StandardWatchEventKinds.ENTRY_DELETE) {
-            Files.newBufferedReader(dramaFile).use {
-                evalDrama(it, null, dramaFileStr)
-            }
+            evalDrama(dramaFile, null)
         }
 
         logger.info("Drama file $dramaFile updated, type $type.")

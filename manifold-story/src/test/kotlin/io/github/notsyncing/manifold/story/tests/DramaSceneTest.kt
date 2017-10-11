@@ -1,9 +1,6 @@
 package io.github.notsyncing.manifold.story.tests
 
 import io.github.notsyncing.manifold.Manifold
-import io.github.notsyncing.manifold.action.interceptors.ForEveryScene
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptor
-import io.github.notsyncing.manifold.action.interceptors.SceneInterceptorContext
 import io.github.notsyncing.manifold.authenticate.*
 import io.github.notsyncing.manifold.story.drama.DramaManager
 import io.github.notsyncing.manifold.story.drama.DramaScene
@@ -12,11 +9,8 @@ import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
-import kotlin.concurrent.thread
 
 class DramaSceneTest {
     @Before
@@ -46,7 +40,7 @@ class DramaSceneTest {
     fun testSimpleDramaWithPermissions() {
         Manifold.authInfoProvider = object : AuthenticateInformationProvider {
             override fun getRole(id: String): CompletableFuture<AuthRole?> {
-                return CompletableFuture.completedFuture(AuthRole(1, emptyArray(),
+                return CompletableFuture.completedFuture(AuthRole(1, "", emptyArray(),
                         arrayOf(Permission("TestModule", "TestAuth", PermissionState.Allowed))))
             }
         }
@@ -59,7 +53,7 @@ class DramaSceneTest {
     fun testSimpleDramaWithPermissionsNotPassed() {
         Manifold.authInfoProvider = object : AuthenticateInformationProvider {
             override fun getRole(id: String): CompletableFuture<AuthRole?> {
-                return CompletableFuture.completedFuture(AuthRole(1, emptyArray(),
+                return CompletableFuture.completedFuture(AuthRole(1, "", emptyArray(),
                         arrayOf(Permission("A", "B", PermissionState.Allowed))))
             }
         }
