@@ -152,13 +152,14 @@ function fill(obj, json) {
     return DramaUtils.jsonToObject(obj.class, json);
 }
 
-function hooking(name, domain, handler) {
-    if (typeof domain === "function") {
-        handler = domain;
-        domain = null;
+function hooking(name, handler) {
+    var domain = __MANIFOLD_DRAMA_CURRENT_DOMAIN__;
+    var hooker = handler(Java.extend(Java.type("io.github.notsyncing.manifold.hooking.Hook")));
+    var hookSource = __MANIFOLD_DRAMA_CURRENT_FILE__ + "?" + name;
+
+    if (domain) {
+        hookSource += "@" + domain;
     }
 
-    var hooker = handler(Java.extend(Java.type("io.github.notsyncing.manifold.hooking.Hook")));
-
-    Manifold.hooks.registerHook(name, domain, hooker);
+    Manifold.hooks.registerHook(name, domain, hooker, hookSource);
 }

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.logging.Logger
 
 class HookManager {
-    private val hooks = ConcurrentHashMap<String, ConcurrentLinkedQueue<Class<Hook<*>>>>()
+    private val hooks = ConcurrentHashMap<String, ConcurrentLinkedQueue<HookInfo>>()
 
     private val log = Logger.getLogger(javaClass.simpleName)
 
@@ -23,17 +23,30 @@ class HookManager {
         }
     }
 
-    fun registerHook(name: String, domain: String? = null, hook: Class<Hook<*>>) {
+    fun registerHook(name: String, domain: String? = null, hook: Class<Hook<*>>, source: String? = null) {
         hooks.compute(makeRealName(name, domain)) { _, v ->
+            val info = HookInfo(hook, source)
+
             if (v == null) {
-                val l = ConcurrentLinkedQueue<Class<Hook<*>>>()
-                l.add(hook)
+                val l = ConcurrentLinkedQueue<HookInfo>()
+                l.add(info)
                 l
             } else {
-                if (!v.contains(hook)) {
-                    v.add(hook)
+                if (source == null) {
+                    if (!v.contains(info)) {
+                        v.add(info)
+                    } else {
+                        log.warning("Hook $v already contained in $name, will be skipped")
+                    }
                 } else {
-                    log.warning("Hook $v already contained in $name, will be skipped")
+                    val origin = v.firstOrNull { it.source == source }
+
+                    if (origin != null) {
+                        origin.clazz = hook
+                        log.warning("Hook $v already contained in $name with source $source, will be overwritten")
+                    } else {
+                        v.add(info)
+                    }
                 }
 
                 v
@@ -51,7 +64,7 @@ class HookManager {
         registerHook(name, domain, hook)
     }
 
-    fun getHooks(name: String, domain: String? = null): List<Class<Hook<*>>> {
+    fun getHooks(name: String, domain: String? = null): List<HookInfo> {
         val list = hooks[makeRealName(name, domain)]
 
         return if (list == null) {
@@ -71,7 +84,7 @@ class HookManager {
         var result = inputValue
 
         for (h in matchedHooks) {
-            val hh = Manifold.dependencyProvider?.get(h) as Hook<T?>?
+            val hh = Manifold.dependencyProvider?.get(h.clazz) as Hook<T?>?
 
             if (hh == null) {
                 log.warning("Cannot instantiate hook class $h")
@@ -88,7 +101,7 @@ class HookManager {
         return runHooks(hookClass.name, domain, inputValue)
     }
 
-    fun removeFromCacheIf(predicate: (Class<Hook<*>>) -> Boolean) {
+    fun removeFromCacheIf(predicate: (HookInfo) -> Boolean) {
         hooks.forEach { (_, hooks) ->
             hooks.removeIf(predicate)
         }

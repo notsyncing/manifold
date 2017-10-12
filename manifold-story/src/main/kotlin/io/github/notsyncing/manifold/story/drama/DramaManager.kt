@@ -243,6 +243,8 @@ object DramaManager {
                         iter.remove()
                     }
                 }
+
+                Manifold.hooks.removeFromCacheIf { it.source?.startsWith(dramaFilePathStr + "?") ?: false }
             }
         }
 
