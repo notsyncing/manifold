@@ -107,7 +107,7 @@ object Manifold {
 
             actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
 
-            hooks.removeFromCacheIf { it.clazz.classLoader == cl }
+            hooks.removeFromCacheIf { (it.domain == domain.name) || (it.clazz.classLoader == cl) }
 
             DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
         }

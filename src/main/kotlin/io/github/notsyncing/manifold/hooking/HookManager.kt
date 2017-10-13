@@ -25,7 +25,7 @@ class HookManager {
 
     fun registerHook(name: String, domain: String? = null, hook: Class<Hook<*>>, source: String? = null) {
         hooks.compute(makeRealName(name, domain)) { _, v ->
-            val info = HookInfo(hook, source)
+            val info = HookInfo(hook, source, domain)
 
             if (v == null) {
                 val l = ConcurrentLinkedQueue<HookInfo>()

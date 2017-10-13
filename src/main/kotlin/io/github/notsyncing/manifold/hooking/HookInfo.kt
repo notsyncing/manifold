@@ -3,7 +3,8 @@ package io.github.notsyncing.manifold.hooking
 import java.util.*
 
 class HookInfo(var clazz: Class<Hook<*>>,
-               val source: String? = null) {
+               val source: String? = null,
+               val domain: String? = null) {
     override fun equals(other: Any?): Boolean {
         if (other !is HookInfo) {
             return super.equals(other)
