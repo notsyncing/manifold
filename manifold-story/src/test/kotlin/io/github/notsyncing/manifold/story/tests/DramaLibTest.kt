@@ -24,11 +24,10 @@ class DramaLibTest {
     }
 
     @Test
-    fun testFillSimple() {
+    fun testFromSimple() {
         val code = """
             var objClass = Java.type("${TestObject::class.java.name}");
-            var obj = new objClass();
-            fill(obj, { id: 2, name: "test" });
+            var obj = from(objClass, { id: 2, name: "test" });
         """.trimIndent()
 
         engine.eval(code)
@@ -39,11 +38,10 @@ class DramaLibTest {
     }
 
     @Test
-    fun testFillNested() {
+    fun testFromNested() {
         val code = """
             var objClass = Java.type("${TestNestedObject::class.java.name}");
-            var obj = new objClass();
-            fill(obj, { count: 3, inner: { id: 2, name: "test" } });
+            var obj = from(objClass, { count: 3, inner: { id: 2, name: "test" } });
         """.trimIndent()
 
         engine.eval(code)

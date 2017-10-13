@@ -140,24 +140,12 @@ function type(javaClassName, domain) {
     return DramaUtils.type(javaClassName, _domain).static;
 }
 
-function fill(obj, json) {
-    if (typeof json === "string") {
-        json = JSON.parse(json);
+function from(type, json) {
+    if (typeof json === "object") {
+        json = JSON.stringify(json);
     }
 
-    for (var key in json) {
-        if (obj[key] === undefined) {
-            continue;
-        }
-
-        if (typeof json[key] === "object") {
-            fill(obj[key], json[key]);
-        } else {
-            obj[key] = json[key];
-        }
-    }
-
-    return obj;
+    return DramaUtils.jsonToObject(type.class, json);
 }
 
 function hooking(name, handler) {
