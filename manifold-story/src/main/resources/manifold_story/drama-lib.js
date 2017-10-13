@@ -141,15 +141,23 @@ function type(javaClassName, domain) {
 }
 
 function fill(obj, json) {
-    if (typeof json === "object") {
-        json = JSON.stringify(json);
+    if (typeof json === "string") {
+        json = JSON.parse(json);
     }
 
-    if (!obj.class) {
-        throw new Error("You cannot fill a non-Java object " + obj);
+    for (var key in json) {
+        if (obj[key] === undefined) {
+            continue;
+        }
+
+        if (typeof json[key] === "object") {
+            fill(obj[key], json[key]);
+        } else {
+            obj[key] = json[key];
+        }
     }
 
-    return DramaUtils.jsonToObject(obj.class, json);
+    return obj;
 }
 
 function hooking(name, handler) {
