@@ -1,6 +1,7 @@
 package io.github.notsyncing.manifold.story.drama.engine
 
 import java.io.Reader
+import java.nio.file.Path
 
 abstract class DramaEngine {
     abstract fun eval(script: String): Any?
@@ -14,4 +15,8 @@ abstract class DramaEngine {
     abstract fun get(name: String): Any?
 
     abstract fun invoke(obj: Any?, method: String, vararg parameters: Any?): Any?
+
+    abstract fun loadScript(file: Path)
+
+    abstract fun loadScriptFromClasspath(file: String)
 }

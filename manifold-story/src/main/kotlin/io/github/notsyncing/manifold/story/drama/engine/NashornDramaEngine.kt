@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.story.drama.engine
 
 import jdk.nashorn.api.scripting.ScriptObjectMirror
 import java.io.Reader
+import java.nio.file.Path
 import javax.script.Invocable
 import javax.script.ScriptContext
 import javax.script.ScriptEngine
@@ -45,5 +46,15 @@ class NashornDramaEngine : DramaEngine() {
 
     override fun invoke(obj: Any?, method: String, vararg parameters: Any?): Any? {
         return (engine as Invocable).invokeMethod(obj, method, *parameters)
+    }
+
+    override fun loadScript(file: Path) {
+        val path = file.toAbsolutePath().normalize().toString()
+
+        engine.eval("load('$path')")
+    }
+
+    override fun loadScriptFromClasspath(file: String) {
+        engine.eval("load('classpath:$file')")
     }
 }

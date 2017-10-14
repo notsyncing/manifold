@@ -89,7 +89,7 @@ object DramaManager {
             engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
             if ((domain == null) || (domain == ManifoldDomain.ROOT)) {
-                engine.eval("load('classpath:$path')")
+                engine.loadScriptFromClasspath(path)
             } else {
                 engine.eval(it)
             }
@@ -109,7 +109,7 @@ object DramaManager {
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
-        engine.eval("load('${path}')")
+        engine.loadScript(file)
 
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
