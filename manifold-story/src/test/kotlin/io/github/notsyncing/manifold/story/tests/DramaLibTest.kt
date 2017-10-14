@@ -1,5 +1,6 @@
 package io.github.notsyncing.manifold.story.tests
 
+import io.github.notsyncing.manifold.story.tests.toys.TestFunctions
 import io.github.notsyncing.manifold.story.tests.toys.TestNestedObject
 import io.github.notsyncing.manifold.story.tests.toys.TestObject
 import org.junit.After
@@ -15,6 +16,7 @@ class DramaLibTest {
     @Before
     fun setUp() {
         engine = ScriptEngineManager().getEngineByName("nashorn")
+        engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')")
         engine.eval("load('classpath:manifold_story/drama-lib.js')")
     }
 
@@ -50,5 +52,45 @@ class DramaLibTest {
         Assert.assertEquals(3, result.count)
         Assert.assertEquals(2, result.inner.id)
         Assert.assertEquals("test", result.inner.name)
+    }
+
+    @Test
+    fun testToPromiseSuccess() {
+        val code = """
+            var TestFunctions = Java.type("${TestFunctions::class.java.name}");
+            var result = "";
+
+            toPromise(TestFunctions.successCf())
+                .then(function (r) {
+                    result = r;
+                });
+        """.trimIndent()
+
+        engine.eval(code)
+
+        Thread.sleep(100)
+
+        val result = engine.get("result")
+        Assert.assertEquals("SUCCESS", result)
+    }
+
+    @Test
+    fun testToPromiseFailed() {
+        val code = """
+            var TestFunctions = Java.type("${TestFunctions::class.java.name}");
+            var result = "";
+
+            toPromise(TestFunctions.failedCf())
+                .catch(function (err) {
+                    result = err.message;
+                });
+        """.trimIndent()
+
+        engine.eval(code)
+
+        Thread.sleep(100)
+
+        val result = engine.get("result")
+        Assert.assertEquals("java.lang.Exception: FAILED", result)
     }
 }

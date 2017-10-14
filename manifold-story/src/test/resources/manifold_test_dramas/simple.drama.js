@@ -1,7 +1,7 @@
 "use strict";
 
 (function () {
-    var TestException = Java.type("io.github.notsyncing.manifold.story.tests.toys.TestException");
+    var TestFunctions = Java.type("io.github.notsyncing.manifold.story.tests.toys.TestFunctions");
 
     var user = new Role();
 
@@ -14,7 +14,7 @@
     });
 
     user.on("exceptionInJavaAction", function (context, params) {
-        return TestException.exception();
+        return TestFunctions.exception();
     });
 
     var authUser = new Role("TestModule", "TestAuth");
