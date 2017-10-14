@@ -72,7 +72,6 @@ object DramaManager {
 
         engine = ScriptEngineManager().getEngineByName("nashorn")
 
-        engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')")
         engine.eval("load('classpath:manifold_story/drama-lib.js')")
 
         dramaWatcher = FileSystems.getDefault().newWatchService()

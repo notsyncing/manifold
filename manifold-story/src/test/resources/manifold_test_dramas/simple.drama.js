@@ -17,6 +17,13 @@
         return TestFunctions.exception();
     });
 
+    user.on("nestedCFPAction1", function (context, params) {
+        return toPromise(TestFunctions.successCf())
+            .then(function (r) {
+                return toPromise(TestFunctions.failedCf());
+            });
+    });
+
     var authUser = new Role("TestModule", "TestAuth");
 
     authUser.on("simpleAuthAction", function (context, params) {

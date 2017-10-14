@@ -5,26 +5,71 @@ var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
 var Manifold = Java.type("io.github.notsyncing.manifold.Manifold");
 
+function Promise(handlerOrCf) {
+    if (typeof handlerOrCf === "function") {
+        this._cf = new CompletableFuture();
+        var __this = this;
+
+        handlerOrCf.call(this, function (r) {
+            __this._cf.complete(r);
+        }, function (err) {
+            __this._cf.completeExceptionally(err);
+        });
+    } else if (handlerOrCf instanceof CompletableFuture) {
+        this._cf = handlerOrCf;
+    } else {
+        throw new Error("Unsupported parameter of promise: " + handlerOrCf);
+    }
+}
+
+Promise.prototype.then = function (onFulfilled, onRejected) {
+    var f = this._cf.thenCompose(function (r) {
+        var result = onFulfilled(r);
+
+        if (result instanceof Promise) {
+            return result.toCompletableFuture();
+        } else {
+            return CompletableFuture.completedFuture(result);
+        }
+    });
+
+    if (onRejected) {
+        f = f.exceptionally(onRejected);
+    }
+
+    return f;
+};
+
+Promise.prototype.catch = function (onRejected) {
+    return this._cf.exceptionally(onRejected);
+};
+
+Promise.prototype.toCompletableFuture = function () {
+    return this._cf;
+};
+
+Promise.resolve = function (r) {
+    return new Promise(function (resolve, reject) {
+        resolve(r);
+    });
+};
+
+Promise.reject = function (r) {
+    return new Promise(function (resolve, reject) {
+        reject(r);
+    });
+};
+
 function setCurrentDomain(domain) {
     __MANIFOLD_DRAMA_CURRENT_DOMAIN__ = domain;
 }
 
 function toPromise(cf) {
-    return new Promise(function (resolve, reject) {
-        cf.thenAccept(resolve).exceptionally(reject);
-    });
+    return new Promise(cf);
 }
 
 function toCompletableFuture(promise) {
-    var cf = new CompletableFuture();
-
-    promise.then(function (r) {
-        cf.complete(r);
-    }).catch(function (err) {
-        cf.completeExceptionally(err);
-    });
-
-    return cf;
+    return promise.toCompletableFuture();
 }
 
 function Role(permissionName, permissionType) {

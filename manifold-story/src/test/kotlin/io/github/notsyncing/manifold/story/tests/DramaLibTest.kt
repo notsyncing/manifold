@@ -16,7 +16,6 @@ class DramaLibTest {
     @Before
     fun setUp() {
         engine = ScriptEngineManager().getEngineByName("nashorn")
-        engine.eval("load('classpath:net/arnx/nashorn/lib/promise.js')")
         engine.eval("load('classpath:manifold_story/drama-lib.js')")
     }
 
@@ -91,6 +90,6 @@ class DramaLibTest {
         Thread.sleep(100)
 
         val result = engine.get("result")
-        Assert.assertEquals("java.lang.Exception: FAILED", result)
+        Assert.assertEquals("FAILED", result)
     }
 }

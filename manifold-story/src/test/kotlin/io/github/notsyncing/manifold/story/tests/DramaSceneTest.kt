@@ -210,4 +210,14 @@ class DramaSceneTest {
             Assert.assertEquals("java.lang.Exception: EXCEPTION", e.cause?.message)
         }
     }
+
+    @Test
+    fun testNestedCFPWithExceptionInJava() {
+        try {
+            val r = Manifold.run(DramaScene("nestedCFPAction1")).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertEquals("FAILED", e.cause?.message)
+        }
+    }
 }
