@@ -3,8 +3,9 @@ package io.github.notsyncing.manifold.story.drama
 import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.domain.ManifoldDomain
+import io.github.notsyncing.manifold.story.drama.engine.CallableObject
+import io.github.notsyncing.manifold.story.drama.engine.NashornDramaEngine
 import io.github.notsyncing.manifold.utils.removeIf
-import jdk.nashorn.api.scripting.ScriptObjectMirror
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import java.io.IOException
@@ -13,20 +14,16 @@ import java.io.InputStreamReader
 import java.io.Reader
 import java.net.URI
 import java.nio.file.*
-import java.security.InvalidParameterException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
-import javax.script.*
 import kotlin.concurrent.thread
 
 object DramaManager {
     private const val DRAMA_EXT = ".drama.js"
 
-    private lateinit var engine: ScriptEngine
-    private val engineCompilable get() = engine as Compilable
-    private val engineInvocable get() = engine as Invocable
+    private lateinit var engine: NashornDramaEngine
 
     private val dramaSearchPaths = mutableListOf("$")
 
@@ -70,9 +67,7 @@ object DramaManager {
     fun init() {
         isInit = true
 
-        engine = ScriptEngineManager().getEngineByName("nashorn")
-
-        engine.eval("load('classpath:manifold_story/drama-lib.js')")
+        engine = NashornDramaEngine()
 
         dramaWatcher = FileSystems.getDefault().newWatchService()
 
@@ -90,8 +85,8 @@ object DramaManager {
 
     private fun evalDrama(reader: Reader, domain: String?, path: String) {
         reader.use {
-            engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
-            engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain, ScriptContext.ENGINE_SCOPE)
+            engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
+            engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
             if ((domain == null) || (domain == ManifoldDomain.ROOT)) {
                 engine.eval("load('classpath:$path')")
@@ -99,8 +94,8 @@ object DramaManager {
                 engine.eval(it)
             }
 
-            engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", ScriptContext.ENGINE_SCOPE)
-            engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", ScriptContext.ENGINE_SCOPE)
+            engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
+            engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
         }
     }
 
@@ -111,13 +106,13 @@ object DramaManager {
     private fun evalDrama(file: Path, domain: String?) {
         val path = file.toAbsolutePath().normalize().toString()
 
-        engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path, ScriptContext.ENGINE_SCOPE)
-        engine.context.setAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain, ScriptContext.ENGINE_SCOPE)
+        engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
+        engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
         engine.eval("load('${path}')")
 
-        engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", ScriptContext.ENGINE_SCOPE)
-        engine.context.removeAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", ScriptContext.ENGINE_SCOPE)
+        engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
+        engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
     }
 
     private fun loadAndWatchDramasFromDirectory(path: String) {
@@ -190,7 +185,7 @@ object DramaManager {
     }
 
     @JvmStatic
-    fun registerAction(name: String, permissionName: String?, permissionType: String?, code: ScriptObjectMirror,
+    fun registerAction(name: String, permissionName: String?, permissionType: String?, code: CallableObject,
                        fromPath: String, domain: String?) {
         var realName = name
 
@@ -322,10 +317,6 @@ object DramaManager {
     fun perform(scene: DramaScene, actionInfo: DramaActionInfo, parameters: JSONObject,
                 permissionParameters: JSONObject?) = future<Any?> {
         val functor = actionInfo.code
-
-        if (!functor.isFunction) {
-            throw InvalidParameterException("Drama action ${actionInfo.name} does not contain a function!")
-        }
 
         val context = DramaActionContext(engine, scene, actionInfo.domain)
         val result = functor.call(null, context, parameters.toJSONString(), permissionParameters?.toJSONString())

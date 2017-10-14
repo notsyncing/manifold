@@ -4,6 +4,7 @@ var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaMan
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
 var Manifold = Java.type("io.github.notsyncing.manifold.Manifold");
+var NashornDramaEngine = Java.type("io.github.notsyncing.manifold.story.drama.engine.NashornDramaEngine");
 
 function Promise(handlerOrCf) {
     if (typeof handlerOrCf === "function") {
@@ -98,6 +99,8 @@ Role.prototype.on = function (actionName, handler) {
 
     Object.freeze(h);
     Object.seal(h);
+
+    h = NashornDramaEngine.toCallable(h);
 
     DramaManager.registerAction(actionName, this.permissionName, this.permissionType, h,
         __MANIFOLD_DRAMA_CURRENT_FILE__, __MANIFOLD_DRAMA_CURRENT_DOMAIN__);

@@ -16,7 +16,7 @@ class DramaLibTest {
     @Before
     fun setUp() {
         engine = ScriptEngineManager().getEngineByName("nashorn")
-        engine.eval("load('classpath:manifold_story/drama-lib.js')")
+        engine.eval("load('classpath:manifold_story/drama-lib-nashorn.js')")
     }
 
     @After

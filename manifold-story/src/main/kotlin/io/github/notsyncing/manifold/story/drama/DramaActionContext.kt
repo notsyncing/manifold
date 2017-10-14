@@ -3,21 +3,18 @@ package io.github.notsyncing.manifold.story.drama
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.action.ManifoldAction
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
+import io.github.notsyncing.manifold.story.drama.engine.DramaEngine
 import io.github.notsyncing.manifold.utils.FutureUtils
-import jdk.nashorn.api.scripting.ScriptObjectMirror
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
 import java.util.concurrent.CompletableFuture
-import javax.script.Invocable
-import javax.script.ScriptEngine
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.primaryConstructor
 
-class DramaActionContext(private val engine: ScriptEngine,
+class DramaActionContext(private val engine: DramaEngine,
                          private val scene: DramaScene,
                          val domain: String? = null) {
     private val repoList = mutableListOf<DramaPropertyRepository>()
-    private val engineInvocable = engine as Invocable
 
     val sceneContext get() = scene.context
     val m get() = scene.m
@@ -47,9 +44,9 @@ class DramaActionContext(private val engine: ScriptEngine,
         scene.eventNode?.broadcastToAnyInGroups(ManifoldEvent(event, data))
     }
 
-    fun emit(event: String, data: ScriptObjectMirror) {
+    fun emit(event: String, data: Any?) {
         val json = engine.get("JSON")
-        val str = engineInvocable.invokeMethod(json, "stringify", data) as String
+        val str = engine.invoke(json, "stringify", data) as String
 
         emit(event, str)
     }
