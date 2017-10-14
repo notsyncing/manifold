@@ -190,4 +190,24 @@ class DramaSceneTest {
             Files.delete(tmpDir)
         }
     }
+
+    @Test
+    fun testDramaWithExceptionInJs() {
+        try {
+            Manifold.run(DramaScene("exceptionInJsAction")).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertEquals("Error: EXCEPTION", e.cause?.message)
+        }
+    }
+
+    @Test
+    fun testDramaWithExceptionInJava() {
+        try {
+            Manifold.run(DramaScene("exceptionInJavaAction")).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertEquals("java.lang.Exception: EXCEPTION", e.cause?.message)
+        }
+    }
 }

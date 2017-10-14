@@ -43,12 +43,9 @@ Role.prototype.on = function (actionName, handler) {
         var result = handler(context, parameters, permissionParameters);
 
         if (result instanceof Promise) {
-            var f = new CompletableFuture();
-
-            result.then(f.complete)
-                .catch(f.completeExceptionally);
-
-            return f;
+            return toCompletableFuture(result);
+        } else if (!(result instanceof CompletableFuture)) {
+            return CompletableFuture.completedFuture(result);
         } else {
             return result;
         }
