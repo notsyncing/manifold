@@ -38,7 +38,7 @@ Promise.prototype.then = function (onFulfilled, onRejected) {
         f = f.exceptionally(onRejected);
     }
 
-    return f;
+    return toPromise(f);
 };
 
 Promise.prototype.catch = function (onRejected) {
