@@ -117,6 +117,7 @@ object DramaManager {
 
     private fun loadAndWatchDramasFromDirectory(path: String) {
         val p = Paths.get(path)
+        var counter = 0
 
         Files.list(p)
                 .filter { it.fileName.toString().endsWith(DRAMA_EXT) }
@@ -124,11 +125,15 @@ object DramaManager {
                     logger.info("Loading drama $f")
 
                     evalDrama(f, null)
+
+                    counter++
                 }
 
         val watchKey = p.register(dramaWatcher, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_CREATE,
                 StandardWatchEventKinds.ENTRY_MODIFY)
         dramaWatchingPaths[watchKey] = p
+
+        logger.info("Loaded $counter dramas from $path and added it to the watching list.")
     }
 
     private fun loadAllDramas() {
