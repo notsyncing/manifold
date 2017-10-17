@@ -23,37 +23,39 @@ abstract class ManifoldTransactionalAction<T, R>(private var transClass: Class<T
         }
     }
 
-    override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = future<R> {
+    override fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>): CompletableFuture<R> {
         if (Manifold.transactionProvider == null) {
-            throw RuntimeException("Action ${this@ManifoldTransactionalAction::class.java} wants to use transaction, but no transaction provider found!")
+            throw RuntimeException("Action ${this::class.java} wants to use transaction, but no transaction provider found!")
         }
 
-        if (this@ManifoldTransactionalAction.context.transaction == null) {
-            this@ManifoldTransactionalAction.context.transaction = Manifold.transactionProvider!!.get(transClass)
+        if (this.context.transaction == null) {
+            this.context.transaction = Manifold.transactionProvider!!.get(transClass)
         }
 
-        transaction = this@ManifoldTransactionalAction.context.transaction as ManifoldTransaction<T>?
+        transaction = this.context.transaction as ManifoldTransaction<T>?
 
-        storageList.forEach { it.sceneContext = this@ManifoldTransactionalAction.context }
+        storageList.forEach { it.sceneContext = this.context }
 
-        this@ManifoldTransactionalAction.context.transaction!!.begin(!this@ManifoldTransactionalAction.context.autoCommit).await()
+        return future {
+            this@ManifoldTransactionalAction.context.transaction!!.begin(!this@ManifoldTransactionalAction.context.autoCommit).await()
 
-        try {
-            val r = super.execute(f).await()
+            try {
+                val r = super.execute(f).await()
 
-            if (this@ManifoldTransactionalAction.context.autoCommit) {
+                if (this@ManifoldTransactionalAction.context.autoCommit) {
+                    this@ManifoldTransactionalAction.context.transaction!!.end().await()
+                    this@ManifoldTransactionalAction.context.transaction = null
+                }
+
+                return@future r
+            } catch (e: Exception) {
+                e.printStackTrace()
+
                 this@ManifoldTransactionalAction.context.transaction!!.end().await()
                 this@ManifoldTransactionalAction.context.transaction = null
+
+                throw e
             }
-
-            return@future r
-        } catch (e: Exception) {
-            e.printStackTrace()
-
-            this@ManifoldTransactionalAction.context.transaction!!.end().await()
-            this@ManifoldTransactionalAction.context.transaction = null
-
-            throw e
         }
     }
 }

@@ -184,99 +184,103 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
 
     abstract fun stage(): CompletableFuture<R>
 
-    fun execute() = future<R> {
+    fun execute(): CompletableFuture<R> {
         this@ManifoldScene.context.sessionIdentifier = sessionIdentifier
 
         val c = this@ManifoldScene::class.java as Class<ManifoldScene<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForScene(c)
         val functor = { stage() }
 
-        if (interceptorClasses.isNotEmpty()) {
-            val interceptorContext = SceneInterceptorContext(this@ManifoldScene)
-            val interceptors = ArrayList<Pair<SceneInterceptorInfo, SceneInterceptor>>()
+        val stack = Exception("Scene execution starts here")
 
-            try {
-                interceptorClasses.forEach {
-                    val i = Manifold.dependencyProvider!!.get(it.interceptorClass)!!
-                    interceptorContext.annotation = it.forAnnotation
+        return future {
+            if (interceptorClasses.isNotEmpty()) {
+                val interceptorContext = SceneInterceptorContext(this@ManifoldScene)
+                val interceptors = ArrayList<Pair<SceneInterceptorInfo, SceneInterceptor>>()
 
-                    interceptors.add(Pair(it, i))
+                try {
+                    interceptorClasses.forEach {
+                        val i = Manifold.dependencyProvider!!.get(it.interceptorClass)!!
+                        interceptorContext.annotation = it.forAnnotation
 
-                    i.m = m
-                    i.before(interceptorContext).await()
+                        interceptors.add(Pair(it, i))
 
-                    if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
-                        throw InterceptorException("Interceptor ${i::class.java} stopped the execution of scene ${this@ManifoldScene::class.java}", interceptorContext.exception)
+                        i.m = m
+                        i.before(interceptorContext).await()
+
+                        if (interceptorContext.interceptorResult == InterceptorResult.Stop) {
+                            throw InterceptorException("Interceptor ${i::class.java} stopped the execution of scene ${this@ManifoldScene::class.java}", interceptorContext.exception)
+                        }
+                    }
+
+                    interceptorContext.result = functor().await()
+
+                    if (!checkSuccessConditions(interceptorContext.result as R)) {
+                        throw SceneFailedException(interceptorContext.result, stack)
+                    }
+
+                    interceptors.forEach {
+                        val (info, i) = it
+
+                        i.after(interceptorContext).await()
+
+                        i.destroy(interceptorContext).await()
+                    }
+
+                    afterExecution().await()
+                } catch (e: Exception) {
+                    interceptors.forEach {
+                        val (info, i) = it
+
+                        i.destroy(interceptorContext).await()
+                    }
+
+                    afterExecution(false).await()
+
+                    val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
+
+                    if (!shouldUseAlternativeResult) {
+                        if (e is SceneFailedException) {
+                            interceptorContext.result = e.data
+                        } else {
+                            throw e
+                        }
+                    } else {
+                        interceptorContext.result = alternativeResult
                     }
                 }
 
-                interceptorContext.result = functor().await()
+                return@future interceptorContext.result as R
+            }
 
-                if (!checkSuccessConditions(interceptorContext.result as R)) {
-                    throw SceneFailedException(interceptorContext.result)
-                }
+            var r: R
 
-                interceptors.forEach {
-                    val (info, i) = it
+            try {
+                r = functor().await()
 
-                    i.after(interceptorContext).await()
-
-                    i.destroy(interceptorContext).await()
+                if (!checkSuccessConditions(r)) {
+                    throw SceneFailedException(r, stack)
                 }
 
                 afterExecution().await()
             } catch (e: Exception) {
-                interceptors.forEach {
-                    val (info, i) = it
-
-                    i.destroy(interceptorContext).await()
-                }
-
                 afterExecution(false).await()
 
                 val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
 
                 if (!shouldUseAlternativeResult) {
                     if (e is SceneFailedException) {
-                        interceptorContext.result = e.data
+                        r = e.data as R
                     } else {
                         throw e
                     }
                 } else {
-                    interceptorContext.result = alternativeResult
+                    r = alternativeResult as R
                 }
             }
 
-            return@future interceptorContext.result as R
+            return@future r
         }
-
-        var r: R
-
-        try {
-            r = functor().await()
-
-            if (!checkSuccessConditions(r)) {
-                throw SceneFailedException(r)
-            }
-
-            afterExecution().await()
-        } catch (e: Exception) {
-            afterExecution(false).await()
-
-            val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
-
-            if (!shouldUseAlternativeResult) {
-                if (e is SceneFailedException) {
-                    r = e.data as R
-                } else {
-                    throw e
-                }
-            } else {
-                r = alternativeResult as R
-            }
-        }
-
-        return@future r
     }
 
     private fun endTransaction(commit: Boolean = true) = future {

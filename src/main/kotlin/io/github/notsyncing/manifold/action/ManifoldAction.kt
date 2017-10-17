@@ -52,39 +52,41 @@ abstract class ManifoldAction<R> {
 
     open protected fun <A: ManifoldAction<R>> execute(f: (A) -> CompletableFuture<R>) = f(this@ManifoldAction as A)
 
-    fun execute() = future<R> {
+    fun execute(): CompletableFuture<R> {
         val c = this@ManifoldAction::class.java as Class<ManifoldAction<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForAction(c)
         val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
 
-        if (interceptorClasses.isNotEmpty()) {
-            val context = ActionInterceptorContext(this@ManifoldAction)
-            val interceptors = interceptorClasses.map { Pair(it, Manifold.dependencyProvider!!.get(it.interceptorClass)) }
+        return future {
+            if (interceptorClasses.isNotEmpty()) {
+                val context = ActionInterceptorContext(this@ManifoldAction)
+                val interceptors = interceptorClasses.map { Pair(it, Manifold.dependencyProvider!!.get(it.interceptorClass)) }
 
-            interceptors.forEach {
-                val (info, i) = it
+                interceptors.forEach {
+                    val (info, i) = it
 
-                context.annotation = info.forAnnotation
-                i!!.before(context).await()
+                    context.annotation = info.forAnnotation
+                    i!!.before(context).await()
 
-                if (context.interceptorResult == InterceptorResult.Stop) {
-                    throw InterceptorException("Interceptor ${i::class.java} stopped the execution of action ${this@ManifoldAction::class.java}", context.exception)
+                    if (context.interceptorResult == InterceptorResult.Stop) {
+                        throw InterceptorException("Interceptor ${i::class.java} stopped the execution of action ${this@ManifoldAction::class.java}", context.exception)
+                    }
                 }
+
+                context.result = functor().await()
+
+                interceptors.forEach {
+                    val (info, i) = it
+
+                    context.annotation = info.forAnnotation
+                    i!!.after(context).await()
+                }
+
+                return@future context.result as R
             }
 
-            context.result = functor().await()
-
-            interceptors.forEach {
-                val (info, i) = it
-
-                context.annotation = info.forAnnotation
-                i!!.after(context).await()
-            }
-
-            return@future context.result as R
+            return@future functor().await()
         }
-
-        return@future functor().await()
     }
 
     protected fun <T> hook(name: String, domain: String? = null, inputValue: T?): CompletableFuture<T?> {
