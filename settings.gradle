@@ -7,4 +7,5 @@ include 'manifold-suspendable'
 include 'manifold-integration-cowherd'
 include 'manifold-integration-weavergirl'
 include 'manifold-docgen'
+include 'manifold-rules'
 
