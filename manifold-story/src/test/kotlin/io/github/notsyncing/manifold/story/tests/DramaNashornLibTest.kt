@@ -10,7 +10,7 @@ import org.junit.Test
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
-class DramaLibTest {
+class DramaNashornLibTest {
     private lateinit var engine: ScriptEngine
 
     @Before

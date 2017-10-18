@@ -7,5 +7,6 @@ class DramaActionInfo(val name: String,
                       val permissionType: String? = null,
                       val code: CallableObject,
                       val fromPath: String,
-                      val domain: String? = null) {
+                      val domain: String? = null,
+                      val internal: Boolean = false) {
 }

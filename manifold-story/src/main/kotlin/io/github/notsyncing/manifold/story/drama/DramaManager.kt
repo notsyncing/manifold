@@ -190,8 +190,8 @@ object DramaManager {
     }
 
     @JvmStatic
-    fun registerAction(name: String, permissionName: String?, permissionType: String?, code: CallableObject,
-                       fromPath: String, domain: String?) {
+    fun registerAction(name: String, isInternal: Boolean, permissionName: String?, permissionType: String?,
+                       code: CallableObject, fromPath: String, domain: String?) {
         var realName = name
 
         if ((!domain.isNullOrBlank()) && (domain != ManifoldDomain.ROOT)) {
@@ -203,7 +203,7 @@ object DramaManager {
                     "will be overwritten!")
         }
 
-        val actionInfo = DramaActionInfo(name, permissionName, permissionType, code, fromPath, domain)
+        val actionInfo = DramaActionInfo(name, permissionName, permissionType, code, fromPath, domain, isInternal)
         actionMap[realName] = actionInfo
     }
 
@@ -335,5 +335,19 @@ object DramaManager {
         context.destroy().await()
 
         realResult
+    }
+
+    fun perform(actionName: String, domain: String? = null, parameters: JSONObject,
+                permissionParameters: JSONObject?): CompletableFuture<Any?> {
+        val actionInfo = getAction(actionName, domain)
+
+        if (actionInfo == null) {
+            throw ClassNotFoundException("No action with name $actionName " +
+                    "${if (domain != null) "in domain $domain" else ""} found!")
+        }
+
+        val scene = DramaScene(actionName, domain, parameters)
+
+        return perform(scene, actionInfo, parameters, permissionParameters)
     }
 }

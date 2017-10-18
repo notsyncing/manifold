@@ -7,6 +7,7 @@ import io.github.notsyncing.manifold.action.SceneMetadata
 import io.github.notsyncing.manifold.action.describe.DataPolicy
 import io.github.notsyncing.manifold.authenticate.*
 import io.github.notsyncing.manifold.utils.FutureUtils
+import java.lang.UnsupportedOperationException
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -24,6 +25,10 @@ class DramaScene(private val action: String,
 
         if (actionInfo == null) {
             return FutureUtils.failed(ClassNotFoundException("No such action $action found in dramas"))
+        }
+
+        if (actionInfo.internal) {
+            return FutureUtils.failed(UnsupportedOperationException("The action $action is for internal use!"))
         }
 
         var permission: Permission? = null

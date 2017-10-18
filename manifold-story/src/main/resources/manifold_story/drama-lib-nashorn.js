@@ -78,7 +78,7 @@ function Role(permissionName, permissionType) {
     this.permissionType = permissionType || null;
 }
 
-Role.prototype.on = function (actionName, handler) {
+Role.prototype.on = function (actionName, handler, isInternal) {
     var h = function (context, parameters, permissionParameters) {
         parameters = JSON.parse(parameters);
 
@@ -102,8 +102,8 @@ Role.prototype.on = function (actionName, handler) {
 
     h = NashornDramaEngine.toCallable(h);
 
-    DramaManager.registerAction(actionName, this.permissionName, this.permissionType, h,
-        __MANIFOLD_DRAMA_CURRENT_FILE__, __MANIFOLD_DRAMA_CURRENT_DOMAIN__);
+    DramaManager.registerAction(actionName, isInternal || false, this.permissionName,
+        this.permissionType, h, __MANIFOLD_DRAMA_CURRENT_FILE__, __MANIFOLD_DRAMA_CURRENT_DOMAIN__);
 };
 
 function type(javaClassName, domain) {
