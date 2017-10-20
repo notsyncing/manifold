@@ -324,17 +324,20 @@ object DramaManager {
         val functor = actionInfo.code
 
         val context = DramaActionContext(engine, scene, actionInfo.domain)
-        val result = functor.call(null, context, parameters.toJSONString(), permissionParameters?.toJSONString())
 
-        val realResult = if (result is CompletableFuture<*>) {
-            result.await()
-        } else {
-            result
+        try {
+            val result = functor.call(null, context, parameters.toJSONString(), permissionParameters?.toJSONString())
+
+            val realResult = if (result is CompletableFuture<*>) {
+                result.await()
+            } else {
+                result
+            }
+
+            realResult
+        } finally {
+            context.destroy().await()
         }
-
-        context.destroy().await()
-
-        realResult
     }
 
     fun perform(actionName: String, domain: String? = null, parameters: JSONObject,
