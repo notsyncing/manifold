@@ -57,6 +57,8 @@ abstract class ManifoldAction<R> {
         val interceptorClasses = Manifold.interceptors.getInterceptorsForAction(c)
         val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
 
+        val stack = Exception("An exception occured")
+
         return future {
             if (interceptorClasses.isNotEmpty()) {
                 val context = ActionInterceptorContext(this@ManifoldAction)
@@ -73,7 +75,12 @@ abstract class ManifoldAction<R> {
                     }
                 }
 
-                context.result = functor().await()
+                try {
+                    context.result = functor().await()
+                } catch (e: Exception) {
+                    stack.initCause(e)
+                    throw stack
+                }
 
                 interceptors.forEach {
                     val (info, i) = it
@@ -85,7 +92,12 @@ abstract class ManifoldAction<R> {
                 return@future context.result as R
             }
 
-            return@future functor().await()
+            try {
+                return@future functor().await()
+            } catch (e: Exception) {
+                stack.initCause(e)
+                throw stack
+            }
         }
     }
 
