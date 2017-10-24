@@ -51,7 +51,7 @@ class NashornDramaEngine : DramaEngine() {
     override fun loadScript(file: Path) {
         val path = file.toAbsolutePath().normalize().toString()
 
-        engine.eval("load('$path')")
+        engine.eval("load('${path.replace("\\", "\\\\")}')")
     }
 
     override fun loadScriptFromClasspath(file: String) {
