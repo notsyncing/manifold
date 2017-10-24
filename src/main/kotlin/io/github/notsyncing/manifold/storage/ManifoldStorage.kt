@@ -20,7 +20,8 @@ abstract class ManifoldStorage<T> {
                 return transaction!!.body
             } else {
                 if (ownTrans == null) {
-                    ownTrans = Manifold.transactionProvider?.get() as ManifoldTransaction<T>?
+                    ownTrans = Manifold.transactionProvider
+                            ?.get(Exception("Created by $this at here")) as ManifoldTransaction<T>?
                 }
 
                 return ownTrans!!.body

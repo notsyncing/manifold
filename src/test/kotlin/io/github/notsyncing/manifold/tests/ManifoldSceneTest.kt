@@ -100,7 +100,7 @@ class ManifoldSceneTest {
 
     private fun createTransProviderForBackground() {
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun get(): ManifoldTransaction<*> {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         TestSceneWithBackground.add(TestSceneWithBackground.TRANS_START)
@@ -181,7 +181,7 @@ class ManifoldSceneTest {
 
     private fun createTransProviderForFailedException() {
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun get(): ManifoldTransaction<*> {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         TestSceneFailedException.add(TestSceneWithBackground.TRANS_START)
@@ -220,7 +220,7 @@ class ManifoldSceneTest {
 
     private fun createTransProvider() {
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun get(): ManifoldTransaction<*> {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         TestSceneTransaction.add(TestSceneWithBackground.TRANS_START)
@@ -260,7 +260,7 @@ class ManifoldSceneTest {
 
     private fun createTransProviderForSuccessCond() {
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun get(): ManifoldTransaction<*> {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         TestSceneWithSuccessCond.add(TestSceneWithSuccessCond.TRANS_START)

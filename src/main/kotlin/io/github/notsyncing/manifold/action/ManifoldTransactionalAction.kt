@@ -29,7 +29,7 @@ abstract class ManifoldTransactionalAction<T, R>(private var transClass: Class<T
         }
 
         if (this.context.transaction == null) {
-            this.context.transaction = Manifold.transactionProvider!!.get(transClass)
+            this.context.transaction = Manifold.transactionProvider!!.get(transClass, executionStartStack!!)
         }
 
         transaction = this.context.transaction as ManifoldTransaction<T>?

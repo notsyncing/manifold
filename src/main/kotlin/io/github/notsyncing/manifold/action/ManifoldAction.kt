@@ -19,6 +19,8 @@ abstract class ManifoldAction<R> {
 
     protected val storageList = ArrayList<ManifoldStorage<*>>()
 
+    protected var executionStartStack: Exception? = null
+
     init {
         DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
     }
@@ -56,6 +58,8 @@ abstract class ManifoldAction<R> {
         val c = this@ManifoldAction::class.java as Class<ManifoldAction<*>>
         val interceptorClasses = Manifold.interceptors.getInterceptorsForAction(c)
         val functor = { execute<ManifoldAction<R>> { this@ManifoldAction.action() } }
+
+        executionStartStack = Exception("Action $this execution starts here")
 
         val stack = Exception("An exception occured")
 

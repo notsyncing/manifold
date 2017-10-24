@@ -41,7 +41,7 @@ class ManifoldTest {
         Manifold.interceptors.reset()
 
         Manifold.transactionProvider = object : ManifoldTransactionProvider {
-            override fun get(): ManifoldTransaction<*> {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
                 return object : ManifoldTransaction<String>("") {
                     override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
                         if (withTransaction) {
