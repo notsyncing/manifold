@@ -70,4 +70,8 @@ class DramaActionContext(private val engine: DramaEngine,
     fun hook(name: String, inputValue: Any?): CompletableFuture<Any?> {
         return Manifold.hooks.runHooks(name, domain, inputValue)
     }
+
+    fun provide(clazz: Class<*>): Any? {
+        return Manifold.dependencyProvider?.get(clazz)
+    }
 }
