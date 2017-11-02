@@ -10,6 +10,8 @@ import io.github.notsyncing.manifold.action.session.ManifoldSessionStorage
 import io.github.notsyncing.manifold.action.session.ManifoldSessionStorageProvider
 import io.github.notsyncing.manifold.authenticate.AuthenticateInformationProvider
 import io.github.notsyncing.manifold.authenticate.PermissionManager
+import io.github.notsyncing.manifold.authenticate.PermissionModuleDescriptionContainer
+import io.github.notsyncing.manifold.authenticate.PermissionTypeDescriptionContainer
 import io.github.notsyncing.manifold.di.ManifoldDependencyInjector
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.domain.ScanResultWrapper
@@ -110,6 +112,8 @@ object Manifold {
             hooks.removeFromCacheIf { (it.domain == domain.name) || (it.clazz.classLoader == cl) }
 
             DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
+
+            permissions.removePermissionsByClassLoader(cl)
         }
 
         rootDomain.init()
@@ -121,6 +125,10 @@ object Manifold {
         if (sessionStorageProvider == null) {
             sessionStorageProvider = ManifoldSessionStorage()
         }
+
+        permissions.init()
+
+        processPermissions()
 
         features.init()
         interceptors.init()
@@ -135,10 +143,34 @@ object Manifold {
         onInitListeners.forEach { it() }
 
         ManifoldDomain.afterScan {
+            processPermissions(it)
             processScenes(it)
             processActions(it)
             processInterceptors(it)
             processHooks(it)
+        }
+    }
+
+    private fun processPermissions(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+            s?.getNamesOfClassesWithAnnotationsAnyOf(PermissionModuleDescriptionContainer::class.java,
+                    PermissionTypeDescriptionContainer::class.java)?.forEach {
+                val clazz = Class.forName(it, true, cl)
+
+                if (clazz.isAnnotationPresent(PermissionModuleDescriptionContainer::class.java)) {
+                    permissions.addPermissionModuleDescriptions(clazz)
+                } else if (clazz.isAnnotationPresent(PermissionTypeDescriptionContainer::class.java)) {
+                    permissions.addPermissionTypeDescriptions(clazz)
+                }
+            }
+
+            Unit
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
         }
     }
 
