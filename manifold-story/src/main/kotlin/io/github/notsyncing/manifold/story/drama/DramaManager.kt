@@ -41,6 +41,8 @@ object DramaManager {
         }
     }
 
+    var currentFile: String? = null
+
     private val logger = Logger.getLogger(javaClass.simpleName)
 
     fun addDramaSearchPath(p: Path) {
@@ -78,6 +80,7 @@ object DramaManager {
     }
 
     private fun evalDrama(reader: Reader, domain: String?, path: String) {
+        currentFile = path
         val engine = DramaEngineFactory.getByFile(path)
 
         reader.use {
@@ -93,6 +96,8 @@ object DramaManager {
             engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
             engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
         }
+
+        currentFile = null
     }
 
     private fun evalDrama(inputStream: InputStream, domain: String?, path: String) {
@@ -101,6 +106,7 @@ object DramaManager {
 
     private fun evalDrama(file: Path, domain: String?) {
         val path = file.toAbsolutePath().normalize().toString()
+        currentFile = path
         val engine = DramaEngineFactory.getByFile(path)
 
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
@@ -110,6 +116,8 @@ object DramaManager {
 
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
+
+        currentFile = null
     }
 
     private fun loadAndWatchDramasFromDirectory(path: String) {

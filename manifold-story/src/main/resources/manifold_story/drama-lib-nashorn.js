@@ -4,7 +4,7 @@ var DramaManager = Java.type("io.github.notsyncing.manifold.story.drama.DramaMan
 var CompletableFuture = Java.type("java.util.concurrent.CompletableFuture");
 var DramaUtils = Java.type("io.github.notsyncing.manifold.story.drama.DramaUtils");
 var Manifold = Java.type("io.github.notsyncing.manifold.Manifold");
-var NashornDramaEngine = Java.type("io.github.notsyncing.manifold.story.drama.engine.NashornDramaEngine");
+var NashornDramaEngine = Java.type("io.github.notsyncing.manifold.story.drama.engine.nashorn.NashornDramaEngine");
 
 function Promise(handlerOrCf) {
     if (typeof handlerOrCf === "function") {
