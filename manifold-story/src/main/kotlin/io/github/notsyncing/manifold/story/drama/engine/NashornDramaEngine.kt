@@ -10,6 +10,8 @@ import javax.script.ScriptEngineManager
 
 class NashornDramaEngine : DramaEngine() {
     companion object {
+        const val DRAMA_EXT = ".drama.js"
+
         @JvmStatic
         fun toCallable(obj: ScriptObjectMirror): CallableObject {
             return NashornCallableObject(obj)

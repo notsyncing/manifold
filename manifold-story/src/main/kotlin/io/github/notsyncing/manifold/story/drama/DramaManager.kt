@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.story.drama.engine.CallableObject
-import io.github.notsyncing.manifold.story.drama.engine.NashornDramaEngine
+import io.github.notsyncing.manifold.story.drama.engine.DramaEngineFactory
 import io.github.notsyncing.manifold.utils.removeIf
 import kotlinx.coroutines.experimental.future.await
 import kotlinx.coroutines.experimental.future.future
@@ -21,10 +21,6 @@ import java.util.logging.Logger
 import kotlin.concurrent.thread
 
 object DramaManager {
-    private const val DRAMA_EXT = ".drama.js"
-
-    private lateinit var engine: NashornDramaEngine
-
     private val dramaSearchPaths = mutableListOf("$")
 
     var ignoreClasspathDramas = false
@@ -67,8 +63,6 @@ object DramaManager {
     fun init() {
         isInit = true
 
-        engine = NashornDramaEngine()
-
         dramaWatcher = FileSystems.getDefault().newWatchService()
 
         dramaWatching = true
@@ -84,6 +78,8 @@ object DramaManager {
     }
 
     private fun evalDrama(reader: Reader, domain: String?, path: String) {
+        val engine = DramaEngineFactory.getByFile(path)
+
         reader.use {
             engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
             engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
@@ -105,6 +101,7 @@ object DramaManager {
 
     private fun evalDrama(file: Path, domain: String?) {
         val path = file.toAbsolutePath().normalize().toString()
+        val engine = DramaEngineFactory.getByFile(path)
 
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
@@ -120,7 +117,7 @@ object DramaManager {
         var counter = 0
 
         Files.list(p)
-                .filter { it.fileName.toString().endsWith(DRAMA_EXT) }
+                .filter { DramaEngineFactory.isSupportedFile(it.fileName.toString()) }
                 .forEach { f ->
                     logger.info("Loading drama $f")
 
@@ -149,7 +146,7 @@ object DramaManager {
                 }
 
                 Manifold.dependencyProvider?.getAllClasspathFilesWithDomain()
-                        ?.filter { (_, _, relPath) -> relPath.endsWith(DRAMA_EXT) }
+                        ?.filter { (_, _, relPath) -> DramaEngineFactory.isSupportedFile(relPath) }
                         ?.forEach { (domain, containingPath, relPath) ->
                             val fullPath: Path
                             val fileName = containingPath.fileName.toString()
@@ -281,7 +278,7 @@ object DramaManager {
                 val ev = event as WatchEvent<Path>
                 val filename = ev.context()
 
-                if (!filename.toString().endsWith(DRAMA_EXT)) {
+                if (!DramaEngineFactory.isSupportedFile(filename.toString())) {
                     continue
                 }
 
@@ -320,9 +317,10 @@ object DramaManager {
     fun getAction(name: String, domain: String? = null) = actionMap[if (domain.isNullOrBlank()) name else "${domain}_$name"]
 
     fun perform(scene: DramaScene, actionInfo: DramaActionInfo, parameters: JSONObject,
-                permissionParameters: JSONObject?) = future<Any?> {
+                permissionParameters: JSONObject?) = future {
         val functor = actionInfo.code
 
+        val engine = DramaEngineFactory.getByFile(actionInfo.fromPath)
         val context = DramaActionContext(engine, scene, actionInfo.domain)
 
         try {

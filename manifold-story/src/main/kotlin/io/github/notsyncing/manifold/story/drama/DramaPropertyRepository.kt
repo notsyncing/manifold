@@ -5,14 +5,14 @@ import io.github.notsyncing.manifold.storage.ManifoldStorage
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import java.util.concurrent.CompletableFuture
 
-abstract class DramaPropertyRepository(protected val context: DramaActionContext) {
+abstract class DramaPropertyRepository(private val context: DramaActionContext) {
     init {
         context.registerRepository(this)
 
         DependencyProviderUtils.autoProvideProperties(this, this::provideDependency)
     }
 
-    protected val sceneContext get() = context.sceneContext
+    private val sceneContext get() = context.sceneContext
 
     private fun provideDependency(t: Class<*>): Any? {
         if (ManifoldStorage::class.java.isAssignableFrom(t)) {
