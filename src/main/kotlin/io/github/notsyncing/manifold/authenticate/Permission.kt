@@ -90,4 +90,10 @@ class Permission(val module: String,
     infix fun additional(data: Any) {
         this.additionalData = data
     }
+
+    fun allowed() = ((!SceneAuthenticator.denyUndefinedPermissions) && (state == PermissionState.Undefined))
+            || (state == PermissionState.Allowed)
+
+    fun disallowed() = ((SceneAuthenticator.denyUndefinedPermissions) && (state == PermissionState.Undefined))
+            || (state == PermissionState.Forbidden)
 }

@@ -7,5 +7,7 @@ open class AuthRole(val roleId: String = "",
     constructor(roleId: Long = 0, sessionId: String = "", groups: Array<AuthGroup> = emptyArray(), permissions: Array<Permission>)
             : this(if (roleId == 0L) "" else roleId.toString(), sessionId, groups, permissions)
 
+    constructor() : this("", "", permissions = emptyArray())
+
     fun isSuperUser() = this == SpecialRole.SuperUser
 }
