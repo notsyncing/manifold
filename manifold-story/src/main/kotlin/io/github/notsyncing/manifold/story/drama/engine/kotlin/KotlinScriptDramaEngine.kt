@@ -2,13 +2,13 @@ package io.github.notsyncing.manifold.story.drama.engine.kotlin
 
 import io.github.notsyncing.manifold.story.drama.engine.CallableObject
 import io.github.notsyncing.manifold.story.drama.engine.DramaEngine
+import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngine
 import java.io.InputStreamReader
 import java.io.Reader
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.script.Invocable
 import javax.script.ScriptContext
-import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
 
 class KotlinScriptDramaEngine : DramaEngine() {
@@ -20,18 +20,22 @@ class KotlinScriptDramaEngine : DramaEngine() {
         }
     }
 
-    private val engine: ScriptEngine
+    private val engine: KotlinJsr223JvmLocalScriptEngine
 
     init {
-        engine = ScriptEngineManager().getEngineByExtension("kts")
+        engine = ScriptEngineManager().getEngineByExtension("kts") as KotlinJsr223JvmLocalScriptEngine
     }
 
     override fun eval(script: String): Any? {
-        return engine.eval(script)
+        val r = engine.eval(script)
+        engine.state.history.reset()
+        return r
     }
 
     override fun eval(script: Reader): Any? {
-        return engine.eval(script)
+        val r = engine.eval(script)
+        engine.state.history.reset()
+        return r
     }
 
     override fun setContextAttribute(name: String, value: Any?) {
