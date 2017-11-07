@@ -11,6 +11,7 @@ import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.reflect
 
@@ -139,9 +140,10 @@ object TypeUtils {
 
                 val v: Any?
                 val type = p.type.jvmErasure.java
+                val name = p.findAnnotation<ParameterName>()?.name ?: p.name
 
-                if (o.containsKey(p.name)) {
-                    v = o[p.name].toType(type)
+                if (o.containsKey(name)) {
+                    v = o[name].toType(type)
                 } else {
                     if (p.isOptional) {
                         continue
