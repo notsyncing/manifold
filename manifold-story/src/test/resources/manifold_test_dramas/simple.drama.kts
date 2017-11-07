@@ -8,7 +8,7 @@ user.on("simpleActionKt") { context, params, permParams ->
     CompletableFuture.completedFuture("Hello, world!")
 }
 
-user.on("exceptionInKotlinActionKt") { context, params, permParams ->
+user.on<Unit>("exceptionInKotlinActionKt") { context, params, permParams ->
     throw RuntimeException("EXCEPTION")
 }
 
