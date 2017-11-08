@@ -1,12 +1,14 @@
 package io.github.notsyncing.manifold.mapping
 
 import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KProperty
 import kotlin.reflect.full.memberProperties
 
 object O {
-    private fun shallowCopyFields(from: Any, to: Any) {
+    private fun _shallowCopyFields(from: Any, to: Any, skipFields: Set<String>?) {
         val fromFields = from.javaClass.kotlin.memberProperties
                 .filter { it is KMutableProperty<*> }
+                .filter { !(skipFields?.contains(it.name) ?: false) }
                 .map { it as KMutableProperty<*> }
                 .groupingBy { it.name }
                 .aggregate { _, _: KMutableProperty<*>?, element, _ -> element }
@@ -36,6 +38,10 @@ object O {
         }
     }
 
+    private fun shallowCopyFields(from: Any, to: Any, skipFields: Set<KProperty<*>>?) {
+        _shallowCopyFields(from, to, skipFields?.map { it.name }?.toSet())
+    }
+
     fun <R> map(from: Any?, toType: Class<R>): R {
         if (from == null) {
             return null as R
@@ -48,7 +54,7 @@ object O {
                     "constructor!")
         }
 
-        shallowCopyFields(from, to)
+        shallowCopyFields(from, to, null)
 
         return to
     }
@@ -74,7 +80,11 @@ object O {
     }
 
     fun <F, T> fill(from: F?, to: T) {
-        fill(from, to) { f, t -> shallowCopyFields(f!!, t!!) }
+        fill(from, to, null as Set<KProperty<*>>?)
+    }
+
+    fun <F, T> fill(from: F?, to: T, skipFields: Set<KProperty<*>>?) {
+        fill(from, to) { f, t -> shallowCopyFields(f!!, t!!, skipFields) }
     }
 
     fun <F, T> fill(from: List<F>, to: List<T>, filler: (F, T) -> Unit) {
@@ -88,7 +98,11 @@ object O {
     }
 
     fun <F, T> fill(from: List<F>, to: List<T>) {
-        fill(from, to, this::shallowCopyFields)
+        fill(from, to) { f: F, t -> shallowCopyFields(f!!, t!!, null) }
+    }
+
+    fun <F, T> fill(from: List<F>, to: List<T>, skipFields: Set<KProperty<*>>?) {
+        fill(from, to) { f: F, t -> shallowCopyFields(f!!, t!!, skipFields) }
     }
 }
 
@@ -112,12 +126,20 @@ fun List<*>.fillFrom(from: List<*>) {
     O.fill(from, this)
 }
 
+fun List<*>.fillFrom(from: List<*>, skipFields: Set<KProperty<*>>?) {
+    O.fill(from, this, skipFields)
+}
+
 fun <F, T> List<T>.fillFrom(from: List<F>, filler: (F, T) -> Unit) {
     O.fill(from, this, filler)
 }
 
 fun List<*>.fillTo(to: List<*>) {
     O.fill(this, to)
+}
+
+fun List<*>.fillTo(to: List<*>, skipFields: Set<KProperty<*>>?) {
+    O.fill(this, to, skipFields)
 }
 
 fun <F, T> List<F>.fillTo(to: List<T>, filler: (F, T) -> Unit) {
@@ -128,12 +150,20 @@ fun Any.fillFrom(from: Any?) {
     O.fill(from, this)
 }
 
+fun Any.fillFrom(from: Any?, skipFields: Set<KProperty<*>>?) {
+    O.fill(from, this, skipFields)
+}
+
 fun <F, T> T.fillFrom(from: F?, filler: (F, T) -> Unit) {
     O.fill(from, this, filler)
 }
 
 fun Any?.fillTo(to: Any) {
     O.fill(this, to)
+}
+
+fun Any?.fillTo(to: Any, skipFields: Set<KProperty<*>>?) {
+    O.fill(this, to, skipFields)
 }
 
 fun <F, T> F.fillTo(to: T, filler: (F, T) -> Unit) {

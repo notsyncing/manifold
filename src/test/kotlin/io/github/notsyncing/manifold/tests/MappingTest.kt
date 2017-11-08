@@ -105,4 +105,22 @@ class MappingTest {
         assertEquals("title5", list[1].title)
         assertEquals("title6", list[2].title)
     }
+
+    @Test
+    fun testSimpleFillingSkip() {
+        val a = SubA()
+        a.id = 2
+        a.title = "testTitle"
+        a.name = "testName"
+
+        val b = B()
+        b.code = 3
+        b.title = "testNewTitle"
+
+        a.fillFrom(b, skipFields = setOf(b::title))
+
+        assertEquals(2, a.id)
+        assertEquals("testName", a.name)
+        assertEquals("testTitle", a.title)
+    }
 }
