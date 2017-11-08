@@ -3,6 +3,7 @@ package io.github.notsyncing.manifold.story.drama.engine.kotlin
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONArray
 import com.alibaba.fastjson.JSONObject
+import com.alibaba.fastjson.util.ParameterizedTypeImpl
 import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.hooking.Hook
 import io.github.notsyncing.manifold.story.drama.DramaActionContext
@@ -11,6 +12,7 @@ import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
+import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.reflect
@@ -122,6 +124,16 @@ object TypeUtils {
 
     private fun Any?.toType(type: Type) = anyToType(this, type)
 
+    private fun KType.toJavaType(): Type {
+        if (this.arguments.isNotEmpty()) {
+            val typeArgs = this.arguments.map { it.type!!.toJavaType() }
+
+            return ParameterizedTypeImpl(typeArgs.toTypedArray(), this.jvmErasure.java, this.jvmErasure.java)
+        } else {
+            return this.jvmErasure.java
+        }
+    }
+
     fun processParameters(function: KFunction<*>,
                                   parameters: JSONObject): Map<KParameter, Any?> {
         val targetParams = mutableMapOf<KParameter, Any?>()
@@ -139,7 +151,7 @@ object TypeUtils {
                 }
 
                 val v: Any?
-                val type = p.type.jvmErasure.java
+                val type = p.type.toJavaType()
                 val name = p.findAnnotation<ParameterName>()?.name ?: p.name
 
                 if (o.containsKey(name)) {
