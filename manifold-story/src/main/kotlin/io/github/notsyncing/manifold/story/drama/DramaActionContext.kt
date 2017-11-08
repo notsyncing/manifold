@@ -19,8 +19,8 @@ class DramaActionContext(private val engine: DramaEngine,
     val sceneContext get() = scene.context
     val m get() = scene.m
 
-    val uploads get() = scene.context.additionalData["manifold.scene.api.all_uploads"]
-    val uploadMap get() = scene.context.additionalData["manifold.scene.api.all_uploads.map"]
+    val uploads get() = scene.context.additionalData["manifold.scene.api.all_uploads"] as List<Any>?
+    val uploadMap get() = scene.context.additionalData["manifold.scene.api.all_uploads.map"] as Map<String, List<Any>>?
 
     val role get() = scene.context.role
 
