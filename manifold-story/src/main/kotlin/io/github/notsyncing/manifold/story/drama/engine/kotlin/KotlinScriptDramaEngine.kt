@@ -10,6 +10,7 @@ import java.nio.file.Path
 import javax.script.Invocable
 import javax.script.ScriptContext
 import javax.script.ScriptEngineManager
+import javax.script.SimpleScriptContext
 
 class KotlinScriptDramaEngine : DramaEngine() {
     companion object {
@@ -27,13 +28,15 @@ class KotlinScriptDramaEngine : DramaEngine() {
     }
 
     override fun eval(script: String): Any? {
-        val r = engine.eval(script)
+        val context = SimpleScriptContext()
+        val r = engine.eval(script, context)
         engine.state.history.reset()
         return r
     }
 
     override fun eval(script: Reader): Any? {
-        val r = engine.eval(script)
+        val context = SimpleScriptContext()
+        val r = engine.eval(script, context)
         engine.state.history.reset()
         return r
     }

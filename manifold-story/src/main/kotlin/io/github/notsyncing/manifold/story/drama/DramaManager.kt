@@ -263,11 +263,15 @@ object DramaManager {
         }
 
         try {
-            if (type != StandardWatchEventKinds.ENTRY_DELETE) {
-                evalDrama(dramaFile, null)
-            }
-
             logger.info("Drama file $dramaFile updated, type $type.")
+
+            if (type != StandardWatchEventKinds.ENTRY_DELETE) {
+                logger.info("Reloading drama file $dramaFile")
+
+                evalDrama(dramaFile, null)
+
+                logger.info("Drama file $dramaFile reloaded.")
+            }
         } catch (e: Exception) {
             logger.log(Level.WARNING, "Failed to update drama $dramaFile", e)
         }
