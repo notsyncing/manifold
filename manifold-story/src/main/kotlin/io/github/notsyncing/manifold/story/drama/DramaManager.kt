@@ -17,6 +17,7 @@ import java.nio.file.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
+import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.concurrent.thread
 
@@ -129,9 +130,13 @@ object DramaManager {
                 .forEach { f ->
                     logger.info("Loading drama $f")
 
-                    evalDrama(f, null)
+                    try {
+                        evalDrama(f, null)
 
-                    counter++
+                        counter++
+                    } catch (e: Exception) {
+                        logger.log(Level.WARNING, "Failed to load drama $f", e)
+                    }
                 }
 
         val watchKey = p.register(dramaWatcher, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_CREATE,
@@ -176,7 +181,12 @@ object DramaManager {
 
                                 Files.newBufferedReader(fullPath).use {
                                     logger.info("Loading drama $relPath from classpath")
-                                    evalDrama(it, domain.name, relPath)
+
+                                    try {
+                                        evalDrama(it, domain.name, relPath)
+                                    } catch (e: Exception) {
+                                        logger.log(Level.WARNING, "Failed to load drama $relPath", e)
+                                    }
                                 }
                             } finally {
                                 if (fs != null) {
@@ -252,11 +262,15 @@ object DramaManager {
             }
         }
 
-        if (type != StandardWatchEventKinds.ENTRY_DELETE) {
-            evalDrama(dramaFile, null)
-        }
+        try {
+            if (type != StandardWatchEventKinds.ENTRY_DELETE) {
+                evalDrama(dramaFile, null)
+            }
 
-        logger.info("Drama file $dramaFile updated, type $type.")
+            logger.info("Drama file $dramaFile updated, type $type.")
+        } catch (e: Exception) {
+            logger.log(Level.WARNING, "Failed to update drama $dramaFile", e)
+        }
     }
 
     private fun dramaWatcherThread() {
