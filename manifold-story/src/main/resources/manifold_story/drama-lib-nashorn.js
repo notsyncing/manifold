@@ -130,3 +130,7 @@ function hooking(name, handler) {
 
     Manifold.hooks.registerHook(name, domain, hooker, hookSource);
 }
+
+function lifecycle(listener) {
+    return listener;
+}

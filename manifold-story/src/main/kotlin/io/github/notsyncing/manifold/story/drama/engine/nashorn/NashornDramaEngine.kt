@@ -52,13 +52,13 @@ class NashornDramaEngine : DramaEngine() {
         return (engine as Invocable).invokeMethod(obj, method, *parameters)
     }
 
-    override fun loadScript(file: Path) {
+    override fun loadScript(file: Path): Any? {
         val path = file.toAbsolutePath().normalize().toString()
 
-        engine.eval("load('${path.replace("\\", "\\\\")}')")
+        return engine.eval("load('${path.replace("\\", "\\\\")}')")
     }
 
-    override fun loadScriptFromClasspath(file: String) {
-        engine.eval("load('classpath:$file')")
+    override fun loadScriptFromClasspath(file: String): Any? {
+        return engine.eval("load('classpath:$file')")
     }
 }

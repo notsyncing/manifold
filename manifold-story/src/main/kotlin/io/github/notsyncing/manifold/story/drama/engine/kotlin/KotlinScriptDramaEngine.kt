@@ -57,15 +57,15 @@ class KotlinScriptDramaEngine : DramaEngine() {
         return (engine as Invocable).invokeMethod(obj, method, *parameters)
     }
 
-    override fun loadScript(file: Path) {
+    override fun loadScript(file: Path): Any? {
         InputStreamReader(Files.newInputStream(file)).use {
-            eval(it)
+            return eval(it)
         }
     }
 
-    override fun loadScriptFromClasspath(file: String) {
+    override fun loadScriptFromClasspath(file: String): Any? {
         InputStreamReader(javaClass.getResourceAsStream("/" + file)).use {
-            eval(it)
+            return eval(it)
         }
     }
 }

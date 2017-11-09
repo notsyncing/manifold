@@ -8,6 +8,7 @@ import io.github.notsyncing.manifold.Manifold
 import io.github.notsyncing.manifold.hooking.Hook
 import io.github.notsyncing.manifold.story.drama.DramaActionContext
 import io.github.notsyncing.manifold.story.drama.DramaManager
+import io.github.notsyncing.manifold.story.drama.DramaScriptLifecycle
 import java.lang.reflect.Type
 import java.util.concurrent.CompletableFuture
 import kotlin.reflect.KFunction
@@ -191,4 +192,8 @@ fun hooking(name: String, hook: Hook<*>) {
     val hookSource = DramaManager.currentFile + "?" + name
 
     Manifold.hooks.registerHook(name, null, hook.javaClass, hookSource)
+}
+
+fun lifecycle(listener: DramaScriptLifecycle): DramaScriptLifecycle {
+    return listener
 }

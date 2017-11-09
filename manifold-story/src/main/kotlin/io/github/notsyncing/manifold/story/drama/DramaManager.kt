@@ -34,6 +34,7 @@ object DramaManager {
     private var isInit = true
 
     private val actionMap = ConcurrentHashMap<String, DramaActionInfo>()
+    private val scriptLifecycleMap = ConcurrentHashMap<String, DramaScriptLifecycle>()
 
     private val dramaReloadThread = Executors.newSingleThreadExecutor {
         Thread(it).apply {
@@ -75,6 +76,18 @@ object DramaManager {
 
         ManifoldDomain.onClose { domain, _ ->
             actionMap.removeIf { (_, info) -> info.domain == domain.name }
+
+            val iter = scriptLifecycleMap.iterator()
+
+            while (iter.hasNext()) {
+                val (_, listener) = iter.next()
+
+                if (listener.javaClass.classLoader == domain.classLoader) {
+                    listener.beforeDestroy()
+
+                    iter.remove()
+                }
+            }
         }
 
         isInit = false
@@ -88,10 +101,16 @@ object DramaManager {
             engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
             engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
-            if ((domain == null) || (domain == ManifoldDomain.ROOT)) {
+            val r = if ((domain == null) || (domain == ManifoldDomain.ROOT)) {
                 engine.loadScriptFromClasspath(path)
             } else {
                 engine.eval(it)
+            }
+
+            if (r is DramaScriptLifecycle) {
+                scriptLifecycleMap[path] = r
+
+                r.afterEvaluate()
             }
 
             engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
@@ -113,7 +132,13 @@ object DramaManager {
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__", path)
         engine.setContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__", domain)
 
-        engine.loadScript(file)
+        val r = engine.loadScript(file)
+
+        if (r is DramaScriptLifecycle) {
+            scriptLifecycleMap[path] = r
+
+            r.afterEvaluate()
+        }
 
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_FILE__")
         engine.removeContextAttribute("__MANIFOLD_DRAMA_CURRENT_DOMAIN__")
@@ -241,10 +266,11 @@ object DramaManager {
     }
 
     private fun updateDramaActions(dramaFile: Path, type: WatchEvent.Kind<*>) {
-        val iter = actionMap.iterator()
         val dramaFilePathStr = dramaFile.toString()
 
         if ((type == StandardWatchEventKinds.ENTRY_MODIFY) || (type == StandardWatchEventKinds.ENTRY_DELETE)) {
+            val iter = actionMap.iterator()
+
             while (iter.hasNext()) {
                 val (_, info) = iter.next()
 
@@ -259,6 +285,24 @@ object DramaManager {
                 }
 
                 Manifold.hooks.removeFromCacheIf { it.source?.startsWith(dramaFilePathStr + "?") ?: false }
+            }
+
+            val iter2 = scriptLifecycleMap.iterator()
+
+            while (iter2.hasNext()) {
+                val (path, listener) = iter2.next()
+
+                if (Files.isDirectory(dramaFile)) {
+                    if (Paths.get(path).startsWith(dramaFile)) {
+                        listener.beforeDestroy()
+                        iter.remove()
+                    }
+                } else {
+                    if (path == dramaFilePathStr) {
+                        listener.beforeDestroy()
+                        iter.remove()
+                    }
+                }
             }
         }
 

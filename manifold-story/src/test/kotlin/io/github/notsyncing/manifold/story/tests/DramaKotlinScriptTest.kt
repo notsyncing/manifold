@@ -6,14 +6,20 @@ import io.github.notsyncing.manifold.story.drama.DramaManager
 import io.github.notsyncing.manifold.story.drama.DramaScene
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.CompletableFuture
 
 class DramaKotlinScriptTest {
+    companion object {
+        var afterEval = false
+    }
+
     @Before
     fun setUp() {
         Manifold.enableFeatureManagement = false
+        afterEval = false
 
         Manifold.init()
 
@@ -22,6 +28,8 @@ class DramaKotlinScriptTest {
 
     @After
     fun tearDown() {
+        afterEval = false
+
         DramaManager.destroy()
         DramaManager.reset()
 
@@ -102,5 +110,10 @@ class DramaKotlinScriptTest {
         } catch (e: Exception) {
             Assert.assertEquals("FAILED", e.cause?.message)
         }
+    }
+
+    @Test
+    fun testLifecycleAfterEvaluate() {
+        assertTrue(afterEval)
     }
 }

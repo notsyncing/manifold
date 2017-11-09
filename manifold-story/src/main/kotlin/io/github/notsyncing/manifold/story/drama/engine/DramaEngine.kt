@@ -16,7 +16,7 @@ abstract class DramaEngine {
 
     abstract fun invoke(obj: Any?, method: String, vararg parameters: Any?): Any?
 
-    abstract fun loadScript(file: Path)
+    abstract fun loadScript(file: Path): Any?
 
-    abstract fun loadScriptFromClasspath(file: String)
+    abstract fun loadScriptFromClasspath(file: String): Any?
 }
