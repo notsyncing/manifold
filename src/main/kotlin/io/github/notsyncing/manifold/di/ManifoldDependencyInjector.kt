@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.di
 
 import io.github.notsyncing.manifold.ManifoldDependencyProvider
 import io.github.notsyncing.manifold.domain.ManifoldDomain
+import io.github.notsyncing.manifold.utils.removeIf
 import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Path
@@ -148,6 +149,10 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
 
     override fun <T: S, S> registerMapping(instClass: Class<T>, intfClass: Class<S>) {
         classMap.put(intfClass, instClass)
+    }
+
+    override fun <T> unregisterMapping(instClass: Class<T>) {
+        classMap.removeIf { (_, v) -> v == instClass }
     }
 
     override fun registerSingleton(type: Class<*>) {

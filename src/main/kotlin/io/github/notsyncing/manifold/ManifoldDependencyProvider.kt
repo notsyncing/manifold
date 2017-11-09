@@ -21,6 +21,8 @@ interface ManifoldDependencyProvider {
 
     fun <T: S, S> registerMapping(instClass: Class<T>, intfClass: Class<S>)
 
+    fun <T> unregisterMapping(instClass: Class<T>)
+
     fun registerSingleton(type: Class<*>)
 
     fun <A: Annotation> getAllAnnotated(anno: Class<A>, handler: (Class<*>) -> Unit)

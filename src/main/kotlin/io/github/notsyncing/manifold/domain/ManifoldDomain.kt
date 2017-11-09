@@ -1,9 +1,7 @@
 package io.github.notsyncing.manifold.domain
 
 import io.github.lukehutch.fastclasspathscanner.FastClasspathScanner
-import io.github.lukehutch.fastclasspathscanner.scanner.ClassInfo
 import io.github.lukehutch.fastclasspathscanner.scanner.ScanResult
-import io.github.lukehutch.fastclasspathscanner.scanner.ScanSpec
 import io.github.notsyncing.manifold.utils.FileUtils
 import java.io.File
 import java.io.IOException
@@ -35,7 +33,6 @@ class ManifoldDomain(val name: String = ROOT,
     private val childDomains = mutableListOf<ManifoldDomain>()
     private val urls = mutableListOf<URL>()
     private val urlsFromWars = mutableMapOf<URL, URL>()
-    private var classLoader: DomainClassLoader = createClassLoader()
     private val classpathWatcher = FileSystems.getDefault().newWatchService()
     private val classpathWatcherKeys = ConcurrentHashMap<WatchKey, Path>()
     private var closed = false
@@ -47,6 +44,9 @@ class ManifoldDomain(val name: String = ROOT,
     private lateinit var scanner: FastClasspathScanner
     private var classScanResult: ScanResultWrapper? = null
     private val fileScanResult = mutableListOf<Triple<ManifoldDomain, Path, String>>()
+
+    var classLoader: DomainClassLoader = createClassLoader()
+        private set
 
     init {
         if (parentDomain != null) {

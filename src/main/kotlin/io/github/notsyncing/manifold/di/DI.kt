@@ -15,3 +15,11 @@ inline fun <reified T> dis(): T {
 
     return o
 }
+
+inline fun <reified T: I, reified I> diReg() {
+    Manifold.dependencyProvider?.registerMapping(T::class.java, I::class.java)
+}
+
+inline fun <reified T> diUnreg() {
+    Manifold.dependencyProvider?.unregisterMapping(T::class.java)
+}
