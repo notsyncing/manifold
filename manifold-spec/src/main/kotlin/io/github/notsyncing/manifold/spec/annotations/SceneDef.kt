@@ -2,4 +2,4 @@ package io.github.notsyncing.manifold.spec.annotations
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class SceneDef
+annotation class SceneDef(val skip: Boolean = false)

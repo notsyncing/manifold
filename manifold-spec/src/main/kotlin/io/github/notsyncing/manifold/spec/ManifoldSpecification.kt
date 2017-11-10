@@ -3,8 +3,11 @@ package io.github.notsyncing.manifold.spec
 import io.github.notsyncing.lightfur.DatabaseManager
 import io.github.notsyncing.lightfur.common.LightfurConfig
 import io.github.notsyncing.lightfur.common.LightfurConfigBuilder
+import io.github.notsyncing.lightfur.integration.jdbc.JdbcPostgreSQLDriver
 import io.github.notsyncing.manifold.spec.checkers.SpecChecker
 import io.github.notsyncing.manifold.spec.models.ModuleInfo
+import io.github.notsyncing.manifold.spec.models.SceneSpec
+import io.github.notsyncing.manifold.spec.testcase.TestCaseInfo
 
 abstract class ManifoldSpecification(val useDatabase: Boolean = false) {
     companion object {
@@ -18,6 +21,7 @@ abstract class ManifoldSpecification(val useDatabase: Boolean = false) {
     }
 
     private fun initDatabase() {
+        DatabaseManager.setDriver(JdbcPostgreSQLDriver())
         DatabaseManager.getInstance().init(databaseConfig())
     }
 
@@ -82,21 +86,21 @@ abstract class ManifoldSpecification(val useDatabase: Boolean = false) {
         return l
     }
 
-    fun getSceneCasesList(): List<Pair<String, String>> {
+    fun getSceneCasesList(): List<Pair<TestCaseInfo?, SceneSpec>> {
         if (modules.isEmpty()) {
             modules = spec().build()
         }
 
-        val l = mutableListOf<Pair<String, String>>()
+        val l = mutableListOf<Pair<TestCaseInfo?, SceneSpec>>()
 
         for (m in modules) {
             for (sg in m.sceneGroups) {
                 for (s in sg.build()) {
                     if (s.cases.isEmpty()) {
-                        l.add(Pair("", s.name))
+                        l.add(Pair(null, s))
                     } else {
                         for (c in s.cases) {
-                            l.add(Pair(c.behavior, s.name))
+                            l.add(Pair(c, s))
                         }
                     }
                 }

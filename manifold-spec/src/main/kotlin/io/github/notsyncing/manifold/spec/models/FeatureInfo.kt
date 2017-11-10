@@ -1,11 +1,9 @@
 package io.github.notsyncing.manifold.spec.models
 
-import io.github.notsyncing.manifold.authenticate.SpecialAuth
-
 class FeatureInfo {
     var name: String? = null
     var groups: Array<String>? = null
-    var defaultSpecialAuths: Array<SpecialAuth> = emptyArray()
+    var defaultSpecialAuths: Array<String> = emptyArray()
     var description: String? = null
     var comment: String? = null
     var internal: Boolean? = null
@@ -25,12 +23,12 @@ class FeatureInfo {
         return this
     }
 
-    infix fun defaultSpecialAuth(auth: SpecialAuth): FeatureInfo {
+    infix fun defaultSpecialAuth(auth: String): FeatureInfo {
         this.defaultSpecialAuths = arrayOf(auth)
         return this
     }
 
-    infix fun defaultSpecialAuths(auths: Array<SpecialAuth>): FeatureInfo {
+    infix fun defaultSpecialAuths(auths: Array<String>): FeatureInfo {
         this.defaultSpecialAuths = auths
         return this
     }

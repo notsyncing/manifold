@@ -10,6 +10,10 @@ import java.util.concurrent.ConcurrentHashMap
 @ForEveryScene
 class FeatureAuthenticator : SceneAuthenticator() {
     companion object {
+        const val PERMISSION_MODULE_UNDEFINED = "manifold.modules.undefined"
+
+        const val PERMISSION_TYPE_UNDEFINED = "manifold.types.undefined"
+
         private val featureAuthMap = ConcurrentHashMap<String, Pair<String, String>>()
 
         class FeatureAuthMapItem(val features: Array<String>) {
@@ -79,7 +83,7 @@ class FeatureAuthenticator : SceneAuthenticator() {
         }
 
         fun getAuth(feature: String): Pair<String, String> {
-            return featureAuthMap[feature] ?: Pair("manifold.modules.undefined", "manifold.types.undefined")
+            return featureAuthMap[feature] ?: Pair(PERMISSION_MODULE_UNDEFINED, PERMISSION_TYPE_UNDEFINED)
         }
     }
 

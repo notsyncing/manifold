@@ -23,6 +23,7 @@ class SceneCheckerTest {
         @JvmStatic
         fun setUp() {
             FeatureAuthenticator.configure {
+                our feature "TestScene2" needs Module.ProductData type Auth.View
                 our feature "ProductData" needs Module.ProductData type Auth.Edit
             }
 
@@ -44,7 +45,9 @@ class SceneCheckerTest {
             @JvmStatic
             @Parameterized.Parameters(name = "{index}: {0}")
             fun data(): Collection<Array<Any>> {
-                return spec.getSceneCasesList().map { (_, sceneName) -> sceneName }
+                return spec.getSceneCasesList()
+                        .filter { (_, scene) -> !scene.skip }
+                        .map { (_, scene) -> scene.name }
                         .distinct()
                         .map { arrayOf<Any>(it) }
             }
@@ -62,9 +65,12 @@ class SceneCheckerTest {
         companion object {
             @JvmStatic
             @Parameterized.Parameters(name = "{index}: {0} {1}")
-            fun data(): Collection<Array<Any>> {
-                return spec.getSceneCasesList().filter { (caseName, _) -> caseName.isNotEmpty() }
-                        .map { (caseName, sceneName) -> arrayOf<Any>(sceneName, caseName) }
+            fun data(): List<Array<String>> {
+                return spec.getSceneCasesList()
+                        .filter { (_, scene) -> !scene.skip }
+                        .filter { (case, _) -> case?.skip == false }
+                        .filter { (case, _) -> case?.behavior?.isNotEmpty() == true }
+                        .map { (case, scene) -> arrayOf(scene.name, case!!.behavior) }
             }
         }
 

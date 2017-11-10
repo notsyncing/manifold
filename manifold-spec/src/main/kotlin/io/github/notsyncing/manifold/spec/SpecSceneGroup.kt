@@ -30,11 +30,12 @@ abstract class SpecSceneGroup {
 
         for (m in sceneDefs) {
             val useDatabase = m.isAnnotationPresent(UseDatabase::class.java)
+            val sceneDef = m.getAnnotation(SceneDef::class.java)
 
             m(this)
 
             l.add(SceneSpec(m.name, feature, permission, parameters.parameters, returns, flow.build(),
-                    cases.build(), useDatabase))
+                    cases.build(), useDatabase, sceneDef.skip))
 
             reset()
         }

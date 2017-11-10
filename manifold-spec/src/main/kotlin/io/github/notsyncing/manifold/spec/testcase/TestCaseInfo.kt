@@ -39,6 +39,7 @@ class TestCaseInfo(val behavior: String) {
     val exit = TestCaseExitPoint()
     val additionalConditions = mutableListOf<TestAdditionalCondition>()
     val session = Manifold.sessionStorageProvider ?: ManifoldSessionStorage()
+    var skip = false
 
     fun session(key: String): (Any) -> Unit {
         return {
@@ -71,6 +72,11 @@ class TestCaseInfo(val behavior: String) {
 
     fun should(checks: TestCaseInfo.() -> Unit): TestCaseInfo {
         this.checks()
+        return this
+    }
+
+    fun skip(): TestCaseInfo {
+        skip = true
         return this
     }
 }

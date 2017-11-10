@@ -1,6 +1,5 @@
 package io.github.notsyncing.manifold.spec.i18n
 
-import io.github.notsyncing.manifold.authenticate.SpecialAuth
 import io.github.notsyncing.manifold.spec.ManifoldSpecification
 import io.github.notsyncing.manifold.spec.SpecBuilder
 import io.github.notsyncing.manifold.spec.SpecSceneGroup
@@ -50,7 +49,7 @@ infix fun FeatureInfo.组(group: String): FeatureInfo {
     return this.group(group)
 }
 
-infix fun FeatureInfo.默认特殊权限(auth: SpecialAuth): FeatureInfo {
+infix fun FeatureInfo.默认特殊权限(auth: String): FeatureInfo {
     return this.defaultSpecialAuth(auth)
 }
 
@@ -123,6 +122,10 @@ fun TestCaseInfo.其他(proc: () -> Unit): TestCaseInfo {
 
 fun TestCaseInfo.应当(checks: TestCaseInfo.() -> Unit): TestCaseInfo {
     return this.should(checks)
+}
+
+fun TestCaseInfo.跳过(): TestCaseInfo {
+    return this.skip()
 }
 
 val TestCaseInfo.结束: TestCaseInfo.TestCaseExitPoint

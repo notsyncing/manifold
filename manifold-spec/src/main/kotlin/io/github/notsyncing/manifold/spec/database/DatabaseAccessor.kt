@@ -1,20 +1,20 @@
 package io.github.notsyncing.manifold.spec.database
 
 import io.github.notsyncing.lightfur.DataSession
-import io.github.notsyncing.lightfur.integration.vertx.VertxDataSession
+import io.github.notsyncing.lightfur.integration.jdbc.JdbcDataSession
 
 val database = DatabaseAccessor()
 
 class DatabaseAccessor {
     init {
-        DataSession.setCreator { VertxDataSession() as DataSession<Any, Any, Any> }
+        DataSession.setCreator { JdbcDataSession() as DataSession<Any, Any, Any> }
     }
 
     infix fun execute(sql: String): DatabaseResult {
-        val db: VertxDataSession = DataSession.start()
+        val db: JdbcDataSession = DataSession.start()
 
         try {
-            val r = DatabaseResult(db.executeWithReturning(sql).get())
+            val r = DatabaseResult(db.queryJson(sql).get())
             db.end().get()
             return r
         } catch (e: Exception) {
@@ -24,12 +24,12 @@ class DatabaseAccessor {
     }
 
     infix fun exists(sql: String): Boolean {
-        val db: VertxDataSession = DataSession.start()
+        val db: JdbcDataSession = DataSession.start()
 
         try {
-            val r = db.query(sql).get()
+            val r = db.queryJson(sql).get()
             db.end().get()
-            return r.numRows > 0
+            return r.isNotEmpty()
         } catch (e: Exception) {
             db.end().get()
             throw e

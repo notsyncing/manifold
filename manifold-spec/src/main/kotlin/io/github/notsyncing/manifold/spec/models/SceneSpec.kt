@@ -10,6 +10,7 @@ class SceneSpec(val name: String,
                 val returns: ReturnInfo,
                 val flow: FlowInfo,
                 val cases: List<TestCaseInfo>,
-                val useDatabase: Boolean) {
+                val useDatabase: Boolean,
+                val skip: Boolean) {
 
 }

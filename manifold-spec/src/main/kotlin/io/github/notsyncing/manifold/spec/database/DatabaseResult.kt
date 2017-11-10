@@ -1,17 +1,17 @@
 package io.github.notsyncing.manifold.spec.database
 
+import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.spec.models.Ref
-import io.vertx.ext.sql.ResultSet
 
-class DatabaseResult(private val result: ResultSet) {
-    class DatabaseResultStore(private val result: ResultSet,
+class DatabaseResult(private val result: List<JSONObject>) {
+    class DatabaseResultStore(private val result: List<JSONObject>,
                               private val columnName: String) {
         infix fun into(variable: Ref<*>) {
-            if (result.rows.isEmpty()) {
+            if (result.isEmpty()) {
                 throw RuntimeException("No data returned!")
             }
 
-            (variable as Ref<Any?>).value = result.rows[0].getValue(columnName)
+            (variable as Ref<Any?>).value = result[0].get(columnName)
         }
     }
 

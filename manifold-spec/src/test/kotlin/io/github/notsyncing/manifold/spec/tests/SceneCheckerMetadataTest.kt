@@ -41,7 +41,7 @@ class SceneCheckerMetadataTest {
     @Test
     fun testMetadataWithWrongFeatureName() {
         try {
-            spec.checkMetadata("测试场景1")
+            spec.checkMetadata("测试场景1F")
             assertTrue(false)
         } catch (e: ComparisonFailure) {
             assertTrue(e.message!!.contains("wrong feature name"))
@@ -61,7 +61,7 @@ class SceneCheckerMetadataTest {
     @Test
     fun testMetadataWithWrongParameterName() {
         try {
-            spec.checkMetadata("测试场景3")
+            spec.checkMetadata("测试场景3F")
             assertTrue(false)
         } catch (e: AssertionError) {
             assertTrue(e.message!!.contains("matches the parameters"))
@@ -77,7 +77,7 @@ class SceneCheckerMetadataTest {
     @Test
     fun testMetadataWithWrongReturnType() {
         try {
-            spec.checkMetadata("测试场景4")
+            spec.checkMetadata("测试场景4F")
             assertTrue(false)
         } catch (e: AssertionError) {
             assertTrue(e.message!!.contains("wrong return type"))

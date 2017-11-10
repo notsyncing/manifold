@@ -1,10 +1,13 @@
 package io.github.notsyncing.manifold.spec.models
 
+import io.github.notsyncing.manifold.feature.FeatureAuthenticator.Companion.PERMISSION_MODULE_UNDEFINED
+import io.github.notsyncing.manifold.feature.FeatureAuthenticator.Companion.PERMISSION_TYPE_UNDEFINED
+
 class PermissionInfo {
-    var module: String = "manifold.modules.undefined"
+    var module: String = PERMISSION_MODULE_UNDEFINED
         private set
 
-    var type: String = "manifold.type.undefined"
+    var type: String = PERMISSION_TYPE_UNDEFINED
         private set
 
     @Deprecated("Please use String to specify module")
