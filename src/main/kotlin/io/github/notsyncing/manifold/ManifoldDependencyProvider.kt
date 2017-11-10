@@ -13,7 +13,7 @@ interface ManifoldDependencyProvider {
         return get(type, false)
     }
 
-    fun <T> get(type: Class<T>, singleton: Boolean = false): T?
+    fun <T> get(type: Class<T>, singleton: Boolean = false, provides: Array<*> = emptyArray<Any>()): T?
 
     fun register(obj: Any)
 

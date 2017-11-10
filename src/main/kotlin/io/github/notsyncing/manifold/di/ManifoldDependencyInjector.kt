@@ -40,7 +40,7 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
         }
     }
 
-    override fun <T> get(type: Class<T>, singleton: Boolean): T? {
+    override fun <T> get(type: Class<T>, singleton: Boolean, provides: Array<*>): T? {
         val config = configs[type]
 
         var t: Class<*> = type
@@ -83,14 +83,19 @@ class ManifoldDependencyInjector(private val rootDomain: ManifoldDomain) : Manif
         } else {
             val params = ArrayList<Any?>()
 
-            constructor.parameters.forEach {
-                if (it.isAnnotationPresent(NoProvide::class.java)) {
+            constructor.parameters.forEach { p ->
+                if (p.isAnnotationPresent(NoProvide::class.java)) {
                     params.add(null)
                     return@forEach
                 }
 
-                val p = get(it.type)
-                params.add(p)
+                val provided = provides.firstOrNull { (it != null) && (p.type.isAssignableFrom(it.javaClass)) }
+
+                if (provided != null) {
+                    params.add(provided)
+                } else {
+                    params.add(get(p.type))
+                }
             }
 
             try {

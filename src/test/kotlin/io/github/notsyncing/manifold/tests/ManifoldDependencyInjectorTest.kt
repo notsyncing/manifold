@@ -142,4 +142,14 @@ class ManifoldDependencyInjectorTest {
         Assert.assertNotNull(s)
         Assert.assertEquals(Any::class.java.name, s?.javaClass?.name)
     }
+
+    @Test
+    fun testProvidedGet() {
+        val a = A()
+        val g = di.get(G::class.java, false, arrayOf(a))
+
+        Assert.assertNotNull(g)
+        Assert.assertEquals(a, g!!.a)
+        Assert.assertNotNull(g.b)
+    }
 }
