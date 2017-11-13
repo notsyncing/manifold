@@ -26,7 +26,7 @@ object RuleEngine {
         rules.clear()
     }
 
-    fun run(ruleName: String, context: Any? = null, vararg additionalParams: Any?) = future {
+    fun run(ruleName: String, context: Any? = null, params: Any? = null, vararg additionalParams: Any?) = future {
         try {
             val functor: ScriptObjectMirror
 
@@ -48,9 +48,13 @@ object RuleEngine {
                 functor = rules[ruleName]!!
             }
 
-            functor.call(null, context, *additionalParams)
+            functor.call(null, context, params, *additionalParams)
         } catch (e: Exception) {
             throw Exception("An exception occured when running rule $ruleName", e)
         }
+    }
+
+    fun ruleChanged(ruleName: String) {
+        rules.remove(ruleName)
     }
 }
