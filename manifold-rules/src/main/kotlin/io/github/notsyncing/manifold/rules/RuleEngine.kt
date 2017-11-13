@@ -26,7 +26,7 @@ object RuleEngine {
         rules.clear()
     }
 
-    fun run(ruleName: String, context: Any? = null, params: Any? = null, vararg additionalParams: Any?) = future {
+    fun run(ruleName: String, context: Any? = null, params: Map<String, Any?> = emptyMap(), vararg additionalParams: Any?) = future {
         try {
             val functor: ScriptObjectMirror
 
@@ -48,7 +48,10 @@ object RuleEngine {
                 functor = rules[ruleName]!!
             }
 
-            functor.call(null, context, params, *additionalParams)
+            val ruleEnv = mutableMapOf<String, Any?>()
+            ruleEnv.put("name", ruleName)
+
+            functor.call(ruleEnv, context, params, *additionalParams)
         } catch (e: Exception) {
             throw Exception("An exception occured when running rule $ruleName", e)
         }
