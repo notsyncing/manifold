@@ -2,6 +2,7 @@ package io.github.notsyncing.manifold.story.drama
 
 import com.alibaba.fastjson.JSONObject
 import io.github.notsyncing.manifold.Manifold
+import io.github.notsyncing.manifold.action.ManifoldActionContextRunner
 import io.github.notsyncing.manifold.domain.ManifoldDomain
 import io.github.notsyncing.manifold.story.drama.engine.CallableObject
 import io.github.notsyncing.manifold.story.drama.engine.DramaEngineFactory
@@ -418,6 +419,7 @@ object DramaManager {
         }
 
         val scene = DramaScene(actionName, domain, parameters)
+        scene.m = ManifoldActionContextRunner(null, scene.context)
 
         return perform(scene, actionInfo, parameters, permissionParameters)
     }
