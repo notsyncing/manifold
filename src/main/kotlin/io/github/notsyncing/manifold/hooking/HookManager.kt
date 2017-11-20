@@ -55,7 +55,7 @@ class HookManager {
     }
 
     fun registerHook(domain: String? = null, hook: Class<Hook<*>>) {
-        val name = if (hook.javaClass.isAnnotationPresent(HookingFor::class.java)) {
+        val name = if (hook.isAnnotationPresent(HookingFor::class.java)) {
             hook.getAnnotation(HookingFor::class.java).value
         } else {
             hook.name
