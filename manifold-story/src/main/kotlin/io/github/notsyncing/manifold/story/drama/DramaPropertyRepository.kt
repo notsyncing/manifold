@@ -20,6 +20,7 @@ abstract class DramaPropertyRepository(private val context: DramaActionContext) 
 
             if (o != null) {
                 (o as ManifoldStorage<*>).sceneContext = sceneContext
+                o.shouldHandInTransactionToSceneContext = true
             }
 
             return o

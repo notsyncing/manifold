@@ -11,6 +11,8 @@ abstract class ManifoldStorage<T> {
 
     var sceneContext: SceneContext? = null
 
+    var shouldHandInTransactionToSceneContext = false
+
     protected val transaction: ManifoldTransaction<T>?
         get() = sceneContext?.transaction as ManifoldTransaction<T>?
 
@@ -22,6 +24,10 @@ abstract class ManifoldStorage<T> {
                 if (ownTrans == null) {
                     ownTrans = Manifold.transactionProvider
                             ?.get(Exception("Created by $this at here")) as ManifoldTransaction<T>?
+
+                    if (shouldHandInTransactionToSceneContext) {
+                        sceneContext?.transaction = ownTrans
+                    }
                 }
 
                 return ownTrans!!.body
@@ -29,6 +35,10 @@ abstract class ManifoldStorage<T> {
         }
 
     fun destroy() = future {
+        if ((shouldHandInTransactionToSceneContext) && (sceneContext != null)) {
+            return@future
+        }
+
         if (ownTrans != null) {
             ownTrans!!.end().await()
         }
