@@ -309,15 +309,15 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
     }
 
-    protected fun successOn(cond: (R) -> Boolean) {
+    fun successOn(cond: (R) -> Boolean) {
         succCond1 = cond
     }
 
-    protected fun successOn(cond: () -> R) {
+    fun successOn(cond: () -> R) {
         succCond2 = cond
     }
 
-    protected fun successOn(expected: R) {
+    fun successOn(expected: R) {
         succCond2 = { expected }
     }
 

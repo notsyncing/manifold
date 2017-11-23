@@ -55,6 +55,18 @@ class DramaActionContext(private val engine: DramaEngine,
         return FutureUtils.failed(DramaExecutionException(message))
     }
 
+    fun successOn(cond: (Any?) -> Boolean) {
+        scene.successOn(cond)
+    }
+
+    fun successOn(cond: () -> Any?) {
+        scene.successOn(cond)
+    }
+
+    fun successOn(expected: Any?) {
+        scene.successOn(expected)
+    }
+
     fun m(actionClass: Class<ManifoldAction<*>>, params: Map<String, Any?>): CompletableFuture<Any?> {
         val kotlinClass = actionClass.kotlin
         val constructor = kotlinClass.primaryConstructor ?: return FutureUtils.failed(RuntimeException("Action $actionClass has no primary constructor!"))
