@@ -87,7 +87,7 @@ object O {
         fill(from, to) { f, t -> shallowCopyFields(f!!, t!!, skipFields) }
     }
 
-    fun <F, T> fill(from: List<F>, to: List<T>, filler: (F, T) -> Unit) {
+    fun <F, T> fillList(from: List<F>, to: List<T>, filler: (F, T) -> Unit) {
         for (i in 0 until from.size) {
             if (to[i] == null) {
                 continue
@@ -97,12 +97,21 @@ object O {
         }
     }
 
-    fun <F, T> fill(from: List<F>, to: List<T>) {
-        fill(from, to) { f: F, t -> shallowCopyFields(f!!, t!!, null) }
-    }
+    fun <F, T> fillList(from: List<F>, to: List<T>, skipFields: Set<KProperty<*>>?,
+                        matching: ((F, T) -> Boolean)? = null) {
+        if (matching != null) {
+            for (f in from) {
+                for (t in to) {
+                    if (!matching(f, t)) {
+                        continue
+                    }
 
-    fun <F, T> fill(from: List<F>, to: List<T>, skipFields: Set<KProperty<*>>?) {
-        fill(from, to) { f: F, t -> shallowCopyFields(f!!, t!!, skipFields) }
+                    fill(f, t) { f, t -> shallowCopyFields(f!!, t!!, skipFields) }
+                }
+            }
+        } else {
+            fillList(from, to) { f: F, t: T -> shallowCopyFields(f!!, t!!, skipFields) }
+        }
     }
 }
 
@@ -122,28 +131,30 @@ inline fun <reified R> List<*>.mapAs(): List<R> {
     return O.map(this)
 }
 
-fun List<*>.fillFrom(from: List<*>) {
-    O.fill(from, this)
+fun <F, T> List<T>.fillFrom(from: List<F>) {
+    O.fillList(from, this, null as Set<KProperty<*>>?)
 }
 
-fun List<*>.fillFrom(from: List<*>, skipFields: Set<KProperty<*>>?) {
-    O.fill(from, this, skipFields)
+fun <F, T> List<T>.fillFrom(from: List<F>, skipFields: Set<KProperty<*>>? = null,
+                     matching: ((F, T) -> Boolean)? = null) {
+    O.fillList(from, this, skipFields, matching)
 }
 
 fun <F, T> List<T>.fillFrom(from: List<F>, filler: (F, T) -> Unit) {
-    O.fill(from, this, filler)
+    O.fillList(from, this, filler)
 }
 
-fun List<*>.fillTo(to: List<*>) {
-    O.fill(this, to)
+fun <F, T> List<F>.fillTo(to: List<T>) {
+    O.fillList(this, to, null as Set<KProperty<*>>?)
 }
 
-fun List<*>.fillTo(to: List<*>, skipFields: Set<KProperty<*>>?) {
-    O.fill(this, to, skipFields)
+fun <F, T> List<F>.fillTo(to: List<T>, skipFields: Set<KProperty<*>>? = null,
+                   matching: ((F, T) -> Boolean)? = null) {
+    O.fillList(this, to, skipFields, matching)
 }
 
 fun <F, T> List<F>.fillTo(to: List<T>, filler: (F, T) -> Unit) {
-    O.fill(this, to, filler)
+    O.fillList(this, to, filler)
 }
 
 fun Any.fillFrom(from: Any?) {

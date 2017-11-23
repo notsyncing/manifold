@@ -123,4 +123,44 @@ class MappingTest {
         assertEquals("testName", a.name)
         assertEquals("testTitle", a.title)
     }
+
+    @Test
+    fun testSimpleFillingListMatching() {
+        val list = listOf(
+                SubA().apply {
+                    id = 1
+                    name = "test1"
+                    title = "title1"
+                },
+                SubA().apply {
+                    id = 2
+                    name = "test2"
+                    title = "title2"
+                },
+                SubA().apply {
+                    id = 3
+                    name = "test3"
+                    title = "title3"
+                })
+
+        val list2 = listOf(
+                B().apply {
+                    code = 3
+                    title = "title4"
+                },
+                B().apply {
+                    code = 1
+                    title = "title5"
+                },
+                B().apply {
+                    code = 2
+                    title = "title6"
+                })
+
+        list.fillFrom(list2, matching = { f, t -> f.code.toLong() == t.id })
+
+        assertEquals("title5", list[0].title)
+        assertEquals("title6", list[1].title)
+        assertEquals("title4", list[2].title)
+    }
 }
