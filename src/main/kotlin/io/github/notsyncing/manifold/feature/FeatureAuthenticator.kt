@@ -93,6 +93,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
                 if (role.roleId.isEmpty()) {
                     return context.deny()
                 }
+            } else if (a == SpecialAuth.SuperUserOnly) {
+                if (role != SpecialRole.SuperUser) {
+                   return context.deny()
+                }
             }
         }
 
@@ -130,6 +134,8 @@ class FeatureAuthenticator : SceneAuthenticator() {
 
         if (module == SpecialAuth.LoginOnly) {
             return if (role.roleId.isNotEmpty()) context.pass() else context.deny()
+        } else if (module == SpecialAuth.SuperUserOnly) {
+            return if (role == SpecialRole.SuperUser) context.pass() else context.deny()
         }
 
         return context.checkPermission(module, type)

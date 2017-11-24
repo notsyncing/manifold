@@ -20,8 +20,11 @@ import io.github.notsyncing.manifold.eventbus.event.InternalEvent
 import io.github.notsyncing.manifold.eventbus.event.ManifoldEvent
 import io.github.notsyncing.manifold.feature.FeatureManager
 import io.github.notsyncing.manifold.feature.FeaturePublisher
+import io.github.notsyncing.manifold.feature.InternalFeatureGroups
 import io.github.notsyncing.manifold.hooking.Hook
 import io.github.notsyncing.manifold.hooking.HookManager
+import io.github.notsyncing.manifold.management.ManagementCommandManager
+import io.github.notsyncing.manifold.management.ManagementCommands
 import io.github.notsyncing.manifold.utils.BlackMagicUtils
 import io.github.notsyncing.manifold.utils.DependencyProviderUtils
 import io.github.notsyncing.manifold.utils.removeIf
@@ -84,6 +87,8 @@ object Manifold {
 
     val hooks = HookManager()
 
+    val managementCommands = ManagementCommandManager()
+
     private val onDestroyListeners = mutableListOf<() -> Unit>()
     private val onResetListeners = mutableListOf<() -> Unit>()
     private val onInitListeners = mutableListOf<() -> Unit>()
@@ -110,6 +115,8 @@ object Manifold {
             actionMetadata.removeIf { (_, clazz) -> clazz.classLoader == cl }
 
             hooks.removeFromCacheIf { (it.domain == domain.name) || (it.clazz.classLoader == cl) }
+
+            managementCommands.removeFromCacheIf { _, m -> m.declaringClass.classLoader == cl }
 
             DependencyProviderUtils.removeFromCacheIf { it.classLoader == cl }
 
@@ -139,6 +146,7 @@ object Manifold {
         processActions()
         processInterceptors()
         processHooks()
+        processManagementCommands()
 
         onInitListeners.forEach { it() }
 
@@ -148,6 +156,7 @@ object Manifold {
             processActions(it)
             processInterceptors(it)
             processHooks(it)
+            processManagementCommands(it)
         }
     }
 
@@ -271,6 +280,28 @@ object Manifold {
                 }
 
                 hooks.registerHook(domain.name, clazz as Class<Hook<*>>)
+            }
+
+            Unit
+        }
+
+        if (domain == rootDomain) {
+            domain.inAllClassScanResults(handler)
+        } else {
+            domain.inCurrentClassScanResult(handler)
+        }
+    }
+
+    private fun processManagementCommands(domain: ManifoldDomain = rootDomain) {
+        val handler = { s: ScanResultWrapper?, cl: ClassLoader ->
+            s?.getNamesOfClassesImplementing(ManagementCommands::class.java)?.forEach {
+                val clazz = Class.forName(it, true, cl)
+
+                if (!Modifier.isStatic(clazz.modifiers)) {
+                    return@forEach
+                }
+
+                managementCommands.addCommands(clazz as Class<Hook<*>>)
             }
 
             Unit
@@ -413,5 +444,9 @@ object Manifold {
 
     fun addOnInitListener(listener: () -> Unit) {
         onInitListeners.add(listener)
+    }
+
+    fun enableManagement() {
+        features.enableFeatureGroups(InternalFeatureGroups.Management)
     }
 }
