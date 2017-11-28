@@ -1,16 +1,19 @@
 package io.github.notsyncing.manifold.story.drama.engine.kotlin
 
+import com.intellij.openapi.util.Disposer
 import io.github.notsyncing.manifold.story.drama.engine.CallableObject
 import io.github.notsyncing.manifold.story.drama.engine.DramaEngine
+import org.jetbrains.kotlin.cli.common.repl.KotlinJsr223JvmScriptEngineFactoryBase
+import org.jetbrains.kotlin.cli.common.repl.ScriptArgsWithTypes
 import org.jetbrains.kotlin.script.jsr223.KotlinJsr223JvmLocalScriptEngine
+import org.jetbrains.kotlin.script.jsr223.KotlinStandardJsr223ScriptTemplate
 import java.io.InputStreamReader
 import java.io.Reader
+import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
-import javax.script.Invocable
-import javax.script.ScriptContext
-import javax.script.ScriptEngineManager
-import javax.script.SimpleScriptContext
+import java.nio.file.Paths
+import javax.script.*
 
 class KotlinScriptDramaEngine : DramaEngine() {
     companion object {
@@ -21,10 +24,23 @@ class KotlinScriptDramaEngine : DramaEngine() {
         }
     }
 
+    private class EngineFactory : KotlinJsr223JvmScriptEngineFactoryBase() {
+        override fun getScriptEngine(): ScriptEngine {
+            val classpathElems = ((Thread.currentThread().contextClassLoader) as URLClassLoader).urLs
+                    .map { Paths.get(it.toURI()).toFile() }
+
+            return KotlinJsr223JvmLocalScriptEngine(Disposer.newDisposable(), this,
+                    classpathElems,
+                    KotlinStandardJsr223ScriptTemplate::class.qualifiedName!!,
+                    { ctx, types -> ScriptArgsWithTypes(arrayOf(ctx.getBindings(ScriptContext.ENGINE_SCOPE)), types ?: emptyArray()) },
+                    arrayOf(Bindings::class))
+        }
+    }
+
     private val engine: KotlinJsr223JvmLocalScriptEngine
 
     init {
-        engine = ScriptEngineManager().getEngineByExtension("kts") as KotlinJsr223JvmLocalScriptEngine
+        engine = EngineFactory().scriptEngine as KotlinJsr223JvmLocalScriptEngine
     }
 
     override fun eval(script: String): Any? {
