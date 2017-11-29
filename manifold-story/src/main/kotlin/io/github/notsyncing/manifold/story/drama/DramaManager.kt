@@ -58,6 +58,11 @@ object DramaManager {
             return
         }
 
+        if (!Files.isDirectory(Paths.get(p))) {
+            logger.warning("Drama search path $p does not exist or not a directory, will skip adding it.")
+            return
+        }
+
         dramaSearchPaths.add(p)
 
         if (!isInit) {
