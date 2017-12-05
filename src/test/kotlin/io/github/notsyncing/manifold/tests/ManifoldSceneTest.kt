@@ -30,7 +30,6 @@ class ManifoldSceneTest {
         TestSceneWithSuccessCond.reset()
 
         Manifold.enableFeatureManagement = false
-        Manifold.reset()
 
         ManifoldEventBus.debug = true
         Manifold.init()

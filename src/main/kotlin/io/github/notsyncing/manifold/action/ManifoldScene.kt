@@ -14,6 +14,7 @@ import kotlinx.coroutines.experimental.future.future
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.thread
 
 abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                                 private val eventNodeId: String = "",
@@ -117,42 +118,42 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         }
 
         val f = CompletableFuture<Unit>()
-        var ex: Exception? = null
 
-        CompletableFuture.runAsync(Runnable {
+        thread {
             try {
                 func()
             } catch (e: Exception) {
                 context.transaction!!.rollback(false).get()
-                ex = e
-            }
-        }, Manifold.sceneBgWorkerPool).thenCompose {
-            if (ex != null) {
+
                 if (onException != null) {
-                    onException(ex!!)
+                    onException(e)
                 }
+
+                f.completeExceptionally(e)
             }
+
+            var ended = false
 
             if (keepTransaction) {
                 synchronized(context.transactionRefCount) {
                     context.transactionRefCount--
 
                     if (context.transactionRefCount <= 0) {
-                        return@thenCompose endTransaction()
+                        endTransaction()
+                                .thenAccept { f.complete(Unit) }
+                                .exceptionally {
+                                    f.completeExceptionally(it)
+                                    null
+                                }
+
+                        ended = true
                     }
                 }
             }
 
-            return@thenCompose CompletableFuture.completedFuture(Unit)
-        }.thenAccept {
-            if (ex == null) {
-                f.complete(it)
-            } else {
-                f.completeExceptionally(ex)
+            if (!ended) {
+                f.complete(Unit)
             }
-        }.exceptionally {
-            f.completeExceptionally(it.cause)
-            return@exceptionally null
         }
 
         return f

@@ -34,7 +34,6 @@ import java.lang.reflect.Constructor
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
 
 object Manifold {
     var dependencyProvider: ManifoldDependencyProvider? = null
@@ -64,8 +63,6 @@ object Manifold {
 
     val actionMetadata = ConcurrentHashMap<String, Class<ManifoldAction<*>>>()
     val interceptors = InterceptorManager()
-
-    val sceneBgWorkerPool = Executors.newFixedThreadPool(100)
 
     val features = FeatureManager()
 
@@ -318,8 +315,6 @@ object Manifold {
         reset()
 
         onDestroyListeners.forEach { it() }
-
-        sceneBgWorkerPool.shutdown()
 
         rootDomain.close()
 
