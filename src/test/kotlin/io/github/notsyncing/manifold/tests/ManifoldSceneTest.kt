@@ -309,4 +309,90 @@ class ManifoldSceneTest {
                 TestSceneWithSuccessCond.SCENE_END, TestSceneWithSuccessCond.TRANS_END)
         Assert.assertArrayEquals(expected, TestSceneWithSuccessCond.list.toTypedArray())
     }
+
+    private fun createTransProviderForExceptionAfterTransaction() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransactionException.add(TestSceneTransactionException.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransactionException.add(TestSceneTransactionException.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneTransactionException.add(TestSceneTransactionException.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransactionException.add(TestSceneTransactionException.TRANS_ROLLBACK)
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testSceneWithExceptionAfterTransaction() {
+        createTransProviderForExceptionAfterTransaction()
+
+        try {
+            Manifold.run(TestSceneTransactionException(false)).get()
+            Assert.assertTrue(false)
+        } catch (e: Exception) {
+            Assert.assertTrue(e.cause is RuntimeException)
+            Assert.assertEquals("Exception!", e.cause?.message)
+        }
+
+        val expected = arrayOf(TestSceneTransactionException.SCENE_START,
+                TestSceneTransactionException.TRANS_START, TestSceneTransactionException.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneTransactionException.list.toTypedArray())
+    }
+
+    private fun createTransProviderForTransactionNoFuture() {
+        Manifold.transactionProvider = object : ManifoldTransactionProvider {
+            override fun get(startStack: Exception): ManifoldTransaction<*> {
+                return object : ManifoldTransaction<String>("") {
+                    override fun begin(withTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransactionNoFuture.add(TestSceneTransactionNoFuture.TRANS_START)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun commit(endTransaction: Boolean): CompletableFuture<Void> {
+                        TestSceneTransactionNoFuture.add(TestSceneTransactionNoFuture.TRANS_COMMIT)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun end(): CompletableFuture<Void> {
+                        TestSceneTransactionNoFuture.add(TestSceneTransactionNoFuture.TRANS_END)
+                        return CompletableFuture.completedFuture(null)
+                    }
+
+                    override fun rollback(endTransaction: Boolean): CompletableFuture<Void> {
+                        return CompletableFuture.completedFuture(null)
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun testSceneWithTransactionNoFuture() {
+        createTransProviderForTransactionNoFuture()
+
+        val r = Manifold.run(TestSceneTransactionNoFuture()).get()
+        Assert.assertEquals("Hello", r)
+
+        val expected = arrayOf(TestSceneTransactionNoFuture.SCENE_START,
+                TestSceneTransactionNoFuture.TRANS_START,
+                TestSceneTransactionNoFuture.TRANS_COMMIT,
+                TestSceneTransactionNoFuture.TRANS_END)
+        Assert.assertArrayEquals(expected, TestSceneTransactionNoFuture.list.toTypedArray())
+    }
 }

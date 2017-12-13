@@ -42,9 +42,11 @@ abstract class ManifoldTransactionalAction<T, R>(private var transClass: Class<T
             try {
                 val r = super.execute(f).await()
 
-                if (this@ManifoldTransactionalAction.context.autoCommit) {
-                    this@ManifoldTransactionalAction.context.transaction!!.end().await()
-                    this@ManifoldTransactionalAction.context.transaction = null
+                if (runningOutsideScene) {
+                    if (this@ManifoldTransactionalAction.context.autoCommit) {
+                        this@ManifoldTransactionalAction.context.transaction!!.end().await()
+                        this@ManifoldTransactionalAction.context.transaction = null
+                    }
                 }
 
                 return@future r

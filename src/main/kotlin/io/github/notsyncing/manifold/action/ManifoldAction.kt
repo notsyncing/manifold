@@ -17,6 +17,8 @@ abstract class ManifoldAction<R> {
     var sessionIdentifier: String? = null
     lateinit var context: SceneContext
 
+    var runningOutsideScene = false
+
     protected val storageList = ArrayList<ManifoldStorage<*>>()
 
     protected var executionStartStack: Exception? = null

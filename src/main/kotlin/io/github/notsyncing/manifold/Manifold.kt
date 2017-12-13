@@ -358,6 +358,8 @@ object Manifold {
     }
 
     fun <R> run(action: ManifoldAction<R>): CompletableFuture<R> {
+        action.runningOutsideScene = true
+
         try {
             return action.execute()
         } catch (e: Exception) {
