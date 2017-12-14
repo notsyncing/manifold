@@ -74,13 +74,13 @@ class KotlinScriptDramaEngine : DramaEngine() {
     }
 
     override fun loadScript(file: Path): Any? {
-        InputStreamReader(Files.newInputStream(file)).use {
+        InputStreamReader(Files.newInputStream(file), "utf-8").use {
             return eval(it)
         }
     }
 
     override fun loadScriptFromClasspath(file: String): Any? {
-        InputStreamReader(javaClass.getResourceAsStream("/" + file)).use {
+        InputStreamReader(javaClass.getResourceAsStream("/" + file), "utf-8").use {
             return eval(it)
         }
     }

@@ -191,6 +191,9 @@ object DramaManager {
 
                 Manifold.dependencyProvider?.getAllClasspathFilesWithDomain()
                         ?.filter { (_, _, relPath) -> DramaEngineFactory.isSupportedFile(relPath) }
+                        ?.apply {
+                            logger.info("Found $size dramas on classpath.")
+                        }
                         ?.forEach { (domain, containingPath, relPath) ->
                             val fullPath: Path
                             val fileName = containingPath.fileName.toString()
