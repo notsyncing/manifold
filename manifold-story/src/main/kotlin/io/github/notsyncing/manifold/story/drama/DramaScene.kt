@@ -51,6 +51,10 @@ class DramaScene(private val action: String,
                             "got state ${permission?.state}"))
                 }
             }
+        } else if (actionInfo.permissionName == SpecialAuth.LoginOnly) {
+            if ((context.role?.roleId == "0") || (context.role?.roleId == null) || (context.role?.roleId == "")) {
+                return FutureUtils.failed(NoPermissionException("Drama action $action needs login!"))
+            }
         }
 
         return DramaManager.perform(this, actionInfo, parameters,
