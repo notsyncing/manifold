@@ -229,7 +229,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                     }
 
                     afterExecution().await()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     interceptors.forEach {
                         val (info, i) = it
 
@@ -264,7 +264,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
                 }
 
                 afterExecution().await()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 afterExecution(false).await()
 
                 val (shouldUseAlternativeResult, alternativeResult) = onFailure(e).await()
@@ -332,7 +332,7 @@ abstract class ManifoldScene<R>(private val enableEventNode: Boolean = false,
         return true
     }
 
-    protected open fun onFailure(exception: Exception): CompletableFuture<Pair<Boolean, R?>> {
+    protected open fun onFailure(exception: Throwable): CompletableFuture<Pair<Boolean, R?>> {
         return CompletableFuture.completedFuture(Pair(false, null))
     }
 

@@ -61,7 +61,7 @@ class DramaScene(private val action: String,
                 if (permission == null) null else JSON.toJSON(permission.additionalData) as JSONObject?)
     }
 
-    override fun onFailure(exception: Exception): CompletableFuture<Pair<Boolean, Any?>> {
+    override fun onFailure(exception: Throwable): CompletableFuture<Pair<Boolean, Any?>> {
         if (exception is DramaExecutionException) {
             val o = JSONObject()
                     .fluentPut("error", exception.message)
