@@ -130,6 +130,10 @@ class FeatureAuthenticator : SceneAuthenticator() {
             } else {
                 return context.pass()
             }
+        } else {
+            if (feature.defaultSpecialAuths.isNotEmpty()) {
+                return checkSpecialAuths(context, role, feature.defaultSpecialAuths)
+            }
         }
 
         if (module == SpecialAuth.LoginOnly) {
