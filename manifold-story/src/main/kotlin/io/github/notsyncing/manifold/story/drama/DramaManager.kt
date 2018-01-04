@@ -431,4 +431,21 @@ object DramaManager {
 
         return perform(scene, actionInfo, parameters, permissionParameters)
     }
+
+    fun performWithScene(actionName: String, domain: String? = null, parameters: JSONObject,
+                         permissionParameters: JSONObject?): CompletableFuture<Any?> {
+        val actionInfo = getAction(actionName, domain)
+
+        if (actionInfo == null) {
+            throw ClassNotFoundException("No action with name $actionName " +
+                    "${if (domain != null) "in domain $domain" else ""} found!")
+        }
+
+        val scene = DramaScene(actionName, domain, parameters)
+        scene.permissionParameters = permissionParameters
+        scene.calledFromInternal = true
+        scene.m = ManifoldActionContextRunner(null, scene.context)
+
+        return scene.execute()
+    }
 }

@@ -16,6 +16,9 @@ import java.util.logging.Logger
 class DramaScene(private val action: String,
                  private val domain: String? = null,
                  private val parameters: JSONObject = JSONObject()): ManifoldScene<Any?>() {
+    var permissionParameters: JSONObject? = null
+    var calledFromInternal: Boolean = false
+
     private val logger = Logger.getLogger(javaClass.simpleName)
 
     constructor() : this("")
@@ -27,7 +30,7 @@ class DramaScene(private val action: String,
             return FutureUtils.failed(ClassNotFoundException("No such action $action found in dramas"))
         }
 
-        if (actionInfo.internal) {
+        if ((actionInfo.internal) && (!calledFromInternal)) {
             return FutureUtils.failed(UnsupportedOperationException("The action $action is for internal use!"))
         }
 
@@ -57,8 +60,13 @@ class DramaScene(private val action: String,
             }
         }
 
-        return DramaManager.perform(this, actionInfo, parameters,
-                if (permission == null) null else JSON.toJSON(permission.additionalData) as JSONObject?)
+        val permParams = if (permissionParameters != null) {
+            permissionParameters
+        } else {
+            if (permission == null) null else JSON.toJSON(permission.additionalData) as JSONObject?
+        }
+
+        return DramaManager.perform(this, actionInfo, parameters, permParams)
     }
 
     override fun onFailure(exception: Throwable): CompletableFuture<Pair<Boolean, Any?>> {
